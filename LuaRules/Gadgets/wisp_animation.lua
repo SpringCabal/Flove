@@ -251,8 +251,8 @@ function CreateShader()
         vec3 eye = camPos;
 
         vec3 pos = scalePos ;
-        pos.x += sin(time*gl_Vertex.w + scalePos.y+gl_Vertex.w*20) * 240. * gl_Vertex.w;
-        pos.z += cos(time*(1-gl_Vertex.w) + scalePos.x+gl_Vertex.w*20) * 240. * gl_Vertex.w;
+        pos.x += sin(time*gl_Vertex.w + scalePos.y+gl_Vertex.w*20) * 480. * gl_Vertex.w;
+        pos.z += cos(time*(1-gl_Vertex.w) + scalePos.x+gl_Vertex.w*20) * 480. * gl_Vertex.w;
 		pos.y += (1+sin(time*(gl_Vertex.w*0.1) + scalePos.y+gl_Vertex.w*20)) * 300. * gl_Vertex.w + 300;
 		float origPosY = pos.y;
 		glimmer = max(0, sin(time*(gl_Vertex.w*5))/2);
@@ -398,6 +398,7 @@ function DrawEffects(stage)
 end
 
 function gadget:DrawScreenEffects() --World()
+	-- Ugly, but we draw wisps in three passes, for each of the different stages
 	DrawEffects(1)
 	DrawEffects(2)
 	DrawEffects(3)

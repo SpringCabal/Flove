@@ -71,7 +71,7 @@ local function UpdateWisps()
 	local frame = Spring.GetGameFrame()
 	local stageDur = wispConfiguration.stageFrameDuration
 	local totalStages = wispConfiguration.totalStages
-	local mana = Spring.GetGameRulesParam("mana")
+	local mana = Spring.GetGameRulesParam("mana") or 0
 	for unitID, tree in pairs(trees) do
 		local wisps = tree.wisps
 		for i, wisp in pairs(wisps) do
