@@ -1,6 +1,3 @@
-if not gadgetHandler:IsSyncedCode() then
-	return
-end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
@@ -15,6 +12,14 @@ function gadget:GetInfo()
 		enabled = true
 	}
 end
+
+
+-------------------------------------------------------------------
+-- SYNCED
+-------------------------------------------------------------------
+if gadgetHandler:IsSyncedCode() then
+-------------------------------------------------------------------
+
 
 local spireDefID = UnitDefNames["spire"].id
 local spireID = nil
@@ -38,29 +43,6 @@ local function explode(div,str)
 end
 
 -------------------------------------------------------------------
--- Configuration
--------------------------------------------------------------------
-
-local shotgunAttributes = {
-	radius = 300,
-	radiusSq = 300^2,
-	edgeMagnitude = 0,
-	proximityMagnitude = 150,
-	thingType = 1, -- weapon
-}
-
-local torchAttributes = {
-	radius = 200,
-	radiusSq = 200^2,
-	edgeMagnitude = 0.1,
-	proximityMagnitude = 1.8,
-	thingType = 2, -- torch
-}
-
-local torchEdge = 0.1
-local torchProx = 1.8
-
--------------------------------------------------------------------
 -- Spawning Projectiles
 -------------------------------------------------------------------
 
@@ -82,7 +64,7 @@ local function SpawnShot(def, spawnx, spawny, spawnz, dx, dy, dz)
 	Spring.SpawnProjectile(def.id, params)
 end
 
-local function FireShotgun(x, y, z)
+local function FireZap(x, y, z)
 	if not spireID then
 		return
 	end
@@ -128,26 +110,6 @@ end
 -- Handling unit
 -------------------------------------------------------------------
 
-local function MoveShotgun(x, y, z)
-	targetx, targety, targetz = x, y, z
-	if not spireID then
-		if gameStarted then
-			Spring.CreateUnit(spireDefID, x + 50, y + 100, z + 50, 0, Spring.GetGaiaTeamID())
-		end
-		return
-	end
-	Spring.GiveOrderToUnit(spireID, CMD.MOVE, {targetx + 100, targety, targetz - 100}, {})
-	
-	torchScaryArea.x = x
-	torchScaryArea.z = z
-	
-	-- Prevent torch from being used at the map edge
-	local distance = math.sqrt((x - 3072)^2 + (z - 3072)^2)
-	local mult = math.max(0, math.min(1, (3100 - distance)/300))
-	torchAttributes.edgeMagnitude = mult*torchEdge
-	torchAttributes.proximityMagnitude = mult*torchProx
-end
-
 function gadget:UnitCreated(unitID, unitDefID, unitTeam)
 	if unitDefID == spireDefID then
 		spireID = unitID
@@ -192,25 +154,31 @@ function HandleLuaMessage(msg)
 	if msg_table[1] == 'zap' then
 		local x = tonumber(msg_table[2])
 		local y = tonumber(msg_table[3])
-		local z = tonumber(msg_table[4])
-		
-		FireShotgun(x, y, z)
-	elseif msg_table[1] == 'movegun' then
-		local x = tonumber(msg_table[2])
-		local y = tonumber(msg_table[3])
-		local z = tonumber(msg_table[4])
-		
-		MoveShotgun(x, y, z)
+		local z = tonumber(msg_table[4])	
+        
+		FireZap(x, y, z)        
 	elseif msg_table[1] == 'field_of_flowers' then
 		local x = tonumber(msg_table[2])
 		local y = tonumber(msg_table[3])
 		local z = tonumber(msg_table[4])
-		
+        
 		FireFlowerShot(x, y, z)
 	end
 end
 
 function gadget:RecvLuaMsg(msg)
 	HandleLuaMessage(msg)
+end
+
+
+
+-------------------------------------------------------------------
+-- UNSYNCED
+-------------------------------------------------------------------
+else
+-------------------------------------------------------------------
+
+
+	return
 end
 
