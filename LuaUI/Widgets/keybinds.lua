@@ -50,7 +50,7 @@ function SetBindings()
 end
 
 function widget:Initialize()
-    local devMode = false
+    local devMode = (tonumber(Spring.GetModOptions().play_mode) or 0) == 0
     if not devMode then 
         -- NOTICE: uncomment this for release
         --Spring.SendCommands("unbindall") --muahahahaha

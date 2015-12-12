@@ -18,14 +18,12 @@ function widget:GetInfo()
 end
 
 function widget:Initialize()
-    --for k, v in pairs(Spring.GetCameraState()) do
-    --    Spring.Echo(k .. " = " .. tostring(v) .. ",")
-    --end
---     local devMode = (tonumber(Spring.GetModOptions().play_mode) or 0) == 0
---     if devMode then
---         widgetHandler:RemoveWidget(widget)
---         return
---     end
+    local devMode = (tonumber(Spring.GetModOptions().play_mode) or 0) == 0
+    if devMode then
+        widgetHandler:RemoveWidget(widget)
+        return
+    end
+
     s = {
         px = 3150,
         py = 102.34146118164,

@@ -96,6 +96,15 @@ local options =
     type   = "bool",
     def    = true,
   },
+  
+    {
+        key    = 'play_mode',
+        name   = 'Play Mode',
+        desc   = 'Turns off irritating things when disabled',
+        type   = 'bool',
+        def    = true,
+    },
+
 
 }
 return options
