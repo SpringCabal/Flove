@@ -16,6 +16,15 @@ local function ShowBranch(n)
 	Show(Leaves[n]);
 end
 
+local function GlowEye()
+	SetSignalMask(1);
+	while true do
+		x,y,z = Spring.GetUnitPiecePosDir(unitID,Eye);
+		Spring.SpawnCEG("mordor", x, y, z, 0, 0, 0, 0);
+		Sleep(300);
+	end
+end
+
 function script.Create()
 	for i=1,9 do
 		Leaves[i] = piece('Leaves'..i);
@@ -23,6 +32,8 @@ function script.Create()
 		Hide(Leaves[i]);
 		Hide(Branch[i]);
 	end
+	
+	StartThread(GlowEye);
 	
 	Sleep(1000);
 	
