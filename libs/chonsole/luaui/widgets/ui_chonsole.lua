@@ -862,7 +862,7 @@ function ProcessText(str)
 					Spring.SendCommands(command)
 				end
 			else
-				Spring.Log("Chonsole", LOG.WARNING, "Unknown command: " .. command)
+-- 				Spring.Log("Chonsole", LOG.WARNING, "Unknown command: " .. command)
 				Spring.SendCommands(command)
 			end
 		end
