@@ -35,7 +35,7 @@ function widget:MousePress(mx, my, button)
 				local x, y, z = pos[1], pos[2], pos[3]
 				Spring.SendLuaRulesMsg('zap|' .. x .. '|' .. y .. '|' .. z )
 				return true
-			else
+			elseif button == 3 then
 				local x, y, z = pos[1], pos[2], pos[3]
 				Spring.SendLuaRulesMsg('field_of_flowers|' .. x .. '|' .. y .. '|' .. z )
 				return true
