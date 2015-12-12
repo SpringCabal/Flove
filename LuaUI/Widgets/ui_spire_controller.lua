@@ -43,3 +43,10 @@ function widget:MousePress(mx, my, button)
 		end
 	end	
 end
+
+function widget:Initialize()
+	if Game.gameName == "Scened LD34" then
+		widgetHandler:RemoveWidget()
+		return
+	end
+end
