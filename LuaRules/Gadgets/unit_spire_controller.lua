@@ -77,6 +77,8 @@ local function FireZap(x, y, z)
 	for i = 1, zapDef.projectiles do
 		SpawnShot(zapDef, spawnx, spawny, spawnz, dx, dy, dz)
 	end
+    
+    Spring.SpawnCEG("mordor_flowershot", spawnx, spawny, spawnz, 0, 0, 0, 0)
 	
 	--Spring.SetUnitVelocity(spireID, -dx * 20, -dy * 20, -dz * 20)
 	local env = Spring.UnitScript.GetScriptEnv(spireID)
@@ -101,6 +103,8 @@ local function FireFlowerShot(x, y, z)
 	for i = 1, flowerShot.projectiles do
 		SpawnShot(flowerShot, spawnx, spawny, spawnz, dx, dy, dz)
 	end
+    
+    Spring.SpawnCEG("mordor_flowershot", spawnx, spawny, spawnz, 0, 0, 0, 0)
 	
 	--Spring.SetUnitVelocity(spireID, -dx * 20, -dy * 20, -dz * 20)
 	local env = Spring.UnitScript.GetScriptEnv(spireID)
@@ -151,13 +155,13 @@ end
 
 function HandleLuaMessage(msg)
 	local msg_table = explode('|', msg)
-	if msg_table[1] == 'zap' then
+	if msg_table[1] == 'zap' then --LMB
 		local x = tonumber(msg_table[2])
 		local y = tonumber(msg_table[3])
 		local z = tonumber(msg_table[4])	
         
 		FireZap(x, y, z)        
-	elseif msg_table[1] == 'field_of_flowers' then
+	elseif msg_table[1] == 'field_of_flowers' then -- RMB
 		local x = tonumber(msg_table[2])
 		local y = tonumber(msg_table[3])
 		local z = tonumber(msg_table[4])
@@ -178,7 +182,8 @@ end
 else
 -------------------------------------------------------------------
 
+  return
 
-	return
+-------------------------------------------------------------------
 end
 
