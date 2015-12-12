@@ -20,6 +20,7 @@ local radius = 450 -- in elmos
 local speedFactor = 0.25 -- multipicative factor
 
 local TESTING_MODE = false
+local AUTO_MODE = false
 local aMushroomID = UnitDefNames["bigmushroom"].id
 
 local weaponName = "flowershot"
@@ -43,6 +44,7 @@ function gadget:Shutdown()
 end
 
 function gadget:ProjectileCreated(proID, proOwnerID, weaponDefID)
+  Spring.Echo("moo")
     if weaponDefID==flowerShotWDID then 
         watchedProjectiles[proID] = true
     end
@@ -116,7 +118,7 @@ function gadget:GameFrame(frame)
         end        
     end
     
-    if TESTING_MODE and frame%(duration+3*30)==0 then
+    if AUTO_MODE and frame%(duration+3*30)==0 then
         local dummyCenter = {x=4100, z=4100, f=Spring.GetGameFrame()}
         table.insert(watchedCenters, dummyCenter)
         Spring.Echo("Placed dummy center at 6000,6000 for duration "..tostring(duration))
