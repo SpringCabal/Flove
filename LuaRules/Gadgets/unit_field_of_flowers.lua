@@ -16,7 +16,7 @@ end
 
 
 local duration = 10 * 30 -- in simframes
-local radius = 450 -- in elmos
+local radius = 300 -- in elmos
 local speedFactor = 0.25 -- multipicative factor
 
 local TESTING_MODE = false
@@ -44,7 +44,6 @@ function gadget:Shutdown()
 end
 
 function gadget:ProjectileCreated(proID, proOwnerID, weaponDefID)
-  Spring.Echo("moo")
     if weaponDefID==flowerShotWDID then 
         watchedProjectiles[proID] = true
     end
