@@ -201,7 +201,7 @@ end
 --------------------------------------------------------------------------------
 --callins
 
-include('keysym.h.lua')
+require('keysym.h.lua')
 local RETURN = KEYSYMS.RETURN
 function widget:KeyPress(key, mods, isRepeat)
 	if key == RETURN and restartButton and restartButton.OnClick and restartButton.OnClick[1] and
