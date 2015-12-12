@@ -22,7 +22,8 @@ local speedFactor = 0.25 -- multipicative factor
 local TESTING_MODE = false
 local aMushroomID = UnitDefNames["bigmushroom"].id
 
-local flowerShotWDID = WeaponDefNames["FlowerShot"] and WeaponDefNames["FlowerShot"].id or nil
+local weaponName = "flowershot"
+local flowerShotWDID = WeaponDefNames[weaponName] and WeaponDefNames[weaponName].id or nil
 local watchedProjectiles = {}
 local watchedCenters = {}
 local watchedUnits = {}
