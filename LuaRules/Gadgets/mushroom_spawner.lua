@@ -204,7 +204,7 @@ function SelectEnemy(uID)
             if not Spring.AreTeamsAllied(eTeamID, tID) and eID~=spireID then
                 local ex,ey,ez = Spring.GetUnitPosition(eID)
                 local sqrDist = (x-ex)*(x-ex) + (y-ey)*(y-ey) + (z-ez)*(z-ez) 
-                weights[eID] = (sqrDist>10*10) and 1/(sqrDist) or math.huge
+                weights[eID] = (sqrDist>10*10) and 1/(sqrDist) or 0
                 totalWeight = totalWeight + weights[eID]
             end
         end
