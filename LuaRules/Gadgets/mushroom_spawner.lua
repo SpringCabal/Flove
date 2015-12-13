@@ -13,6 +13,8 @@ function gadget:GetInfo()
    }
 end
 
+local AI_TESTING_MODE = true
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
@@ -54,12 +56,14 @@ local waveConfig = {
 --------------------------------------------------------------------------------
 
 local function SpawnUnit(unitDefID, x, z, noRotate)
+    x = x+50*(math.random()-1)
+    z = z+50*(math.random()-1)
 	local unitID = Spring.CreateUnit(unitDefID, x, 0, z, 0, 0, false, false)
 	if not noRotate then
 		Spring.SetUnitRotation(unitID, 0, math.random()*2*math.pi, 0)
 	end
 	local sx, sy, sz = Spring.GetUnitPosition(spireID)
-	Spring.GiveOrderToUnit(unitID, CMD.MOVE, {sx, sy, sz}, 0 )
+	--Spring.GiveOrderToUnit(unitID, CMD.MOVE, {sx, sy, sz}, 0 )
 end
 
 local function CleanUnits()
@@ -69,7 +73,7 @@ local function CleanUnits()
 		if unitDef.customParams.mushroom then
 			Spring.DestroyUnit(unitID, false, false)
 		else
-			OnUnitCreated(unitID, unitDefID)
+			CheckForSpire(unitID, unitDefID)
 		end
 	end
 end
@@ -124,17 +128,11 @@ function gadget:GameFrame(frame)
 	if frame % 33 * 10 == 0 then
 		SpawnWave()
 	end
+    if frame%15==0 then
+        CheckForIdleMushrooms()
+    end
 end
 
-function OnUnitCreated(unitID, unitDefID)
-	if unitDefID == spireDefID then
-		spireID = unitID
-	end
-end
-
-function gadget:UnitCreated(unitID, unitDefID)
-	OnUnitCreated(unitID, unitDefID)
-end
 
 function SpawnWave()
 	currentWave = currentWave + 1
@@ -152,4 +150,100 @@ function SpawnWave()
 			end
 		end
 	end
+end
+
+function CheckForSpire(unitID, unitDefID)
+	if unitDefID == spireDefID then
+		spireID = unitID
+	end
+end
+
+function gadget:UnitCreated(unitID, unitDefID)
+	CheckForSpire(unitID, unitDefID)
+    
+    if UnitDefs[unitDefID].customParams.mushroom and (Spring.GetUnitRulesParam(unitID, "aiEnabled")==1 or AI_TESTING_MODE) then
+        RegisterMushroom(unitID)
+    end
+end
+
+function gadget:UnitDestroyed(unitID, unitDefID)
+    if UnitDefs[unitDefID].customParams.mushroom then
+        DeregisterMushroom(unitID)
+    end
+end
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+local aiMushrooms = {} 
+
+function RegisterMushroom(uID)
+    Spring.Echo(uID)
+    aiMushrooms[uID] = true
+end
+
+function DeregisterMushroom(uID)
+    aiMushrooms[uID] = nil
+end
+
+function SelectEnemy(uID)
+    local nID = Spring.GetUnitNearestEnemy(uID, 5120, true)
+    local x,y,z = Spring.GetUnitPosition(uID)
+    if math.random()<0.5 and nID~=spireID then
+        return nID
+    else
+        -- sample a random enemy with probability proportional to 1 / square distance from self
+        local tID = Spring.GetUnitTeam(uID)
+        local units = Spring.GetAllUnits(tID)
+        local weights = {}
+        local totalWeight = 0
+        for _,eID in pairs(units) do
+            local eTeamID = Spring.GetUnitTeam(eID)
+            if not Spring.AreTeamsAllied(eTeamID, tID) and eID~=spireID then
+                local ex,ey,ez = Spring.GetUnitPosition(eID)
+                local sqrDist = (x-ex)*(x-ex) + (y-ey)*(y-ey) + (z-ez)*(z-ez) 
+                weights[eID] = 1/(sqrDist)
+                totalWeight = totalWeight + weights[eID]
+            end
+        end
+        if totalWeight<=0 then
+            return nil
+        end
+        local p = math.random()*totalWeight
+        local q = 0
+        for eID,w in pairs(weights) do
+            q = q + w
+            if q>p then 
+                return eID
+            end
+        end        
+    end
+    return nil
+end
+
+function CheckForIdleMushrooms()
+    for uID,_ in pairs(aiMushrooms) do
+        if  Spring.GetCommandQueue(uID,-1,false)==0 then
+            local eID = SelectEnemy(uID)
+            if eID then
+                local x,y,z = Spring.GetUnitPosition(eID)
+                local cx,cy,cz = Spring.GetUnitPosition(uID)
+                StandUpAndFightLikeAMan(uID,x,y,z)
+            else
+                GoForAShortWalk(uID)
+            end
+        end        
+    end    
+end
+
+function GoForAShortWalk(uID)
+    local x,y,z = Spring.GetUnitPosition(uID)
+    local theta = math.random(1,360) / 360 * (2*math.pi)
+    local dx, dz = 256*math.sin(theta), 256*math.cos(theta)
+    local nx, ny, nz = x+dx, Spring.GetGroundHeight(x+dx,z+dz), z+dz
+    Spring.GiveOrderToUnit(uID, CMD.MOVE, {nx,ny,nz}, {})    
+end
+
+function StandUpAndFightLikeAMan(uID,x,y,z)
+    Spring.GiveOrderToUnit(uID, CMD.FIGHT, {x,y,z}, {})
 end
