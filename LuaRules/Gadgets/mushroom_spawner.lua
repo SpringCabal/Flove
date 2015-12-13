@@ -173,15 +173,29 @@ function SelectEnemy(uID)
     local x,y,z = Spring.GetUnitPosition(uID)
     if math.random()<0.5 and nID~=spireID then
         return nID
-    else
+    else    
+        -- knuth shuffle, because Spring.GetAllUnits order is predictable
+        local units = Spring.GetAllUnits(tID)
+        local perm = {}
+        for i=1,#units do
+            perm[i] = i
+        end
+        for i=1,#units-1 do
+            local j = math.random(i,#units)
+            local temp = perm[i]
+            perm[i] = perm[j]
+            perm[j] = temp
+        end
+        
         -- sample a random enemy with probability proportional to 1 / square distance from self
         local tID = Spring.GetUnitTeam(uID)
-        local units = Spring.GetAllUnits(tID)
         local weights = {}
         local totalWeight = 0
-        for _,eID in pairs(units) do
+        for i=1,#units do
+            local eID = units[perm[i]]
             local eTeamID = Spring.GetUnitTeam(eID)
-            if not Spring.AreTeamsAllied(eTeamID, tID) and eID~=spireID then
+            local eDID = Spring.GetUnitDefID(eID)
+            if UnitDefs[eDID].customParams.tree and not Spring.AreTeamsAllied(tID, eTeamID) then
                 local ex,ey,ez = Spring.GetUnitPosition(eID)
                 local sqrDist = (x-ex)*(x-ex) + (y-ey)*(y-ey) + (z-ez)*(z-ez) 
                 weights[eID] = (sqrDist>10*10) and 1/(sqrDist) or 0
