@@ -54,10 +54,10 @@ local firstSpawnFrame = nil
 local spawnPoints = nil
 local currentWave = 1
 
--- grove spawning
+-- grass spawning
 local MIN_GRASS = 8
 local MAX_GRASS = 12
-local SHRUB_SPAWN_RADIUS = 500
+local GRASS_SPAWN_RADIUS = 500
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -77,10 +77,23 @@ local function CleanUnits()
 		if unitDef.customParams.tree or unitDef.customParams.shrubs then
 			Spring.DestroyUnit(unitID, false, false)
 		else
-			OnUnitCreated(unitID, unitDefID)
+			RecordUnitCreatedFrame(unitID, unitDefID)
 		end
 	end
 end
+
+function RecordUnitCreatedFrame(unitID, unitDefID)
+	local frame = Spring.GetGameFrame()
+	Spring.SetUnitRulesParam(unitID, "createdFrame", frame, {public=true})
+	if unitDefID == spireDefID then
+		spireID = unitID
+	end
+end
+
+function gadget:UnitCreated(unitID, unitDefID)
+	RecordUnitCreatedFrame(unitID, unitDefID)
+end
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -120,6 +133,8 @@ function gadget:GameFrame(frame)
 	if frame < startSpawnFrame then
 		return
 	end
+    
+    -- spawn base wave
 	if spawnPoints == nil then
 		spawnPoints = {}
 		local basePoints = {}
@@ -132,26 +147,15 @@ function gadget:GameFrame(frame)
 		end
 		SpawnWave(spawnPoints.base)
 	end
-end
-
-function OnUnitCreated(unitID, unitDefID)
-	local frame = Spring.GetGameFrame()
-	Spring.SetUnitRulesParam(unitID, "createdFrame", frame, {public=true})
-	if unitDefID == spireDefID then
-		spireID = unitID
-	end
-end
-
-function gadget:UnitCreated(unitID, unitDefID)
-	OnUnitCreated(unitID, unitDefID)
+    
+    -- gradually spawn new trees
 end
 
 function SpawnWave(spawns)
 	for _, spawnPointID in pairs(spawns) do
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
 		SpawnUnit(treeLevel1DefID, x, z)
-		SpawnGrass(x, z, MIN_GRASS, MAX_GRASS, SHRUB_SPAWN_RADIUS)
-		--SpawnFlowers(x, z, MIN_FLOWERS, MAX_FLOWERS, SHRUB_SPAWN_RADIUS)
+		SpawnGrass(x, z, MIN_GRASS, MAX_GRASS, GRASS_SPAWN_RADIUS)
 	end
 	currentWave = currentWave + 1
 end
