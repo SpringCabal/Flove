@@ -61,8 +61,8 @@ local MAX_GRASS = 12
 local GRASS_SPAWN_RADIUS = 500
 
 -- non-base tree spawning, one by one
-local spawnInterval = 3*30 -- mean time in between trees spawning
-local spawnStDev = 1*30 -- approx std dev of time in between trees spawning
+local treeSpawnInterval = 5*30 -- mean time in between trees spawning
+local treeSpawnStDev = 1*30 -- approx std dev of time in between trees spawning
 
 
 --------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ end
 function gadget:Initialize()
 	CleanUnits()
 	startSpawnFrame = 10 + Spring.GetGameFrame()
-    --nextTreeSpawnTime = NewTreeSpawnTime()
+    nextTreeSpawnTime = NewTreeSpawnTime()
 end
 
 function gadget:GameFrame(frame)
@@ -133,8 +133,10 @@ function gadget:GameFrame(frame)
 	end
     
     -- gradually spawn new trees
-    -- TODO
-    
+    if frame >= nextTreeSpawnTime then
+        nextTreeSpawnTime = NewTreeSpawnTime()
+        SpawnTree()
+    end
     
 end
 
@@ -186,13 +188,15 @@ function SpawnWave(spawns)
 	currentWave = currentWave + 1
 end
 
-function SpawnGrass(x, z, minGrass, maxGrass, radius)
+function SpawnGrass(x, z, minGrass, maxGrass, radius, minRadius)
+    minRadius = minRadius or 0
 	local units = {}
 	local grassCount = math.random(minGrass, maxGrass)
 	for i = 1, grassCount do
 		local ux = x + math.random() * radius - radius/2
         local uz = z + math.random() * radius - radius/2
-		if not IsSteep(ux,uz) then
+        local r = (minRadius>0) and math.sqrt((x-ux)*(x-ux)+(z-ux)*(z-ux)) or 1
+		if not IsSteep(ux,uz) and r>minRadius then
             local indx = math.random(1, #grass)
             local grassDefID = grass[indx]
             local unitID = SpawnUnit(grassDefID, ux, uz)
@@ -202,6 +206,89 @@ function SpawnGrass(x, z, minGrass, maxGrass, radius)
 	return units
 end
 
+GG.SpawnGrass = SpawnGrass
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Single Tree Growth
+--------------------------------------------------------------------------------
+
+function NewTreeSpawnTime()
+    local f = Spring.GetGameFrame()
+    return f + math.max(1,treeSpawnInterval + treeSpawnStDev*SignedRandom())
+end
+
+
+function SpawnTree()
+    -- now choose a position in which to spawn a new (L1) tree
+    local units = Spring.GetAllUnits()
+    
+    -- knuth shuffle, because Spring.GetAllUnits order is predictable
+    local perm = {}
+    for i=1,#units do
+		perm[i] = i
+	end
+    for i=1,#units-1 do
+        local j = math.random(i,#units)
+		local temp = perm[i]
+		perm[i] = perm[j]
+		perm[j] = temp
+	end
+    
+    -- cycle over trees in random order
+    local success = false
+    local tries = 2
+    for try=1,tries do
+        for i=1,#units do
+            local uID = units[perm[i]]
+            local uDID = Spring.GetUnitDefID(uID)
+            if UnitDefs[uDID].customParams.tree then
+                success = TryToSpawnANewTreeSomewhereNearToThisTree(uID)
+                if success then break end
+            end
+        end
+        if success then break end
+    end    
+    if not success then
+        Spring.Echo("OH NOOOO") --TODO
+    end
+end
+
+function TryToSpawnANewTreeSomewhereNearToThisTree(unitID)
+    local x,_,z = Spring.GetUnitPosition(unitID)
+    local minDist = 225 -- tress are not allowed to be closer together than this 
+    local maxDist = 325
+    local distInterval = maxDist-minDist
+    local circleDivs = 5
+    local thetaDiv = 2*math.pi/circleDivs
+    local theta = math.random()*thetaDiv
+    for i=1,circleDivs do
+        theta = theta + thetaDiv
+        local r = minDist + math.random()*distInterval
+        local tx = x + r*math.cos(theta)
+        local tz = z + r*math.sin(theta)
+        local success = ILoveExcessivelyLongFunctionNames(tx,tz,minDist) and not IsSteep(tx,tz)
+        if success then return true end
+    end
+    return false
+end
+
+function ILoveExcessivelyLongFunctionNames(tx,tz, minDist)
+    -- try to spawn a tree at tx, tz
+    -- but first check that we are far enough away from the nearest tree
+    local possibleOtherTrees = Spring.GetUnitsInCylinder(tx,tz, minDist)
+    for _,uID in ipairs(possibleOtherTrees) do
+        local uDID = Spring.GetUnitDefID(uID)
+        if UnitDefs[uDID].customParams.tree or uID==spireID then
+            return false
+        end    
+    end
+    
+    -- thank fuck
+    SpawnUnit(treeLevel1DefID, tx, tz)
+    SpawnGrass(tx, tz, 3, 5, minDist, 10)
+    return true
+end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -238,5 +325,6 @@ function SpawnFlowers(x, z, inverseDensity, radius)
 	return units
 end
 
-GG.SpawnGrass = SpawnGrass
 GG.SpawnFlowers = SpawnFlowers
+
+
