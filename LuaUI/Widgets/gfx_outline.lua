@@ -333,6 +333,13 @@ local function DrawVisibleUnits(overrideEngineDraw)
  
   local visibleUnits = GetVisibleUnits(ALL_UNITS,nil,false)
   for i=1,#visibleUnits do  
+	local createdFrame = Spring.GetUnitRulesParam(visibleUnits[i], "createdFrame") or 0
+	local growTime = 33 * 0.5
+	local duration = Spring.GetGameFrame() - createdFrame
+	local grownPercentage = math.min(1, duration / growTime)
+	local unitDefID = Spring.GetUnitDefID(visibleUnits[i])
+	local unitDef = UnitDefs[unitDefID]
+
     if checknow then
       local unitProgress = select(5, GetUnitHealth(visibleUnits[i]))
       if unitProgress == nil or unitProgress >= 1 then
@@ -342,7 +349,7 @@ local function DrawVisibleUnits(overrideEngineDraw)
       end
     end
  
-    if not unbuiltUnits[visibleUnits[i]] then
+    if not unbuiltUnits[visibleUnits[i]] and (grownPercentage == 1 or not unitDef.customParams.tree) then
       glUnit(visibleUnits[i],overrideEngineDraw)
     end
   end

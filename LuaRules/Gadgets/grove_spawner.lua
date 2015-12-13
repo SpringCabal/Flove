@@ -130,6 +130,8 @@ function gadget:GameFrame(frame)
 end
 
 function OnUnitCreated(unitID, unitDefID)
+	local frame = Spring.GetGameFrame()
+	Spring.SetUnitRulesParam(unitID, "createdFrame", frame, {public=true})
 	if unitDefID == spireDefID then
 		spireID = unitID
 	end

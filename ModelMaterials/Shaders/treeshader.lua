@@ -16,6 +16,8 @@ return {
     uniform vec3 sunAmbient;
 	
 	uniform float frameLoc;
+	uniform float grownPercentage;
+	uniform float height;
 	
   #ifdef use_shadows
     uniform mat4 shadowMatrix;
@@ -47,6 +49,9 @@ return {
 	  vertex.x += distanceFromTrunk * vertex.y * frameLoc;
 	  vertex.z += distanceFromTrunk * vertex.y * frameLoc;
 	  
+	  vertex.x += sin(distanceFromTrunk) * (1 - grownPercentage) * 10;
+	  vertex.x += cos(distanceFromTrunk) * (1 - grownPercentage) * 10;
+	  vertex.y -= (1 - grownPercentage) * height;
 	  
       %%VERTEX_PRE_TRANSFORM%%
 
