@@ -1,6 +1,6 @@
 function widget:GetInfo()
 	return {
-		name 	= "Spire UI",
+		name 	= "Spire UI, also prevents use of mouse for anything else",
 		desc	= "Sends spire actions from LuaUI to LuaRules",
 		author	= "gajop, Google Frog", -- based on GoogleFrog's shotgun UI
 		date	= "12 December 2015",
@@ -41,8 +41,8 @@ function widget:MousePress(mx, my, button)
         if not pos then return false end
         local x, y, z = pos[1], pos[2], pos[3]
 
-		if x<2048 or z<2048 or x>8192 or z>8192 then	 
-            return false
+		if (button==1 or buton==3) and (x<2048 or z<2048 or x>8192 or z>8192) then	 
+            return true
         end
 
 		if pos then
