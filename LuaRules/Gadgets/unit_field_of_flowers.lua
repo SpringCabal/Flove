@@ -29,6 +29,7 @@ local watchedProjectiles = {}
 local watchedCenters = {}
 local watchedUnits = {}
 local coveredUnits = {} -- units that, on this simframe, we slow down
+local tempUnits = {}
 
 function gadget:Initialize()
 	-- watch the FlowerShot weapon (from the spire unit)
@@ -51,14 +52,24 @@ end
 
 function gadget:ProjectileDestroyed(proID)
     if watchedProjectiles[proID] then
+    
         local px,py,pz = Spring.GetProjectilePosition(proID)
         local gy = Spring.GetGroundHeight(px,pz)
         if math.abs(py-gy)<5 then
             -- cause it to happen
+     		local frame = Spring.GetGameFrame()
+
             if TESTING_MODE then Spring.Echo("Adding new center at ", px, pz) end
             table.insert(watchedCenters, {x=pz, z=pz, f=Spring.GetGameFrame()})
-            -- TODO: trigger initial explosion
-            -- TODO: trigger visual effect that lasts for duration of slowdown effect
+            
+			local units = GG.SpawnFlowers(px, pz, 2, 4, 500)
+			local units2 = GG.SpawnGrass(px, pz, 2, 4, 500)
+			for _, unitID in pairs(units) do
+				table.insert(tempUnits, {unitID = unitID, frame = frame + duration -15 +math.random(30)})
+			end
+			for _, unitID in pairs(units2) do
+				table.insert(tempUnits, {unitID = unitID, frame = frame + duration -15 +math.random(30)})
+			end
         end    
     end
 end
@@ -116,6 +127,14 @@ function gadget:GameFrame(frame)
             i = i + 1
         end        
     end
+    
+    for i = #tempUnits, 1, -1 do
+		local unit = tempUnits[i]
+		if unit.frame <= frame then
+			Spring.DestroyUnit(unit.unitID)
+			table.remove(tempUnits, i)
+		end
+	end
     
     if AUTO_MODE and frame%(duration+3*30)==0 then
         local dummyCenter = {x=4100, z=4100, f=Spring.GetGameFrame()}

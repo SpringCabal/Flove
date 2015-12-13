@@ -39,21 +39,6 @@ function gadget:ProjectileCreated(proID, proOwnerID, weaponDefID)
 end
 
 function gadget:ProjectileDestroyed(proID)
-    if watchedProjectiles[proID] then
-        local px,py,pz = Spring.GetProjectilePosition(proID)
-        local gy = Spring.GetGroundHeight(px,pz)
-		local frame = Spring.GetGameFrame()
-        if math.abs(py-gy)<5 then
-			local units = GG.SpawnFlowers(px, pz, 2, 2, 300)
-			local units2 = GG.SpawnGrass(px, pz, 2, 2, 300)
-			for _, unitID in pairs(units) do
-				table.insert(tempUnits, {unitID = unitID, frame = frame + 33*5})
-			end
-			for _, unitID in pairs(units2) do
-				table.insert(tempUnits, {unitID = unitID, frame = frame + 33*5})
-			end
-        end
-    end
 end
 
 function gadget:GameFrame(frame)
