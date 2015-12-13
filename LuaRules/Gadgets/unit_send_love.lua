@@ -52,11 +52,18 @@ function gadget:GameFrame(frame)
 end
 
 function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
+
 	if weaponDefID == zapWDID then
+		local x,y,z = Spring.GetUnitPosition(unitID);
+
 		local unitDef = UnitDefs[unitDefID]
-		if not unitDef.customParams.mushroom then
+		if not unitDef.customParams.mushroom then	
+			Spring.SpawnCEG("love_heals", x, y, z, 0, 0, 0, 0)
 			return -damage, 1.0
 		end
+		
+		Spring.SpawnCEG("love_hurts", x, y, z, 0, 0, 0, 0)
 	end
+	
     return damage, 1.0
 end
