@@ -42,7 +42,6 @@ local startSpawnFrame = 100
 local spawnPoints = nil
 
 local treesTakeNoDamage = false
-local damageTreeP = 0.4
 
 local waveConfig = {
 	[1] = {
@@ -249,7 +248,7 @@ function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, w
     return damage,0    
 end
 
-function DamageTrees()
+function DamageTrees(damageTreeP)
     -- set all trees to have health approximately p of their full health (plus a bit of randomness)
     local units = Spring.GetAllUnits()
     for _,uID in ipairs(units) do
