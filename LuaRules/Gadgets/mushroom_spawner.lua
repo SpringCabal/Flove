@@ -135,6 +135,8 @@ end
 
 
 function SpawnWave()
+    if AI_TESTING_MODE then return end
+    
 	currentWave = currentWave + 1
 	local config = waveConfig[currentWave]
 	if config == nil then
@@ -187,7 +189,7 @@ function DeregisterMushroom(uID)
 end
 
 function SelectEnemy(uID)
-    local nID = Spring.GetUnitNearestEnemy(uID, 5120, true)
+    local nID = Spring.GetUnitNearestEnemy(uID, 10240, true)
     local x,y,z = Spring.GetUnitPosition(uID)
     if math.random()<0.5 and nID~=spireID then
         return nID
@@ -202,7 +204,7 @@ function SelectEnemy(uID)
             if not Spring.AreTeamsAllied(eTeamID, tID) and eID~=spireID then
                 local ex,ey,ez = Spring.GetUnitPosition(eID)
                 local sqrDist = (x-ex)*(x-ex) + (y-ey)*(y-ey) + (z-ez)*(z-ez) 
-                weights[eID] = 1/(sqrDist)
+                weights[eID] = (sqrDist>10*10) and 1/(sqrDist) or math.huge
                 totalWeight = totalWeight + weights[eID]
             end
         end
@@ -223,7 +225,7 @@ end
 
 function CheckForIdleMushrooms()
     for uID,_ in pairs(aiMushrooms) do
-        if  Spring.GetCommandQueue(uID,-1,false)==0 then
+        if  #Spring.GetUnitCommands(uID,2)==0 then
             local eID = SelectEnemy(uID)
             if eID then
                 local x,y,z = Spring.GetUnitPosition(eID)
@@ -241,7 +243,7 @@ function GoForAShortWalk(uID)
     local theta = math.random(1,360) / 360 * (2*math.pi)
     local dx, dz = 256*math.sin(theta), 256*math.cos(theta)
     local nx, ny, nz = x+dx, Spring.GetGroundHeight(x+dx,z+dz), z+dz
-    Spring.GiveOrderToUnit(uID, CMD.MOVE, {nx,ny,nz}, {})    
+    Spring.GiveOrderToUnit(uID, CMD.FIGHT, {nx,ny,nz}, {})    
 end
 
 function StandUpAndFightLikeAMan(uID,x,y,z)
