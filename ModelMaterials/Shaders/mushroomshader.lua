@@ -159,7 +159,7 @@ return {
 
        gl_FragColor     = albedoColor;
        gl_FragColor.rgb = mix(gl_FragColor.rgb, teamColor.rgb, gl_FragColor.a); // teamcolor
-	   gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0), 1-healthFactor);
+	   gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0, 0.0, 0.4), 1-healthFactor);
        gl_FragColor.rgb = gl_FragColor.rgb * reflection + specular;
 
        gl_FragColor.a   = extraColor.a;
