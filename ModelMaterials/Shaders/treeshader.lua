@@ -3,6 +3,8 @@ return {
 //#define use_normalmapping
 //#define flip_normalmap
 //#define use_shadows
+#define use_perspective_correct_shadows
+
 
     %%VERTEX_GLOBAL_NAMESPACE%%
 
