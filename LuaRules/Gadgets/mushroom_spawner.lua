@@ -163,7 +163,7 @@ end
 function gadget:UnitCreated(unitID, unitDefID)
 	CheckForSpire(unitID, unitDefID)
     
-    if UnitDefs[unitDefID].customParams.mushroom and (Spring.GetUnitRulesParam(unitID, "aiEnabled")==1 or AI_TESTING_MODE) then
+    if UnitDefs[unitDefID].customParams.mushroom and (not Spring.GetUnitRulesParam(unitID, "aiDisabled")==1) then
         RegisterMushroom(unitID)
     end
 end
