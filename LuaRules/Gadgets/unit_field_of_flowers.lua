@@ -58,15 +58,18 @@ function gadget:ProjectileDestroyed(proID)
         if math.abs(py-gy)<5 or true then
             -- cause it to happen
      		local frame = Spring.GetGameFrame()
-
             if TESTING_MODE then Spring.Echo("Adding new center at ", px, pz) end
+
             table.insert(watchedCenters, {x=px, z=pz, f=Spring.GetGameFrame()})
             
-			local units = GG.SpawnFlowers(px, pz, 8, 10, 500)
+			-- spawn the flowers
+            local units = GG.SpawnFlowers(px, pz, 75, radius)
 			for _, unitID in pairs(units) do
 				table.insert(tempUnits, {unitID = unitID, frame = frame + duration -15 +math.random(30)})
 			end
-			local units = Spring.GetUnitsInCylinder(px, pz, 200)
+            
+            -- upgrades
+			local units = Spring.GetUnitsInCylinder(px, pz, radius)
 			for i=1,#units do
 				local uID = units[i]
 				local uDID = Spring.GetUnitDefID(uID)

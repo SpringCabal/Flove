@@ -54,10 +54,9 @@ local firstSpawnFrame = nil
 local spawnPoints = nil
 local currentWave = 1
 
+-- grove spawning
 local MIN_GRASS = 8
 local MAX_GRASS = 12
-local MIN_FLOWERS = 3
-local MAX_FLOWERS = 6
 local SHRUB_SPAWN_RADIUS = 500
 
 --------------------------------------------------------------------------------
@@ -216,7 +215,8 @@ function SpawnGrass(x, z, minGrass, maxGrass, radius)
 	local units = {}
 	local grassCount = math.random(minGrass, maxGrass)
 	for i = 1, grassCount do
-		local ux, uz = x + math.random() * radius - radius/2, z + math.random() * radius - radius/2
+		local ux = x + math.random() * radius - radius/2
+        local uz = z + math.random() * radius - radius/2
 		if not IsSteep(ux,uz) then
             local indx = math.random(1, #grass)
             local grassDefID = grass[indx]
@@ -227,18 +227,42 @@ function SpawnGrass(x, z, minGrass, maxGrass, radius)
 	return units
 end
 
-function SpawnFlowers(x, z, minFlowers, maxFlowers, radius)
+function IsInCircle(x,z, r, px,pz)
+    Spring.Echo(math.sqrt((x-px)*(x-px) + (z-pz)*(z-pz)), r)
+    return (x-px)*(x-px) + (z-pz)*(z-pz) <= r*r
+end
+
+function SignedRandom()
+    return math.random()*2-1
+end
+
+function SpawnFlowers(x, z, inverseDensity, radius)
+    -- used by field of flowers, only
+    -- spawn approximately one flower per square of sidelength inverseDensity, evenly spaced
+    if radius<=0 then Spring.Echo("NO") end
 	local units = {}
-	local flowerCount = math.random(minFlowers, maxFlowers)
-	for i = 1, flowerCount do
-		local ux, uz = x + math.random() * radius - radius/2, z + math.random() * radius - radius/2
-		if not IsSteep(ux,uz) then
-            local indx = math.random(1, #flowers)
-            local flowerDefID = flowers[indx]
+    local gridPoints = 2*radius/inverseDensity
+    local gridSize = inverseDensity
+    local peturbSize = inverseDensity/3
+    local ox = x - radius -- grid origin
+    local oz = z - radius
+    local cx,cz = ox,oz -- current
+    while cx < ox + 2*radius do
+    while cz < oz + 2*radius do
+        cz = cz + gridSize        
+        local ux = cx + peturbSize*SignedRandom()
+        local uz = cz + peturbSize*SignedRandom()
+		if not IsSteep(ux,uz) and IsInCircle(cx,cz, radius, x, z) then
+            local index = math.random(1, #flowers)
+            local flowerDefID = flowers[index]
             local unitID = SpawnUnit(flowerDefID, ux, uz)
             table.insert(units, unitID)
         end
 	end
+    cx = cx + gridSize
+    cz = oz
+    end
+    
 	return units
 end
 
