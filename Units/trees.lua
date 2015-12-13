@@ -33,6 +33,7 @@ local Tree = Unit:New {
 	collisionVolumeScales  = "70 76 70",
 	collisionVolumeType    = "cylY",
 
+	category = "TREE",
 }
 
 local TreeLevel1 = Tree:New {

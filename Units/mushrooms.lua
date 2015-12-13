@@ -53,6 +53,7 @@ local NormalMushroom = Mushroom:New {
 	  weapons = {
 		[1]  = {
 		  name               = "shroombarf",
+		  onlyTargetCategory = "TREE",
 		},
 	  },
 }
