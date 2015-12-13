@@ -151,15 +151,37 @@ function SpawnWave()
 	end
 end
 
+function IsSteep(x,z)
+	local mtta = math.acos(1.0 - 0.05) - 0.02 --http://springrts.com/wiki/Movedefs.lua#How_slope_is_determined
+	local a1,a2,a3,a4 = 0,0,0,0
+	local d = 5
+	local y = Spring.GetGroundHeight(x,z)
+	local y1 = Spring.GetGroundHeight(x+d,z)
+	if math.abs(y1 - y) > 0.1 then a1 = math.atan((y1-y)/d) end
+	local y2 = Spring.GetGroundHeight(x,z+d)
+	if math.abs(y2 - y) > 0.1 then a2 = math.atan((y2-y)/d) end
+	local y3 = Spring.GetGroundHeight(x-d,z)
+	if math.abs(y3 - y) > 0.1 then a3 = math.atan((y3-y)/d) end
+	local y4 = Spring.GetGroundHeight(x,z+d)
+	if math.abs(y4 - y) > 0.1 then a4 = math.atan((y4-y)/d) end
+	if math.abs(a1) > mtta or math.abs(a2) > mtta or math.abs(a3) > mtta or math.abs(a4) > mtta then 
+		return true --too steep
+	else
+		return false --ok
+	end	
+end
+
 function SpawnGrass(x, z, minGrass, maxGrass, radius)
 	local units = {}
 	local grassCount = math.random(minGrass, maxGrass)
 	for i = 1, grassCount do
 		local ux, uz = x + math.random() * radius - radius/2, z + math.random() * radius - radius/2
-		local indx = math.random(1, #grass)
-		local grassDefID = grass[indx]
-		local unitID = SpawnUnit(grassDefID, ux, uz)
-		table.insert(units, unitID)
+		if not IsSteep(ux,uz) then
+            local indx = math.random(1, #grass)
+            local grassDefID = grass[indx]
+            local unitID = SpawnUnit(grassDefID, ux, uz)
+            table.insert(units, unitID)
+        end
 	end
 	return units
 end
@@ -169,10 +191,12 @@ function SpawnFlowers(x, z, minFlowers, maxFlowers, radius)
 	local flowerCount = math.random(minFlowers, maxFlowers)
 	for i = 1, flowerCount do
 		local ux, uz = x + math.random() * radius - radius/2, z + math.random() * radius - radius/2
-		local indx = math.random(1, #flowers)
-		local flowerDefID = flowers[indx]
-		local unitID = SpawnUnit(flowerDefID, ux, uz)
-		table.insert(units, unitID)
+		if not IsSteep(ux,uz) then
+            local indx = math.random(1, #flowers)
+            local flowerDefID = flowers[indx]
+            local unitID = SpawnUnit(flowerDefID, ux, uz)
+            table.insert(units, unitID)
+        end
 	end
 	return units
 end
