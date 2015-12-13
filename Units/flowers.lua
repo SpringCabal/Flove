@@ -15,7 +15,7 @@ local Flower = Unit:New {
     yardMap                 = "o",
 
     name                = "Flower",
-    script              = "tree.lua",
+    script              = "flower.lua",
 
 	 customParams        = {
 		modelradius        = [[10]],
