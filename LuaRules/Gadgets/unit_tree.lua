@@ -85,7 +85,7 @@ local function UpgradeTree(unitID)
 	local x, y, z = Spring.GetUnitPosition(unitID)
 	local teamID = Spring.GetUnitTeam(unitID)
 	local dx, dy, dz = Spring.GetUnitDirection(unitID)
-	Spring.DestroyUnit(unitID)
+	Spring.DestroyUnit(unitID, false, true)
 	Spring.CreateUnit(newDefName, x, y, z, 0, teamID)
 	Spring.SetUnitDirection(dx, dy, dz)
 end
