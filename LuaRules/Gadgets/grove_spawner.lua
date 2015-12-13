@@ -64,6 +64,7 @@ local function SpawnUnit(unitDefID, x, z, noRotate)
 	if not noRotate then
 		Spring.SetUnitRotation(unitID, 0, math.random()*2*math.pi, 0)
 	end
+	return unitID
 end
 
 local function CleanUnits()
@@ -143,23 +144,36 @@ function SpawnWave()
 	for _, spawnPointID in pairs(spawnPoints) do
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
 		SpawnUnit(treeLevel1DefID, x, z)
-		SpawnShrubs(x, z)
+		SpawnGrass(x, z, MIN_GRASS, MAX_GRASS, SHRUB_SPAWN_RADIUS)
+		SpawnFlowers(x, z, MIN_FLOWERS, MAX_FLOWERS, SHRUB_SPAWN_RADIUS)
 	end
 end
 
-function SpawnShrubs(x, z)
-	local grassCount = math.random(MIN_GRASS, MAX_GRASS)
-	local flowerCount = math.random(MIN_FLOWERS, MAX_FLOWERS)
+function SpawnGrass(x, z, minGrass, maxGrass, radius)
+	local units = {}
+	local grassCount = math.random(minGrass, maxGrass)
 	for i = 1, grassCount do
-		local ux, uz = x + math.random() * SHRUB_SPAWN_RADIUS - SHRUB_SPAWN_RADIUS/2, z + math.random() * SHRUB_SPAWN_RADIUS - SHRUB_SPAWN_RADIUS/2
+		local ux, uz = x + math.random() * radius - radius/2, z + math.random() * radius - radius/2
 		local indx = math.random(1, #grass)
 		local grassDefID = grass[indx]
-		SpawnUnit(grassDefID, ux, uz)
+		local unitID = SpawnUnit(grassDefID, ux, uz)
+		table.insert(units, unitID)
 	end
+	return units
+end
+
+function SpawnFlowers(x, z, minFlowers, maxFlowers, radius)
+	local units = {}
+	local flowerCount = math.random(minFlowers, maxFlowers)
 	for i = 1, flowerCount do
-		local ux, uz = x + math.random() * SHRUB_SPAWN_RADIUS - SHRUB_SPAWN_RADIUS/2, z + math.random() * SHRUB_SPAWN_RADIUS - SHRUB_SPAWN_RADIUS/2
+		local ux, uz = x + math.random() * radius - radius/2, z + math.random() * radius - radius/2
 		local indx = math.random(1, #flowers)
 		local flowerDefID = flowers[indx]
-		SpawnUnit(flowerDefID, ux, uz)
+		local unitID = SpawnUnit(flowerDefID, ux, uz)
+		table.insert(units, unitID)
 	end
+	return units
 end
+
+GG.SpawnGrass = SpawnGrass
+GG.SpawnFlowers = SpawnFlowers

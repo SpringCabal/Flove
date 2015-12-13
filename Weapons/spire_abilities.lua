@@ -1,6 +1,6 @@
 local Zap = Weapon:New{
 	alwaysVisible = true,
-	areaofeffect = 800,
+	areaofeffect = 500,
 	avoidfeature = false,
 	burst = 3,
 	burstrate = 0.1,
@@ -27,9 +27,9 @@ local Zap = Weapon:New{
 	turret = true,
 	weapontimer = 0.1,
 	weapontype = "Cannon",
-	weaponvelocity = 6000,
+	weaponvelocity = 1000,
 	damage = {
-		default = 3,
+		default = 20,
 	},
 }
 

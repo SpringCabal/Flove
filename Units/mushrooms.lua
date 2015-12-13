@@ -17,7 +17,7 @@ local Mushroom = Unit:New {
     FootprintX = 2,
     FootprintZ = 2,
     MaxSlope = 15,
-    MaxVelocity = 32, -- max velocity is so high because Spring cannot increase max velocity beyond its maximum.
+    MaxVelocity = 62, -- max velocity is so high because Spring cannot increase max velocity beyond its maximum.
     MaxWaterDepth = 20,
     MovementClass = "Bot2x2",
 	TurnInPlace = false,
@@ -49,7 +49,7 @@ local Mushroom = Unit:New {
 
 local NormalMushroom = Mushroom:New {
 	name                = "Normal Mushroom",
-	maxDamage			= 3,
+	maxDamage			= 300,
 	  weapons = {
 		[1]  = {
 		  name               = "shroombarf",
@@ -59,23 +59,23 @@ local NormalMushroom = Mushroom:New {
 }
 local SmallMushroom = Mushroom:New {
 	name                = "Small Mushroom",
-	maxDamage			= 5,
+	maxDamage			= 500,
 }
 local BigMushroom = Mushroom:New {
 	name                = "Big Mushroom",
-	maxDamage			= 7,
+	maxDamage			= 700,
 }
 local MushroomCluster = Mushroom:New {
 	name                = "Mushroom Cluster",
-	maxDamage			= 3,
+	maxDamage			= 300,
 }
 local PoisonMushroom = Mushroom:New {
 	name                = "Poison Mushroom",
-	maxDamage			= 5,
+	maxDamage			= 500,
 }
 local BombMushroom = Mushroom:New {
 	name                = "Bomb Mushroom",
-	maxDamage			= 7,
+	maxDamage			= 700,
 }
 
 return lowerkeys({

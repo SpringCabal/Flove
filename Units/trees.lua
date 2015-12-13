@@ -38,15 +38,15 @@ local Tree = Unit:New {
 
 local TreeLevel1 = Tree:New {
 	name                = "Tree Level 1",
-	maxDamage			= 3,
+	maxDamage			= 300,
 }
 local TreeLevel2 = Tree:New {
 	name                = "Tree Level 2",
-	maxDamage			= 5,
+	maxDamage			= 500,
 }
 local TreeLevel3 = Tree:New {
 	name                = "Tree Level 3",
-	maxDamage			= 7,
+	maxDamage			= 700,
 }
 
 return lowerkeys({
