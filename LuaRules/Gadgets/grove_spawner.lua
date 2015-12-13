@@ -221,10 +221,10 @@ end
 function IsTooHigh(x,z)
     -- hard coded hacks ftw
     local gy = Spring.GetGroundHeight(x,z)
-    if not gy then return false end
+    Spring.Echo(x,gy,z,MAX_TREE_HEIGHT)
+    if not gy then return true end
     return (gy>MAX_TREE_HEIGHT)    
 end
-
 
 function SpawnTree()
     -- now choose a position in which to spawn a new (L1) tree
@@ -274,7 +274,7 @@ function TryToSpawnANewTreeSomewhereNearToThisTree(unitID)
         local r = minDist + math.random()*distInterval
         local tx = x + r*math.cos(theta)
         local tz = z + r*math.sin(theta)
-        local success = ILoveExcessivelyLongFunctionNames(tx,tz,minDist) and (not IsSteep(tx,tz)) and (not IsTooHigh(tx,tz))
+        local success = (not IsSteep(tx,tz)) and (not IsTooHigh(tx,tz)) and ILoveExcessivelyLongFunctionNames(tx,tz,minDist)
         if success then return true end
     end
     return false
