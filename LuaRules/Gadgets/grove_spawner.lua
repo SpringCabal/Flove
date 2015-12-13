@@ -228,7 +228,6 @@ function SpawnGrass(x, z, minGrass, maxGrass, radius)
 end
 
 function IsInCircle(x,z, r, px,pz)
-    Spring.Echo(math.sqrt((x-px)*(x-px) + (z-pz)*(z-pz)), r)
     return (x-px)*(x-px) + (z-pz)*(z-pz) <= r*r
 end
 

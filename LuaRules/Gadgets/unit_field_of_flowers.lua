@@ -15,7 +15,7 @@ if not gadgetHandler:IsSyncedCode() then
 end
 
 
-local duration = 10 * 30 -- in simframes
+local duration = 12 * 30 -- in simframes
 local radius = 300 -- in elmos
 local speedFactor = 0.25 -- multipicative factor
 
@@ -138,6 +138,7 @@ function gadget:GameFrame(frame)
         end        
     end
     
+    -- remove flowers from no longer covered centers
     for i = #tempUnits, 1, -1 do
 		local unit = tempUnits[i]
 		if unit.frame <= frame then
