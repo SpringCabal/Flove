@@ -23,6 +23,7 @@ local Tree = Unit:New {
 
 		terrainblock_x     = 64,
 		terrainblock_z     = 64,
+		tree 			   = true,
     },
 
     footprintX			    = 2,

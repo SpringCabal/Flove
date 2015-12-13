@@ -21,10 +21,11 @@ end
 local file = "LuaRules/Configs/spawn.lua"
 
 function gadget:Initialize()
-	if Game.gameName == "Scenario Editor Area 17" then
+	if Game.gameName == "Scened LD34" then
 		gadgetHandler:RemoveGadget()
 		return
 	end
+	self:clear()
 	local data = loadstring(VFS.LoadFile(file))()
 	self:load(data.units)
 end
@@ -186,12 +187,12 @@ function gadget:clear()
         --self:removeUnit(unitId)
     end
 
-    for unitId, _ in pairs(self.s2mUnitIdMapping) do
-        self:removeUnit(unitId)
-    end
-    self.s2mUnitIdMapping = {}
-    self.m2sUnitIdMapping = {}
-    self.unitIdCounter = 0
+--     for unitId, _ in pairs(self.s2mUnitIdMapping) do
+--         self:removeUnit(unitId)
+--     end
+--     self.s2mUnitIdMapping = {}
+--     self.m2sUnitIdMapping = {}
+--     self.unitIdCounter = 0
 end
 
 function boolToNumber(bool)

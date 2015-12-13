@@ -29,7 +29,7 @@ local Zap = Weapon:New{
 	weapontype = "Cannon",
 	weaponvelocity = 6000,
 	damage = {
-		default = 1,
+		default = 3,
 	},
 }
 

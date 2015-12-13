@@ -23,6 +23,7 @@ local Flower = Unit:New {
 
 		terrainblock_x     = 0,
 		terrainblock_z     = 0,
+		shrubs 			   = true,
     },
 
     footprintX			    = 1,

@@ -26,7 +26,8 @@ local Mushroom = Unit:New {
     TurnRate = 3000,
 	
 	customParams = {
-		turnaccel = 500
+		turnaccel = 500,
+		mushroom = true,
 	},
     
 	--Abilities
