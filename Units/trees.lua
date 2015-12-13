@@ -25,8 +25,8 @@ local Tree = Unit:New {
 		terrainblock_z     = 64,
     },
 
-    footprintX			    = 6,
-	footprintZ			    = 6,
+    footprintX			    = 2,
+	footprintZ			    = 2,
 	-- Hitbox
 	collisionVolumeOffsets = "0 0 0",
 	collisionVolumeScales  = "70 76 70",
