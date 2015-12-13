@@ -36,7 +36,7 @@ local function DrawUnit(unitID, material)
 	local growTime = 33 * 0.5
 	local duration = Spring.GetGameFrame() - createdFrame
 	local grownPercentage = math.min(1, duration / growTime)
-	if not unitDef.customParams.tree or false then
+	if not unitDef.customParams.tree then
 		grownPercentage = 1
 	end
 	glUniform(grownPercentageID, grownPercentage)
