@@ -25,6 +25,9 @@ end
 --------------------------------------------------------------------------------
 
 local baseDefID   = UnitDefNames["base"].id
+local expansion1DefID   = UnitDefNames["expansion1"].id
+local expansion2DefID   = UnitDefNames["expansion2"].id
+local expansion3DefID   = UnitDefNames["expansion3"].id
 
 local treeLevel1DefID  = UnitDefNames["treelevel1"].id
 
@@ -47,8 +50,9 @@ local spireDefID = UnitDefNames["spire"].id
 local spireID = nil
 
 local startSpawnFrame = 100
+local firstSpawnFrame = nil
 local spawnPoints = nil
-
+local currentWave = 1
 
 local MIN_GRASS = 5
 local MAX_GRASS = 10
@@ -119,13 +123,40 @@ function gadget:GameFrame(frame)
 	end
 	if spawnPoints == nil then
 		spawnPoints = {}
+		local basePoints = {}
+		local expansion1, expansion2, expansion3 = {}, {}, {}
+		spawnPoints.base = basePoints
+		spawnPoints.expansion1 = expansion1
+		spawnPoints.expansion2 = expansion2
+		spawnPoints.expansion3 = expansion3
 		for _, unitID in ipairs(Spring.GetAllUnits()) do
 			local unitDefID = Spring.GetUnitDefID(unitID)
 			if unitDefID == baseDefID then
-				table.insert(spawnPoints, unitID)
+				table.insert(basePoints, unitID)
+			end
+			if unitDefID == expansion1DefID then
+				table.insert(expansion1, unitID)
+			end
+			if unitDefID == expansion2DefID then
+				table.insert(expansion2, unitID)
+			end
+			if unitDefID == expansion3DefID then
+				table.insert(expansion3, unitID)
 			end
 		end
 		SpawnWave()
+		firstSpawnFrame = frame
+	end
+	
+	if not spawned1 and (frame - firstSpawnFrame) >= 33*30 then
+		SpawnWave()
+		spawned1 = true
+	elseif not spawned2 and (frame - firstSpawnFrame) >= 33*60 then
+		SpawnWave()
+		spawned2 = true
+	elseif not spawned3 and (frame - firstSpawnFrame) >= 33*90 then
+		SpawnWave()
+		spawned3 = true
 	end
 end
 
@@ -142,13 +173,23 @@ function gadget:UnitCreated(unitID, unitDefID)
 end
 
 function SpawnWave()
-	Spring.Echo("SPAWN WAVE", #spawnPoints)
-	for _, spawnPointID in pairs(spawnPoints) do
+	local spawns
+	if currentWave == 1 then
+		spawns = spawnPoints.base
+	elseif currentWave == 2 then
+		spawns = spawnPoints.expansion1
+	elseif currentWave == 3 then
+		spawns = spawnPoints.expansion2
+	elseif currentWave == 4 then
+		spawns = spawnPoints.expansion3
+	end
+	for _, spawnPointID in pairs(spawns) do
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
 		SpawnUnit(treeLevel1DefID, x, z)
 		SpawnGrass(x, z, MIN_GRASS, MAX_GRASS, SHRUB_SPAWN_RADIUS)
 		SpawnFlowers(x, z, MIN_FLOWERS, MAX_FLOWERS, SHRUB_SPAWN_RADIUS)
 	end
+	currentWave = currentWave + 1
 end
 
 function IsSteep(x,z)
