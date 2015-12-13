@@ -30,13 +30,17 @@ function widget:MousePress(mx, my, button)
 	local alt, ctrl, meta, shift = Spring.GetModKeyState()
 	if not Spring.IsAboveMiniMap(mx, my) then
 		local traceType, pos = Spring.TraceScreenRay(mx, my, true)
+        local x, y, z = pos[1], pos[2], pos[3]
+        
+        if x<2048 or z<2048 or x>8192 or z>8192 then	 
+            return false
+        end
+
 		if pos then
 			if button == 1 then
-				local x, y, z = pos[1], pos[2], pos[3]
 				Spring.SendLuaRulesMsg('zap|' .. x .. '|' .. y .. '|' .. z )
 				return true
 			elseif button == 3 then
-				local x, y, z = pos[1], pos[2], pos[3]
 				Spring.SendLuaRulesMsg('field_of_flowers|' .. x .. '|' .. y .. '|' .. z )
 				return true
 			end
