@@ -3,8 +3,8 @@
 
 function gadget:GetInfo()
    return {
-      name      = "Mushroom spawner",
-      desc      = "Spawns mushrooms.",
+      name      = "Grove spawner",
+      desc      = "Spawns groves",
       author    = "gajop",
       date      = "December 2015",
       license   = "GNU GPL, v2 or later",
