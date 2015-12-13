@@ -63,7 +63,7 @@ local GRASS_SPAWN_RADIUS = 500
 -- non-base tree spawning, one by one
 local treeSpawnInterval = 5*30 -- mean time in between trees spawning
 local treeSpawnStDev = 1*30 -- approx std dev of time in between trees spawning
-
+local MAX_TREE_HEIGHT = 1600
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -218,6 +218,13 @@ function NewTreeSpawnTime()
     return f + math.max(1,treeSpawnInterval + treeSpawnStDev*SignedRandom())
 end
 
+function IsTooHigh(x,z)
+    -- hard coded hacks ftw
+    local gy = Spring.GetGroundHeight(x,z)
+    if not gy then return false end
+    return (gy>MAX_TREE_HEIGHT)    
+end
+
 
 function SpawnTree()
     -- now choose a position in which to spawn a new (L1) tree
@@ -267,7 +274,7 @@ function TryToSpawnANewTreeSomewhereNearToThisTree(unitID)
         local r = minDist + math.random()*distInterval
         local tx = x + r*math.cos(theta)
         local tz = z + r*math.sin(theta)
-        local success = ILoveExcessivelyLongFunctionNames(tx,tz,minDist) and not IsSteep(tx,tz)
+        local success = ILoveExcessivelyLongFunctionNames(tx,tz,minDist) and (not IsSteep(tx,tz)) and (not IsTooHigh(tx,tz))
         if success then return true end
     end
     return false
