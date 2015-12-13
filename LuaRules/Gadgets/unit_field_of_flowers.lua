@@ -55,12 +55,12 @@ function gadget:ProjectileDestroyed(proID)
     
         local px,py,pz = Spring.GetProjectilePosition(proID)
         local gy = Spring.GetGroundHeight(px,pz)
-        if math.abs(py-gy)<5 then
+        if math.abs(py-gy)<5 or true then
             -- cause it to happen
      		local frame = Spring.GetGameFrame()
 
             if TESTING_MODE then Spring.Echo("Adding new center at ", px, pz) end
-            table.insert(watchedCenters, {x=pz, z=pz, f=Spring.GetGameFrame()})
+            table.insert(watchedCenters, {x=px, z=pz, f=Spring.GetGameFrame()})
             
 			local units = GG.SpawnFlowers(px, pz, 2, 4, 500)
 			local units2 = GG.SpawnGrass(px, pz, 2, 4, 500)
@@ -70,7 +70,18 @@ function gadget:ProjectileDestroyed(proID)
 			for _, unitID in pairs(units2) do
 				table.insert(tempUnits, {unitID = unitID, frame = frame + duration -15 +math.random(30)})
 			end
-        end    
+			local units = Spring.GetUnitsInCylinder(px, pz, 200)
+			for i=1,#units do
+				local uID = units[i]
+				local uDID = Spring.GetUnitDefID(uID)
+				local uDef = UnitDefs[uDID]
+				if uDef.customParams.tree then
+					if GG.AddUpgradeProgress(uID) then
+						break
+					end
+				end
+			end
+        end
     end
 end
 

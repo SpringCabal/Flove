@@ -28,6 +28,7 @@ local COB_ANGULAR = 182
 
 local zapFiredFrame
 local flowerFiredFrame
+local FLOWER_SHOT_MANA_COST = 10
 -------------------------------------------------------------------
 -------------------------------------------------------------------
 
@@ -107,6 +108,26 @@ local function FireFlowerShot(x, y, z)
 	end
 	
 	local flowerShot = WeaponDefNames.flowershot
+	local mana = Spring.GetGameRulesParam("mana") or 0
+	
+	local canFire = true
+	
+	if mana < FLOWER_SHOT_MANA_COST then
+		canFire = false
+	end
+	local frame = Spring.GetGameFrame()
+	if not (flowerShotFiredFrame == nil or (frame - flowerShotFiredFrame) >= flowerShot.reload*33) then
+		canFire = false
+	end
+	
+	if not canFire then
+		return
+	end
+	
+	flowerShotFiredFrame = frame
+	mana = mana - FLOWER_SHOT_MANA_COST
+	Spring.SetGameRulesParam("mana", mana)
+	
 	local flare = Spring.GetUnitPieceMap(spireID).Eye
 	local spawnx, spawny, spawnz = Spring.GetUnitPiecePosDir(spireID, flare)
 	local dx, dy, dz = Norm(x - spawnx, y - spawny, z - spawnz)

@@ -189,8 +189,9 @@ local function GetLightsFromUnitDefs()
                 if (WeaponDefs[weaponID]['type'] == 'Cannon') then
                     if verbose then Spring.Echo('Cannon',WeaponDefs[weaponID]['name'],'size', WeaponDefs[weaponID]['size']) end
                     size=WeaponDefs[weaponID]['size']
-                    plighttable[WeaponDefs[weaponID]['name']]={r=0.5,g=0.5,b=0.25,radius=100*size,beam=true}
+                    plighttable[WeaponDefs[weaponID]['name']]={r=0.5,g=0.5,b=0.25,radius=100,beam=false}
                     
+-- 					plighttable[WeaponDefs[weaponID]['name']]={r=r,g=g,b=b,radius=math.min(WeaponDefs[weaponID]['range'],500) * WeaponDefs[weaponID]['visuals']["thickness"]/7,beam=true}
                 elseif (WeaponDefs[weaponID]['type'] == 'DGun') then
                     if verbose then Spring.Echo('DGun',WeaponDefs[weaponID]['name'],'size', WeaponDefs[weaponID]['size']) end
                     --size=WeaponDefs[weaponID]['size']
@@ -525,7 +526,7 @@ function widget:DrawWorld()
                 local wep,piece=spGetProjectileType(pID)
                 if piece then
                     local explosionflags = spGetPieceProjectileParams(pID)
-                    if explosionflags and (explosionflags%32)>15  then --only stuff with the FIRE explode tag gets a light
+                    if explosionflags and (explosionflags%32)>15 or true then --only stuff with the FIRE explode tag gets a light
                         --Spring.Echo('explosionflag=',explosionflags)
                         table.insert(pointlightprojectiles,{r=0.5,g=0.5,b=0.25,radius=100,constant=1,squared=1,linear=0,beam=false,px=x,py=y,pz=z,dx=0,dy=0,dz=0})
                     end

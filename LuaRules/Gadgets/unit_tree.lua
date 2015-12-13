@@ -41,6 +41,8 @@ local wispConfiguration = {
 	stageFrameDuration = 33 * 5,
 }
 
+local UPGRADE_PROGRESS = 3
+
 local trees = {}
 
 local function TreeCreated(unitID)
@@ -57,6 +59,7 @@ local function TreeCreated(unitID)
 	
 	tree.wisps = {}
 	tree.createWispFrame = math.random(config.minWispCreationSpeed, config.maxWispCreationSpeed) + Spring.GetGameFrame()
+	Spring.SetUnitRulesParam(unitID, "upgradeProgress", 0)
 end
 
 local function TreeDestroyed(unitID)
@@ -65,6 +68,43 @@ local function TreeDestroyed(unitID)
 end
 
 local function UpgradeTree(unitID)
+	local unitDefID = Spring.GetUnitDefID(unitID)
+	local unitDefName = UnitDefs[unitDefID].name
+	local config = treeConfiguration[unitDefName]
+	local level = config.level + 1
+	local newConfig, newDefName
+	for defName, config in pairs(treeConfiguration) do
+		if config.level == level then
+			newDefName, newConfig = defName, config
+			break
+		end
+	end
+
+	local tree = trees[unitID] -- not necessary?
+	
+	local x, y, z = Spring.GetUnitPosition(unitID)
+	local teamID = Spring.GetUnitTeam(unitID)
+	local dx, dy, dz = Spring.GetUnitDirection(unitID)
+	Spring.DestroyUnit(unitID)
+	Spring.CreateUnit(newDefName, x, y, z, 0, teamID)
+	Spring.SetUnitDirection(dx, dy, dz)
+end
+
+local function AddUpgradeProgress(unitID)
+	local tree = trees[unitID]
+	local unitDefID = Spring.GetUnitDefID(unitID)
+	local unitDefName = UnitDefs[unitDefID].name
+	local config = treeConfiguration[unitDefName]
+	if config.level == 3 then
+		return false
+	end
+	local progress = Spring.GetUnitRulesParam(unitID, "upgradeProgress") or 0
+	progress = progress + 1
+	Spring.SetUnitRulesParam(unitID, "upgradeProgress", progress, {public=true})
+	if progress >= UPGRADE_PROGRESS then
+		UpgradeTree(unitID)
+	end
+	return true
 end
 
 local function UpdateWisps()
@@ -138,3 +178,4 @@ function gadget:Shutdown()
 end
 
 GG.trees = trees
+GG.AddUpgradeProgress = AddUpgradeProgress
