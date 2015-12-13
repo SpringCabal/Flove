@@ -41,7 +41,7 @@ function widget:MousePress(mx, my, button)
         if not pos then return false end
         local x, y, z = pos[1], pos[2], pos[3]
 
-		if (button==1 or buton==3) and (x<2048 or z<2048 or x>8192 or z>8192) then	 
+		if (button==1 or button==3) and (x<2048 or z<2048 or x>8192 or z>8192) then	 
             return true
         end
 
