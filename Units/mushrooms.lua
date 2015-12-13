@@ -50,11 +50,11 @@ local Mushroom = Unit:New {
 local NormalMushroom = Mushroom:New {
 	name                = "Normal Mushroom",
 	maxDamage			= 3,
-	weapons             = {
-		{
-			def                = "normalmushroomspray",
+	  weapons = {
+		[1]  = {
+		  name               = "shroombarf",
 		},
-	},
+	  },
 }
 local SmallMushroom = Mushroom:New {
 	name                = "Small Mushroom",

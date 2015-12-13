@@ -12,6 +12,10 @@ function script.AimFromWeapon(num)
 	return head
 end
 
+function script.FireWeapon(weaponID)
+	return head
+end
+
 function script.AimWeapon(num, heading, pitch)
 	return true
 end
