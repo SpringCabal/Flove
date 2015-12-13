@@ -123,39 +123,14 @@ function gadget:GameFrame(frame)
 	if spawnPoints == nil then
 		spawnPoints = {}
 		local basePoints = {}
-		local expansion1, expansion2, expansion3 = {}, {}, {}
 		spawnPoints.base = basePoints
-		spawnPoints.expansion1 = expansion1
-		spawnPoints.expansion2 = expansion2
-		spawnPoints.expansion3 = expansion3
 		for _, unitID in ipairs(Spring.GetAllUnits()) do
 			local unitDefID = Spring.GetUnitDefID(unitID)
 			if unitDefID == baseDefID then
 				table.insert(basePoints, unitID)
 			end
-			if unitDefID == expansion1DefID then
-				table.insert(expansion1, unitID)
-			end
-			if unitDefID == expansion2DefID then
-				table.insert(expansion2, unitID)
-			end
-			if unitDefID == expansion3DefID then
-				table.insert(expansion3, unitID)
-			end
 		end
-		SpawnWave()
-		firstSpawnFrame = frame
-	end
-	
-	if not spawned1 and (frame - firstSpawnFrame) >= 33*30 then
-		SpawnWave()
-		spawned1 = true
-	elseif not spawned2 and (frame - firstSpawnFrame) >= 33*60 then
-		SpawnWave()
-		spawned2 = true
-	elseif not spawned3 and (frame - firstSpawnFrame) >= 33*90 then
-		SpawnWave()
-		spawned3 = true
+		SpawnWave(spawnPoints.base)
 	end
 end
 
@@ -171,17 +146,7 @@ function gadget:UnitCreated(unitID, unitDefID)
 	OnUnitCreated(unitID, unitDefID)
 end
 
-function SpawnWave()
-	local spawns
-	if currentWave == 1 then
-		spawns = spawnPoints.base
-	elseif currentWave == 2 then
-		spawns = spawnPoints.expansion1
-	elseif currentWave == 3 then
-		spawns = spawnPoints.expansion2
-	elseif currentWave == 4 then
-		spawns = spawnPoints.expansion3
-	end
+function SpawnWave(spawns)
 	for _, spawnPointID in pairs(spawns) do
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
 		SpawnUnit(treeLevel1DefID, x, z)
