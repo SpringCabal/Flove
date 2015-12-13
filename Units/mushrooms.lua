@@ -29,7 +29,7 @@ local Mushroom = Unit:New {
 		turnaccel = 500,
 		mushroom = true,
 	},
-    
+
 	--Abilities
     Builder = 0,
     CanAttack = 1,
@@ -50,6 +50,11 @@ local Mushroom = Unit:New {
 local NormalMushroom = Mushroom:New {
 	name                = "Normal Mushroom",
 	maxDamage			= 3,
+	weapons             = {
+		{
+			def                = "normalmushroomspray",
+		},
+	},
 }
 local SmallMushroom = Mushroom:New {
 	name                = "Small Mushroom",

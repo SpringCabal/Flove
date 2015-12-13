@@ -46,7 +46,7 @@ local waveConfig = {
 	},
 	[2] = {
 		[normalMushroomDefID] = 5,
-		[smallMushroomDefID] = 3,
+	--	[smallMushroomDefID] = 3,
 	},
 }
 
@@ -59,7 +59,7 @@ local function SpawnUnit(unitDefID, x, z, noRotate)
 		Spring.SetUnitRotation(unitID, 0, math.random()*2*math.pi, 0)
 	end
 	local sx, sy, sz = Spring.GetUnitPosition(spireID)
-	Spring.GiveOrderToUnit(unitID, CMD.FIGHT, {sx, sy, sz}, 0 )
+	Spring.GiveOrderToUnit(unitID, CMD.MOVE, {sx, sy, sz}, 0 )
 end
 
 local function CleanUnits()
@@ -121,7 +121,7 @@ function gadget:GameFrame(frame)
 			end
 		end
 	end
-	if frame % 33 * 2 == 0 then
+	if frame % 33 * 10 == 0 then
 		SpawnWave()
 	end
 end
@@ -147,7 +147,9 @@ function SpawnWave()
 	for _, spawnPointID in pairs(spawnPoints) do
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
 		for unitDefID, count in pairs(config) do
-			SpawnUnit(unitDefID, x, z)
+			for i = 1, count do
+				SpawnUnit(unitDefID, x, z)
+			end
 		end
 	end
 end

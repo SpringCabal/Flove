@@ -60,7 +60,7 @@ local SHRUB_SPAWN_RADIUS = 500
 --------------------------------------------------------------------------------
 
 local function SpawnUnit(unitDefID, x, z, noRotate)
-	local unitID = Spring.CreateUnit(unitDefID, x, 0, z, 0, 0, false, false)
+	local unitID = Spring.CreateUnit(unitDefID, x, 0, z, 0, 1, false, false)
 	if not noRotate then
 		Spring.SetUnitRotation(unitID, 0, math.random()*2*math.pi, 0)
 	end
