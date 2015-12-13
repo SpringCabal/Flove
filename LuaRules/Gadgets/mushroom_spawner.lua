@@ -18,7 +18,7 @@ local AI_TESTING_MODE = false
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
---SYNCED
+-- SYNCED ONLY
 if (not gadgetHandler:IsSyncedCode()) then
    return false
 end
@@ -27,7 +27,6 @@ end
 --------------------------------------------------------------------------------
 
 local mushroomSpawnDefID   = UnitDefNames["mushroomspawn"].id
-
 local normalMushroomDefID  = UnitDefNames["normalmushroom"].id
 local smallMushroomDefID   = UnitDefNames["smallmushroom"].id
 local bigMushroomDefID     = UnitDefNames["bigmushroom"].id
@@ -41,6 +40,9 @@ local spireID = nil
 local currentWave = 0
 local startSpawnFrame = 100
 local spawnPoints = nil
+
+local treesTakeNoDamage = false
+local damageTreeP = 0.4
 
 local waveConfig = {
 	[1] = {
@@ -80,36 +82,12 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+-- Event Handling
+--------------------------------------------------------------------------------
 
 function gadget:Initialize()
 	CleanUnits()
 	startSpawnFrame = 100 + Spring.GetGameFrame()
--- 	GG.SpawnField(2650, 2125, 2930, 2380, 4, 5)
--- 	GG.SpawnField(2320, 3050, 2505, 3550, 8, 3)
--- 	GG.SpawnField(3230, 3900, 3890, 4190, 4, 11)
--- 	GG.SpawnField(3745, 2360, 3870, 2570, 4, 3)
--- 
--- 	GG.SpawnBurrow(3600, 1350)
--- 	GG.SpawnBurrow(4740, 1940)
--- 	GG.SpawnBurrow(4650, 3340)
--- 	GG.SpawnBurrow(4920, 4620)
--- 	GG.SpawnBurrow(3680, 5270)
--- 	GG.SpawnBurrow(2190, 4820)
--- 	GG.SpawnBurrow(1000, 3660)
--- 	GG.SpawnBurrow( 800, 2170)
--- 	GG.SpawnBurrow(2050, 1250)
--- 	
--- 	SpawnUnit(lighthouseDefID, 2560, 2500, true)
--- 	SpawnUnit(lighthouseDefID, 3130, 4320, true)
--- 	SpawnUnit(lighthouseDefID, 3980, 3810, true)
--- 	SpawnUnit(lighthouseDefID, 3630, 2670, true)
--- 	SpawnUnit(lighthouseDefID, 2200, 3650, true)
--- 	
--- 	startFrame = Spring.GetGameFrame()
--- 	
--- 	Spring.SetGameRulesParam("score", 0)
--- 	Spring.SetGameRulesParam("survivalTime", 0)
--- 	currentDifficult = 1
 end
 
 function gadget:GameFrame(frame)
@@ -128,6 +106,7 @@ function gadget:GameFrame(frame)
 	if frame % 33 * 10 == 0 then
 		SpawnWave()
 	end
+    
     if frame%15==0 then
         CheckForIdleMushrooms()
     end
@@ -154,6 +133,14 @@ function SpawnWave()
 	end
 end
 
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Mushroom AI
+--------------------------------------------------------------------------------
+
+local aiMushrooms = {} 
+
 function CheckForSpire(unitID, unitDefID)
 	if unitDefID == spireDefID then
 		spireID = unitID
@@ -173,11 +160,6 @@ function gadget:UnitDestroyed(unitID, unitDefID)
         DeregisterMushroom(unitID)
     end
 end
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-local aiMushrooms = {} 
 
 function RegisterMushroom(uID)
     aiMushrooms[uID] = true
@@ -247,4 +229,36 @@ end
 
 function StandUpAndFightLikeAMan(uID,x,y,z)
     Spring.GiveOrderToUnit(uID, CMD.FIGHT, {x,y,z}, {})
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Trees Special Modes
+--------------------------------------------------------------------------------
+
+function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
+    if not UnitDefs[unitDefID].customParams.tree then
+        return damage,0
+    end
+    
+    if treesTakeNoDamage then
+        return 0,0
+    end    
+    
+    return damage,0    
+end
+
+function DamageTrees()
+    -- set all trees to have health approximately p of their full health (plus a bit of randomness)
+    local units = Spring.GetAllUnits()
+    for _,uID in ipairs(units) do
+        local unitDefID = Spring.GetUnitDefID(uID)
+        if UnitDefs[unitDefID].customParams.tree then
+            local h,mh = Spring.GetUnitHealth(uID)
+            local deviation = 0.2
+            local newH = math.max(0.05*mh, math.min(0.95*mh, mh*damageTreeP + deviation*mh*2*(math.random()-1) ) )
+            Spring.SetUnitHealth(uID, newH)        
+        end        
+    end
 end
