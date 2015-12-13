@@ -8,10 +8,12 @@ local glUniform=gl.Uniform
 local sine =math.sin
 local maximum=math.max
 
-local frameLocID
+local frameLocID, healthFactor
+
 local function DrawUnit(unitID, material)
 	if frameLocID == nil then
 		frameLocID = gl.GetUniformLocation(material.shader, "frameLoc")
+		healthFactorID = gl.GetUniformLocation(material.shader, "healthFactor")
 	end
 	local unitDefID = Spring.GetUnitDefID(unitID)
 	local unitDef = UnitDefs[unitDefID]
@@ -23,6 +25,9 @@ local function DrawUnit(unitID, material)
 	end
 	local frame = factor * sine(modulo(unitID, 10) + GetGameFrame() / (modulo(unitID, 7) + 6))
 	glUniform(frameLocID, frame)
+	local hp, maxhp = Spring.GetUnitHealth(unitID)
+	local healthFactor = hp / maxhp
+	glUniform(healthFactorID, healthFactor)
 --   health,maxhealth=GetUnitHealth(unitID)
 --   glUniform(material.healthLoc, 2*maximum(0, (-2*health)/(maxhealth)+1) )
   

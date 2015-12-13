@@ -25,6 +25,9 @@ local spireDefID = UnitDefNames["spire"].id
 local spireID = nil
 local targetx, targety, targetz
 local COB_ANGULAR = 182
+
+local zapFiredFrame
+local flowerFiredFrame
 -------------------------------------------------------------------
 -------------------------------------------------------------------
 
@@ -70,6 +73,14 @@ local function FireZap(x, y, z)
 	end
 	
 	local zapDef = WeaponDefNames.zap
+	
+	local frame = Spring.GetGameFrame()
+	if zapFiredFrame == nil or (frame - zapFiredFrame) >= zapDef.reload*33 then
+		zapFiredFrame = frame
+	else
+		return
+	end
+	
 	local flare = Spring.GetUnitPieceMap(spireID).Eye
 	local spawnx, spawny, spawnz = Spring.GetUnitPiecePosDir(spireID, flare)
 	local dx, dy, dz = Norm(x - spawnx, y - spawny, z - spawnz)
