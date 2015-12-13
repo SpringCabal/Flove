@@ -16,7 +16,7 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
---SYNCED
+-- SYNCED ONLY
 if (not gadgetHandler:IsSyncedCode()) then
    return false
 end
@@ -53,13 +53,21 @@ local startSpawnFrame = 100
 local firstSpawnFrame = nil
 local spawnPoints = nil
 local currentWave = 1
+local nextTreeSpawnTime = -1
 
 -- grass spawning
 local MIN_GRASS = 8
 local MAX_GRASS = 12
 local GRASS_SPAWN_RADIUS = 500
 
+-- non-base tree spawning, one by one
+local spawnInterval = 3*30 -- mean time in between trees spawning
+local spawnStDev = 1*30 -- approx std dev of time in between trees spawning
+
+
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Event helper funcs
 --------------------------------------------------------------------------------
 
 local function SpawnUnit(unitDefID, x, z, noRotate)
@@ -94,39 +102,15 @@ function gadget:UnitCreated(unitID, unitDefID)
 	RecordUnitCreatedFrame(unitID, unitDefID)
 end
 
-
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Event Handler
 --------------------------------------------------------------------------------
 
 function gadget:Initialize()
 	CleanUnits()
 	startSpawnFrame = 10 + Spring.GetGameFrame()
--- 	GG.SpawnField(2650, 2125, 2930, 2380, 4, 5)
--- 	GG.SpawnField(2320, 3050, 2505, 3550, 8, 3)
--- 	GG.SpawnField(3230, 3900, 3890, 4190, 4, 11)
--- 	GG.SpawnField(3745, 2360, 3870, 2570, 4, 3)
--- 
--- 	GG.SpawnBurrow(3600, 1350)
--- 	GG.SpawnBurrow(4740, 1940)
--- 	GG.SpawnBurrow(4650, 3340)
--- 	GG.SpawnBurrow(4920, 4620)
--- 	GG.SpawnBurrow(3680, 5270)
--- 	GG.SpawnBurrow(2190, 4820)
--- 	GG.SpawnBurrow(1000, 3660)
--- 	GG.SpawnBurrow( 800, 2170)
--- 	GG.SpawnBurrow(2050, 1250)
--- 	
--- 	SpawnUnit(lighthouseDefID, 2560, 2500, true)
--- 	SpawnUnit(lighthouseDefID, 3130, 4320, true)
--- 	SpawnUnit(lighthouseDefID, 3980, 3810, true)
--- 	SpawnUnit(lighthouseDefID, 3630, 2670, true)
--- 	SpawnUnit(lighthouseDefID, 2200, 3650, true)
--- 	
--- 	startFrame = Spring.GetGameFrame()
--- 	
--- 	Spring.SetGameRulesParam("score", 0)
--- 	Spring.SetGameRulesParam("survivalTime", 0)
--- 	currentDifficult = 1
+    --nextTreeSpawnTime = NewTreeSpawnTime()
 end
 
 function gadget:GameFrame(frame)
@@ -149,16 +133,15 @@ function gadget:GameFrame(frame)
 	end
     
     -- gradually spawn new trees
+    -- TODO
+    
+    
 end
 
-function SpawnWave(spawns)
-	for _, spawnPointID in pairs(spawns) do
-		local x, _, z = Spring.GetUnitPosition(spawnPointID)
-		SpawnUnit(treeLevel1DefID, x, z)
-		SpawnGrass(x, z, MIN_GRASS, MAX_GRASS, GRASS_SPAWN_RADIUS)
-	end
-	currentWave = currentWave + 1
-end
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Helper funcs
+--------------------------------------------------------------------------------
 
 function IsSteep(x,z)
 	local mtta = math.acos(1.0 - 0.05) - 0.02 --http://springrts.com/wiki/Movedefs.lua#How_slope_is_determined
@@ -180,6 +163,29 @@ function IsSteep(x,z)
 	end	
 end
 
+function IsInCircle(x,z, r, px,pz)
+    return (x-px)*(x-px) + (z-pz)*(z-pz) <= r*r
+end
+
+function SignedRandom()
+    return math.random()*2-1
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Base (wave) spawning
+--------------------------------------------------------------------------------
+
+function SpawnWave(spawns)
+	for _, spawnPointID in pairs(spawns) do
+		local x, _, z = Spring.GetUnitPosition(spawnPointID)
+		SpawnUnit(treeLevel1DefID, x, z)
+		SpawnGrass(x, z, MIN_GRASS, MAX_GRASS, GRASS_SPAWN_RADIUS)
+	end
+	currentWave = currentWave + 1
+end
+
 function SpawnGrass(x, z, minGrass, maxGrass, radius)
 	local units = {}
 	local grassCount = math.random(minGrass, maxGrass)
@@ -196,13 +202,11 @@ function SpawnGrass(x, z, minGrass, maxGrass, radius)
 	return units
 end
 
-function IsInCircle(x,z, r, px,pz)
-    return (x-px)*(x-px) + (z-pz)*(z-pz) <= r*r
-end
 
-function SignedRandom()
-    return math.random()*2-1
-end
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Field of Flowers spawning (TODO: move to field of flowers gadget)
+--------------------------------------------------------------------------------
 
 function SpawnFlowers(x, z, inverseDensity, radius)
     -- used by field of flowers, only
