@@ -13,7 +13,7 @@ function gadget:GetInfo()
    }
 end
 
-local AI_TESTING_MODE = true
+local AI_TESTING_MODE = false
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ end
 function gadget:UnitCreated(unitID, unitDefID)
 	CheckForSpire(unitID, unitDefID)
     
-    if UnitDefs[unitDefID].customParams.mushroom and (not Spring.GetUnitRulesParam(unitID, "aiDisabled")==1) then
+    if UnitDefs[unitDefID].customParams.mushroom and not (Spring.GetUnitRulesParam(unitID, "aiDisabled")==1) then
         RegisterMushroom(unitID)
     end
 end
@@ -180,7 +180,6 @@ end
 local aiMushrooms = {} 
 
 function RegisterMushroom(uID)
-    Spring.Echo(uID)
     aiMushrooms[uID] = true
 end
 
