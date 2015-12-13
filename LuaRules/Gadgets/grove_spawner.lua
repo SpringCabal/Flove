@@ -54,8 +54,8 @@ local firstSpawnFrame = nil
 local spawnPoints = nil
 local currentWave = 1
 
-local MIN_GRASS = 5
-local MAX_GRASS = 10
+local MIN_GRASS = 8
+local MAX_GRASS = 12
 local MIN_FLOWERS = 3
 local MAX_FLOWERS = 6
 local SHRUB_SPAWN_RADIUS = 500
@@ -187,7 +187,7 @@ function SpawnWave()
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
 		SpawnUnit(treeLevel1DefID, x, z)
 		SpawnGrass(x, z, MIN_GRASS, MAX_GRASS, SHRUB_SPAWN_RADIUS)
-		SpawnFlowers(x, z, MIN_FLOWERS, MAX_FLOWERS, SHRUB_SPAWN_RADIUS)
+		--SpawnFlowers(x, z, MIN_FLOWERS, MAX_FLOWERS, SHRUB_SPAWN_RADIUS)
 	end
 	currentWave = currentWave + 1
 end

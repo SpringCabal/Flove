@@ -62,12 +62,8 @@ function gadget:ProjectileDestroyed(proID)
             if TESTING_MODE then Spring.Echo("Adding new center at ", px, pz) end
             table.insert(watchedCenters, {x=px, z=pz, f=Spring.GetGameFrame()})
             
-			local units = GG.SpawnFlowers(px, pz, 2, 4, 500)
-			local units2 = GG.SpawnGrass(px, pz, 2, 4, 500)
+			local units = GG.SpawnFlowers(px, pz, 8, 10, 500)
 			for _, unitID in pairs(units) do
-				table.insert(tempUnits, {unitID = unitID, frame = frame + duration -15 +math.random(30)})
-			end
-			for _, unitID in pairs(units2) do
 				table.insert(tempUnits, {unitID = unitID, frame = frame + duration -15 +math.random(30)})
 			end
 			local units = Spring.GetUnitsInCylinder(px, pz, 200)
