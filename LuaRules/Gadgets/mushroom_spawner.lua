@@ -53,7 +53,7 @@ local firstSpawnFrame = nil
 local waveConfig = {
 	[1] = { -- first wave is spawned as part of the story
 		units = {
-			[normalMushroomDefID] = 5,
+			[normalMushroomDefID] = 3,
 		},
 		time = 0,
 	},
@@ -146,14 +146,21 @@ function gadget:GameFrame(frame)
 	
 	local story = Spring.GetGameRulesParam("story")
 	if story ~= 0 then
-		CheckTreeHP()
+		if CheckTreeHP() then
+			return
+		end
 		if storyWaveSpawnTime ~= nil and frame - storyWaveSpawnTime > 30 then
-			CheckMushrooms()
+			if CheckMushrooms() then
+				return
+			end
 		end
 		if story ~= 5 then
 			Spring.SetGameRulesParam("mana", 0)
 		end
-		CheckUpgradedTree()
+		if CheckUpgradedTree() then
+			return
+		end
+		
 		return
 	elseif startSpawnFrame == nil then
 		startSpawnFrame = 100 + Spring.GetGameFrame()
@@ -287,9 +294,25 @@ function SelectEnemy(uID)
     return nil
 end
 
+local SMALL_MUSHROOM_ORDER_CHANGE = 30
 function CheckForIdleMushrooms()
+	local frame = Spring.GetGameFrame()
     for uID, _ in pairs(aiMushrooms) do
-        if  Spring.GetUnitCommands(uID,2) ~= nil and #Spring.GetUnitCommands(uID,2)==0 then
+		local unitDefID = Spring.GetUnitDefID(uID)
+		if unitDefID == smallMushroomDefID then
+			local lastOrderFrame = Spring.GetUnitRulesParam(uID, "lastOrderFrame") or 0
+			if frame - lastOrderFrame >= SMALL_MUSHROOM_ORDER_CHANGE then
+				lastOrderFrame = frame
+				Spring.SetUnitRulesParam(uID, "lastOrderFrame", lastOrderFrame)
+				
+				local eID = SelectEnemy(uID)
+				if eID then
+					local x,y,z = Spring.GetUnitPosition(eID)
+					local d = 700
+					Spring.GiveOrderToUnit(uID, CMD.MOVE, {x + math.random()*d - d/2, y+ math.random()*d - d/2, z+ math.random()*d - d/2}, {}) 
+				end
+			end
+		elseif Spring.GetUnitCommands(uID,2) ~= nil and #Spring.GetUnitCommands(uID,2)==0 then
             local eID = SelectEnemy(uID)
             if eID then
                 local x,y,z = Spring.GetUnitPosition(eID)
@@ -365,6 +388,7 @@ function CheckTreeHP()
 	end
 	if fullHP then
 		StoryStage(4)
+		return true
 	end
 end
 
@@ -384,6 +408,7 @@ function CheckMushrooms()
 	-- there always seems to be a few left...
 	if noshroomsC <= 2 then
 		StoryStage(5)
+		return true
 	end
 end
 
@@ -397,7 +422,7 @@ function CheckUpgradedTree()
         local unitDefID = Spring.GetUnitDefID(uID)
         if unitDefID == treeLevel2DefID then
 			StoryStage(6)
-            return
+            return true
 		end
 	end
 end
