@@ -28,15 +28,24 @@ local initializeFrame = 0
 
 function gadget:Initialize()
 	initializeFrame = Spring.GetGameFrame() or 0
+	Spring.SetGameRulesParam("gameOver", 0)
 end
 
-function gadget:GameFrame(frame)
-	if frame > initializeFrame + 2 then
-		local carrotCount = Spring.GetGameRulesParam("carrot_count")
-		
-        -- We're doing widget-only game overs which makes restarts easier
--- 		if carrotCount <= 0 then
--- 			Spring.GameOver({})
--- 		end
+local spireDefID = UnitDefNames["spire"].id
+local spireID = nil
+
+function CheckForSpire(unitID, unitDefID)
+	if unitDefID == spireDefID then
+		spireID = unitID
 	end
+end
+
+function gadget:UnitCreated(unitID, unitDefID)
+	CheckForSpire(unitID, unitDefID)
+end
+
+function gadget:UnitDestroyed(unitID, unitDefID)
+    if unitID == spireID then
+        Spring.SetGameRulesParam("gameOver", 1)
+    end
 end

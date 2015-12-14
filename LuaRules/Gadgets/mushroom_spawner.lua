@@ -239,7 +239,7 @@ function SelectEnemy(uID)
             local eID = units[perm[i]]
             local eTeamID = Spring.GetUnitTeam(eID)
             local eDID = Spring.GetUnitDefID(eID)
-            if UnitDefs[eDID].customParams.tree and not Spring.AreTeamsAllied(tID, eTeamID) then
+            if (UnitDefs[eDID].customParams.tree or spireDefID == eDID) and not Spring.AreTeamsAllied(tID, eTeamID) then
                 local ex,ey,ez = Spring.GetUnitPosition(eID)
                 local sqrDist = (x-ex)*(x-ex) + (y-ey)*(y-ey) + (z-ez)*(z-ez) 
                 weights[eID] = (sqrDist>10*10) and 1/(sqrDist) or 0
@@ -253,7 +253,7 @@ function SelectEnemy(uID)
         local q = 0
         for eID,w in pairs(weights) do
             q = q + w
-            if q>p then 
+            if q>p then
                 return eID
             end
         end        

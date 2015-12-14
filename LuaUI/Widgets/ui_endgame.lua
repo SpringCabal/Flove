@@ -78,34 +78,34 @@ local function SetupControls()
  		textColor = {1,0,0,1},
  	}
 	
-    Chili.Label:New{
- 		x = 80,
- 		y = 100,
- 		width = 100,
- 		parent = window_endgame,
- 		caption = "Score: " .. score,
- 		fontsize = 40,
- 		textColor = {1,0,0,1},
- 	}
-	Chili.Label:New{
- 		x = 114,
- 		y = 155,
- 		width = 100,
- 		parent = window_endgame,
- 		caption = "Time: " .. survialTime .. "s",
- 		fontsize = 32,
- 		textColor = {1,0,0,1},
- 	}
-	Chili.Label:New{
- 		x = 128,
- 		y = 200,
- 		width = 100,
- 		parent = window_endgame,
- 		caption = rabbitKills .. " 🐰",
- 		fontsize = 32,
- 		textColor = {1,0,0,1},
- 	}
-	
+--     Chili.Label:New{
+--  		x = 80,
+--  		y = 100,
+--  		width = 100,
+--  		parent = window_endgame,
+--  		caption = "Score: " .. score,
+--  		fontsize = 40,
+--  		textColor = {1,0,0,1},
+--  	}
+-- 	Chili.Label:New{
+--  		x = 114,
+--  		y = 155,
+--  		width = 100,
+--  		parent = window_endgame,
+--  		caption = "Time: " .. survialTime .. "s",
+--  		fontsize = 32,
+--  		textColor = {1,0,0,1},
+--  	}
+-- 	Chili.Label:New{
+--  		x = 128,
+--  		y = 200,
+--  		width = 100,
+--  		parent = window_endgame,
+--  		caption = rabbitKills .. " 🐰",
+--  		fontsize = 32,
+--  		textColor = {1,0,0,1},
+--  	}
+--[[	
 	nameBox = Chili.EditBox:New{
 		parent = window_endgame,
 		x = 50,
@@ -154,7 +154,7 @@ local function SetupControls()
 				lblUpload:SetCaption("Upload Error \255\255\0\0✗\b")
 			end
 		end},
-	}
+	}]]
 
     restartButton = Button:New{
 		bottom  = 30;
@@ -201,16 +201,16 @@ end
 --------------------------------------------------------------------------------
 --callins
 
-require('keysym.h.lua')
-local RETURN = KEYSYMS.RETURN
-function widget:KeyPress(key, mods, isRepeat)
-	if key == RETURN and restartButton and restartButton.OnClick and restartButton.OnClick[1] and
-			submitButton and submitButton.OnClick and submitButton.OnClick[1] then
-        submitButton.OnClick[1]()
-		restartButton.OnClick[1]()
-        return true
-    end
-end
+-- require('keysym.h.lua')
+-- local RETURN = KEYSYMS.RETURN
+-- function widget:KeyPress(key, mods, isRepeat)
+-- 	if key == RETURN and restartButton and restartButton.OnClick and restartButton.OnClick[1] and
+-- 			submitButton and submitButton.OnClick and submitButton.OnClick[1] then
+--         submitButton.OnClick[1]()
+-- 		restartButton.OnClick[1]()
+--         return true
+--     end
+-- end
 
 function widget:Initialize()
 	if (not WG.Chili) then
@@ -234,51 +234,40 @@ function widget:Initialize()
 end
 
 function widget:GameFrame()
-    local carrotCount = Spring.GetGameRulesParam("carrot_count") or -1
-    local survivalTime = Spring.GetGameRulesParam("survivalTime") or 0
-    if survivalTime == 1 and not sentGameStart then
-        if WG.analytics and WG.analytics.SendEvent then
-			WG.analytics:SendEvent("game_start")
-		end
-        sentGameStart = true
-    elseif survivalTime > 10 then
-        sentGameStart = false
-    end
-    if carrotCount == 0 then
-        widget:GameOver({})
+--     local survivalTime = Spring.GetGameRulesParam("survivalTime") or 0
+--     if survivalTime == 1 and not sentGameStart then
+--         if WG.analytics and WG.analytics.SendEvent then
+-- 			WG.analytics:SendEvent("game_start")
+-- 		end
+--         sentGameStart = true
+--     elseif survivalTime > 10 then
+--         sentGameStart = false
+--     end
+	local gameOver = Spring.GetGameRulesParam("gameOver")
+	local won = Spring.GetGameRulesParam("won") or 0
+    if gameOver == 1 then
+        widget:GameOver(won == 1)
     end
 end
 
-function widget:GameOver(winningAllyTeams)
+function widget:GameOver(won)
     if window_endgame or Spring.GetGameFrame() - frame_delay < 300 then
         return
     end
     if WG.analytics and WG.analytics.SendEvent then
         gameOverTime = os.clock()
-		local score = Spring.GetGameRulesParam("score") or 0
-		local survivalTime = Spring.GetGameRulesParam("survivalTime") or 0
-		local rabbitKills = Spring.GetGameRulesParam("rabbits_killed") or 0 
-		local shotsFired = Spring.GetGameRulesParam("shots_fired") or 0
-		local minesPlaced = Spring.GetGameRulesParam("mines_placed") or 0
-		
-		WG.analytics:SendEvent("score", score)
-		WG.analytics:SendEvent("time", survivalTime)
-		WG.analytics:SendEvent("kills", rabbitKills)
-		WG.analytics:SendEvent("shots", shotsFired)
-		WG.analytics:SendEvent("mines", minesPlaced)
+
 		WG.analytics:SendEvent("game_end")
 	end
 
     local myAllyTeamID = Spring.GetMyAllyTeamID()
-    for _, winningAllyTeamID in pairs(winningAllyTeams) do
-        if myAllyTeamID == winningAllyTeamID then
-            Spring.SendCommands("endgraph 0")
-            SetupControls()
-            caption:SetCaption("You win!");
-            caption.font.color={0,1,0,1};
-            ShowEndGameWindow()
-            return
-        end
+    if won then
+		Spring.SendCommands("endgraph 0")
+		SetupControls()
+		caption:SetCaption("You win!");
+		caption.font.color={0,1,0,1};
+		ShowEndGameWindow()
+		return
     end
     Spring.SendCommands("endgraph 0")
     SetupControls()

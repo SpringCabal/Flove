@@ -25,18 +25,17 @@ local SpireBase = Unit:New {
 		terrainblock_z     = 64,
     },
 
-    footprintX			    = 6,
-	footprintZ			    = 6,
 	-- Hitbox
-	collisionVolumeOffsets = "0 0 0",
-	collisionVolumeScales  = "70 76 70",
+	collisionVolumeOffsets = "0 200 0",
+	collisionVolumeScales  = "200 300 200",
 	collisionVolumeType    = "cylY",
 
+	category = "TREE",
 }
 
 local Spire = SpireBase:New {
 	name                = "Spire",
-	maxDamage			= 3,
+	maxDamage			= 1000,
 }
 
 return lowerkeys({

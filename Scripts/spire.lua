@@ -44,5 +44,10 @@ function script.Create()
 end
 
 function script.Killed(recentDamage, maxHealth)
-	return 0;
+	local x,y,z = Spring.GetUnitPosition(unitID);
+	local trunk = piece('Stalk');
+	Spring.SpawnCEG("blackpop", x, y, z, 0, 2, 0, 10,10);
+	Turn(trunk,z_axis, 4,1);	
+	WaitForTurn(trunk,z_axis);
+	return 0
 end

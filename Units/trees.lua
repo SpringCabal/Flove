@@ -26,8 +26,6 @@ local Tree = Unit:New {
 		tree 			   = true,
     },
 
-    footprintX			    = 2,
-	footprintZ			    = 2,
 	-- Hitbox
 	collisionVolumeOffsets = "0 0 0",
 	collisionVolumeScales  = "70 76 70",
