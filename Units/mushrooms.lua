@@ -127,12 +127,43 @@ local PoisonMushroom = Mushroom:New {
 
 	weapons = {
 		[1]  = {
-		name               = "poisonmushroomspray",
-		onlyTargetCategory = "TREE",
-		mainDir				= "0 0 1",
-		maxAngleDif			= 210,	
+			name               = "poisonmushroomspray",
+			onlyTargetCategory = "TREE",
+			mainDir				= "0 0 1",
+			maxAngleDif			= 210,	
 		},
+		[2] = {
+			def 			   = "Shield",
+		}
 	},
+	weaponDefs = {
+		shield = {
+			name                    = "Shield",
+
+			damage                  = {
+				default = 10,
+			},
+
+			exteriorShield          = true,
+			shieldAlpha             = 0.7,
+			shieldBadColor          = [[0 0 0]],
+			shieldGoodColor         = [[1 0 0.2]],
+			shieldInterceptType     = 3,
+			shieldPower             = 1000,
+			shieldPowerRegen        = 0,
+			shieldPowerRegenEnergy  = 0,
+			shieldRadius            = 400,
+			shieldRepulser          = false,
+			shieldStartingPower     = 1000,
+			smartShield             = true,
+			smart                   = true,
+-- 			texture1                = [[shield3mist]],
+			visibleShield           = true,
+			visibleShieldHitFrames  = 20,
+			visibleShieldRepulse    = true,
+			weaponType              = "Shield",
+		},
+	}
 }
 local BombMushroom = Mushroom:New {
 	name                = "Bomb Mushroom",
@@ -165,6 +196,55 @@ local BombMushroom = Mushroom:New {
 		}
 	}
 }
+local KingShroom = Mushroom:New {
+	-- FIXME: uses old script
+	script = "mushroom.lua",
+	name                = "King Shroom",
+	maxDamage			= 6000,
+	MaxVelocity 		= 50,
+	FootprintX = 4,
+    FootprintZ = 4,
+	weapons = {
+		[1]  = {
+			name               = "bigmushroomspray",
+			onlyTargetCategory = "TREE",
+			mainDir				= "0 0 1",
+			maxAngleDif			= 210,	
+		},
+		[2] = {
+			def 			   = "Shield",
+		}
+	},
+	
+	weaponDefs = {
+		shield = {
+			name                    = "Shield",
+
+			damage                  = {
+				default = 10,
+			},
+
+			exteriorShield          = true,
+			shieldAlpha             = 0.7,
+			shieldBadColor          = [[0 0 0]],
+			shieldGoodColor         = [[0 0 1]],
+			shieldInterceptType     = 3,
+			shieldPower             = 10000,
+			shieldPowerRegen        = 10,
+			shieldPowerRegenEnergy  = 0,
+			shieldRadius            = 600,
+			shieldRepulser          = false,
+			shieldStartingPower     = 10000,
+			smartShield             = true,
+			smart                   = true,
+-- 			texture1                = [[shield3mist]],
+			visibleShield           = true,
+			visibleShieldHitFrames  = 20,
+			visibleShieldRepulse    = true,
+			weaponType              = "Shield",
+		},
+	}
+}
 
 return lowerkeys({
     NormalMushroom       = NormalMushroom,
@@ -173,4 +253,5 @@ return lowerkeys({
 	MushroomCluster      = MushroomCluster,
 	PoisonMushroom       = PoisonMushroom,
 	BombMushroom         = BombMushroom,
+	KingShroom		 	 = KingShroom,
 })
