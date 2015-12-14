@@ -5,8 +5,8 @@
       <author>Blender User</author>
       <authoring_tool>Blender 2.76.0 commit date:2015-11-03, commit time:10:56, hash:f337fea</authoring_tool>
     </contributor>
-    <created>2015-12-14T21:35:15</created>
-    <modified>2015-12-14T21:35:15</modified>
+    <created>2015-12-14T21:49:46</created>
+    <modified>2015-12-14T21:49:46</modified>
     <unit name="meter" meter="0.01875"/>
     <up_axis>Z_UP</up_axis>
   </asset>
@@ -452,9 +452,9 @@
             </bind_material>
           </instance_geometry>
         </node>
-        <node id="leftFoot__2_" name="leftFoot__2_" type="NODE">
+        <node id="leftFoot" name="leftFoot" type="NODE">
           <matrix sid="transform">0.7968131 0 0 4.74264 0 0.7968131 0 -7.262166 0 2.60436e-9 0.7968131 2.98023e-7 0 0 0 1</matrix>
-          <instance_geometry url="#leftFoot__2__004-mesh" name="leftFoot__2_">
+          <instance_geometry url="#leftFoot__2__004-mesh" name="leftFoot">
             <bind_material>
               <technique_common>
                 <instance_material symbol="Default_007-material" target="#Default_007-material"/>
@@ -462,9 +462,9 @@
             </bind_material>
           </instance_geometry>
         </node>
-        <node id="rightFoot__2_" name="rightFoot__2_" type="NODE">
+        <node id="rightFoot" name="rightFoot" type="NODE">
           <matrix sid="transform">1 0 0 -4.853456 0 1 -3.55271e-15 -7.262166 0 3.26847e-9 1 0.06749186 0 0 0 1</matrix>
-          <instance_geometry url="#rightFoot__2__004-mesh" name="rightFoot__2_">
+          <instance_geometry url="#rightFoot__2__004-mesh" name="rightFoot">
             <bind_material>
               <technique_common>
                 <instance_material symbol="Default_007-material" target="#Default_007-material"/>
