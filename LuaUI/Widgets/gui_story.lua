@@ -64,6 +64,15 @@ Also, beware of suicide bombing mushrooms.
 
 }
 
+local narrations = {
+	"sounds/narration_amplified/InTimesLongGone.ogg",
+	"sounds/narration_amplified/RepelBorders.ogg",
+	"sounds/narration_amplified/TheyRejectOurLoveAndKindness.ogg",
+	"sounds/narration_amplified/BlastedAnoterWaveOfEnemies.ogg",
+	"sounds/narration_amplified/ThisSeemsToBeTheEndOfThemForNow.ogg",
+	"sounds/narration_amplified/ItsABeautifulSightIndeed.ogg",
+}
+
 local currentText = 1
 local currentIndex = 1
 
@@ -228,6 +237,10 @@ function UpdateText()
 	local text = texts[currentText]
 	if not text then
 		return
+	end
+	if currentIndex == 2 then -- too sleepy, but this means the file is being displayed
+		local narration = narrations[currentText]
+		Spring.PlaySoundFile(narration)
 	end
 	local textPart = text:sub(1, currentIndex)
 	mission_objective_text:SetText(blue .. textPart)
