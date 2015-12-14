@@ -39,6 +39,7 @@ function gadget:ProjectileCreated(proID, proOwnerID, weaponDefID)
 end
 
 function gadget:ProjectileDestroyed(proID)
+	Spring.PlaySoundFile("sounds/fairy dust.wav", 2, x, y, z)
 end
 
 function gadget:GameFrame(frame)
@@ -68,7 +69,6 @@ function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, w
 			return -damage, 1.0
 		end
 		
-		Spring.PlaySoundFile("sounds/fairy dust.wav", 2, x, y, z)
 		Spring.SpawnCEG("love_hurts", x, y, z, 0, 0, 0, 0)
 	end
 	
