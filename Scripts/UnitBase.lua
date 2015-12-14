@@ -25,7 +25,7 @@ myUnitDef	= UnitDefs[spGetUnitDefID(unitID)]
 
 -- Piece names
 local base
-Spring.Echo(myUnitDef.customParams, myUnitDef.customParams.basepiece)
+--Spring.Echo(myUnitDef.customParams, myUnitDef.customParams.basepiece)
 
 if myUnitDef.customParams.basepiece then
 	--Spring.Echo("base",	myUnitDef.customParams.basepiece)
@@ -237,7 +237,7 @@ function script.Create()
 		
 		moveData["movspeed"] = (Spring.GetUnitMoveTypeData(unitID)).maxSpeed/30
 		
-		Spring.Echo(moveData["movspeed"])
+		--Spring.Echo(moveData["movspeed"])
 	end
 	--Spring.Echo("got move data")
 	

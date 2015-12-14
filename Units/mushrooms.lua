@@ -107,9 +107,11 @@ local MushroomCluster = Mushroom:New {
 	name                = "Mushroom Cluster",
 	maxDamage			= 1000,
 	MaxVelocity 		= 50,
-	script 				= "clustermushroom.lua",
 	FootprintX = 5,
     FootprintZ = 5,
+	customparams = {  
+		deathanim   = "headers/death/clustershroom.lua",	
+	},
 	weapons = {
 		[1]  = {
 		name               = "mushroomclusterspray",
@@ -138,7 +140,9 @@ local BombMushroom = Mushroom:New {
 	name                = "Bomb Mushroom",
 	maxDamage			= 700,
 	MaxVelocity 		= 110,
-	script 				= "bombmushroom.lua",
+	customparams = {  
+		deathanim   = "headers/death/bombshroom.lua",	
+	},
 }
 
 return lowerkeys({
