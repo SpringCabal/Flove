@@ -34,5 +34,7 @@ Mushroom Spores Dispersion(mushroom shots)
 Pillow drop dust poof (mushrooms land after cluster shroom dies)
 - pillow drop dust poof.wav
 
-Not Done(cluster shroom death explode)
-- Cluster mushroom explode squeak
+Cluster mushroom explode squeak
+- clusterexplosion.wav
+
+*Added individual sounds for fairy dust, leaves and wind, and sighs*
