@@ -174,16 +174,16 @@ local BombMushroom = Mushroom:New {
 	},
 	
 	kamikaze               = true,
-    kamikazeDistance       = 80,
+    kamikazeDistance       = 50,
     kamikazeUseLOS         = false,
 	selfDestructAs         = [[bomb]],
 	selfDestructCountdown  = 0,
 	weaponDefs = {
 		bomb = {
-			areaOfEffect       = 384,
+			areaOfEffect       = 500,
 			craterBoost        = 1,
 			craterMult         = 3.5,
-			edgeEffectiveness  = 0.4,
+			edgeEffectiveness  = 0.7,
  			explosionGenerator = "custom:genericshellexplosion",
 			explosionSpeed     = 10000,
 			impulseBoost       = 0,

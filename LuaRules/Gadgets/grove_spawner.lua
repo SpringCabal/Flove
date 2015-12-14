@@ -16,14 +16,15 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- SYNCED ONLY (only suppress trigger drawing)
-if (not gadgetHandler:IsSyncedCode()) then
 
 function IsEffect(unitID)
 	local unitDefID = Spring.GetUnitDefID(unitID)
 	local unitDef = UnitDefs[unitDefID]
 	return unitDef.customParams.effect
 end
+
+-- SYNCED ONLY (only suppress trigger drawing)
+if (not gadgetHandler:IsSyncedCode()) then
 
 function gadget:Initialize(unitID)
 	for _, unitID in ipairs(Spring.GetAllUnits()) do
@@ -112,6 +113,12 @@ function RecordUnitCreatedFrame(unitID, unitDefID)
 end
 
 function gadget:UnitCreated(unitID, unitDefID)
+	if IsEffect(unitID) then
+		Spring.SetUnitNoDraw(unitID, true)
+		Spring.SetUnitNeutral(unitID, true)
+		Spring.SetUnitBlocking(unitID, false, false, false, false, false, false, false)
+	end
+
 	RecordUnitCreatedFrame(unitID, unitDefID)
 end
 

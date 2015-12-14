@@ -79,6 +79,7 @@ function gadget:UnitCreated(unitID, unitDefID, teamID)
 	
 	if ud.customParams.shrubs then
 		Spring.SetUnitBlocking(unitID, false, false, false, false, false, false, false)
+		Spring.SetUnitNeutral(unitID, true)
 	end
 end
 
