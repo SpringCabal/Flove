@@ -84,5 +84,36 @@ return {
         [3]  = 0.2,
       },
     },
-   }
+   },
+  ["grass_trail"] = {
+	explosionwave = {
+      air                = true,
+      class              = [[CSimpleParticleSystem]],
+      count              = 1,
+      ground             = true,
+      water              = true, 
+	  underwater         = true,
+      properties = {
+        airdrag            = 0.5,
+        alwaysvisible      = true,
+        colormap           = [[0 1 0 0.15	0 0 0 0.0]], 
+        directional        = true,
+        emitrot            = 0,
+        emitrotspread      = 180,
+        emitvector         = [[1, 0, 0]],
+        gravity            = [[0, 2, 0]],
+        numparticles       = 5,
+        particlelife       = [[20]], -- same as groundflash ttl
+        particlelifespread = 10,
+        particlesize       = 15, -- groundflash flashsize 25 = 1, so if flashsize is 200, particlesize here would be 8
+        particlesizespread = 1,
+        particlespeed      = 7,
+        particlespeedspread = 10,
+        pos                = [[r40 r-40, r40 r-40, r40 r-40]],
+        sizegrowth         = 5, -- same as groundflash circlegrowth
+        sizemod            = 0.95,
+        texture            = [[goldlove]],
+      },
+    },
+  },
 }

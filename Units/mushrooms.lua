@@ -1,6 +1,4 @@
-local Mushroom = Unit:New {
-    script = "mushroom.lua",
-	
+local Mushroom = Unit:New {	
     RadarDistance = 0,
     SightDistance = 400,
     Upright = 0,
@@ -46,7 +44,7 @@ local Mushroom = Unit:New {
 	collisionVolumeType       =  "sphere",
 	
 	idleAutoHeal = 0,
-	script		 	= "UnitBase.Lua",
+	script		 	= "UnitBase.lua",
 	customparams = {  
 		basepiece	= "Trunk",
 		moveanim	= "headers/bipedal_mushroom_movement.lua", 
@@ -143,6 +141,29 @@ local BombMushroom = Mushroom:New {
 	customparams = {  
 		deathanim   = "headers/death/bombshroom.lua",	
 	},
+	
+	kamikaze               = true,
+    kamikazeDistance       = 80,
+    kamikazeUseLOS         = true,
+	selfDestructAs         = [[BOMB_MUSHROOM_DEATH]],
+	selfDestructCountdown  = 0,
+	weaponDefs = {
+		BOMB_MUSHROOM_DEATH = {
+			areaOfEffect       = 384,
+			craterBoost        = 1,
+			craterMult         = 3.5,
+			edgeEffectiveness  = 0.4,
+-- 			explosionGenerator = "custom:ROACHPLOSION",
+			explosionSpeed     = 10000,
+			impulseBoost       = 0,
+			impulseFactor      = 0.3,
+			name               = "Explosion",
+ 			soundHit           = "sounds/mushroomsqueaksplosion-bomb.wav",
+			damage = {
+				default          = 800,
+			},
+		}
+	}
 }
 
 return lowerkeys({
