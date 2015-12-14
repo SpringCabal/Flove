@@ -121,7 +121,14 @@ end
 --------------------------------------------------------------------------------
 
 function gadget:Initialize()
-    nextTreeSpawnTime = NewTreeSpawnTime()
+    nextTreeSpawnTime = NewTreeSpawnTime()       
+    
+    -- fix this, it breaks with luarules reload but no idea why
+    local units = Spring.GetAllUnits()
+    for _,uID in pairs(units) do
+        local uDID = Spring.GetUnitDefID(uID)
+        gadget:UnitCreated(uID,uDID)
+    end 
 end
 
 local _loadFrame
@@ -232,6 +239,9 @@ GG.SpawnGrass = SpawnGrass
 -- Single Tree Growth
 --------------------------------------------------------------------------------
 
+local minTreeDist = 225 -- tress are not allowed to be closer together than this 
+local maxTreeDist = 325
+
 function NewTreeSpawnTime()
     local f = Spring.GetGameFrame()
     return f + math.max(1,treeSpawnInterval + treeSpawnStDev*SignedRandom())
@@ -261,59 +271,88 @@ function SpawnTree()
 		perm[j] = temp
 	end
     
-    -- cycle over trees in random order
-    local success = false
-    local tries = 2
-    for try=1,tries do
-        for i=1,#units do
-            local uID = units[perm[i]]
-            local uDID = Spring.GetUnitDefID(uID)
-            if UnitDefs[uDID].customParams.tree then
-                success = TryToSpawnANewTreeSomewhereNearToThisTree(uID)
-                if success then break end
+    -- cycle over trees in random order, picking up potential spawn points
+    local potentialSpawnPoints = {}
+    for i=1,#units do
+        local uID = units[perm[i]]
+        local uDID = Spring.GetUnitDefID(uID)
+        if UnitDefs[uDID].customParams.tree then
+            local success,t = TryToSpawnANewTreeSomewhereNearToThisTree(uID)
+            if success then 
+                table.insert(potentialSpawnPoints, t)                    
             end
         end
-        if success then break end
-    end    
-    if not success then
-        --Spring.Echo("OH NOOOO") --TODO
+    end
+    
+    if #potentialSpawnPoints>0 then
+        -- pick potential spawn points with probability proportional to 1/d^2 where d is square distance to spire
+        local sx,_,sz = Spring.GetUnitPosition(spireID) 
+        local totalWeight = 0
+        for i,t in ipairs(potentialSpawnPoints) do
+            local d = (sx-t.x)*(sx-t.x) + (sz-t.z)*(sz-t.z)
+            local weight = (d>0) and 1/(d*d) or 0
+            potentialSpawnPoints[i].weight = weight
+            totalWeight = totalWeight + weight
+        end
+        if totalWeight<=0 then 
+            --Spring.Echo("BALLS!")
+            return fuck_up 
+        end
+        
+        local p = math.random()*totalWeight
+        local q = 0
+        for i,t in ipairs(potentialSpawnPoints) do
+            q = q + t.weight
+            if q>p then
+                SpawnATreeHereNOW(t.x,t.z)
+                return
+            end    
+        end
+    else
+        -- Spring.Echo("OH NOOOO") 
     end
 end
 
 function TryToSpawnANewTreeSomewhereNearToThisTree(unitID)
     local x,_,z = Spring.GetUnitPosition(unitID)
-    local minDist = 225 -- tress are not allowed to be closer together than this 
-    local maxDist = 325
-    local distInterval = maxDist-minDist
+    local distInterval = maxTreeDist-minTreeDist
     local circleDivs = 5
     local thetaDiv = 2*math.pi/circleDivs
     local theta = math.random()*thetaDiv
     for i=1,circleDivs do
         theta = theta + thetaDiv
-        local r = minDist + math.random()*distInterval
+        local r = minTreeDist + math.random()*distInterval
         local tx = x + r*math.cos(theta)
         local tz = z + r*math.sin(theta)
-        local success = (not IsSteep(tx,tz)) and (not IsTooHigh(tx,tz)) and ILoveExcessivelyLongFunctionNames(tx,tz,minDist)
-        if success then return true end
+        if (IsSteep(tx,tz)) or (IsTooHigh(tx,tz)) then
+            return false, nil
+        end
+        local success, t = ILoveExcessivelyLongFunctionNames(tx,tz,minTreeDist)
+        if success then 
+            return true, t
+        end
     end
-    return false
+    return false, nil
 end
 
-function ILoveExcessivelyLongFunctionNames(tx,tz, minDist)
+function ILoveExcessivelyLongFunctionNames(tx,tz, minTreeDist)
     -- try to spawn a tree at tx, tz
     -- but first check that we are far enough away from the nearest tree
-    local possibleOtherTrees = Spring.GetUnitsInCylinder(tx,tz, minDist)
+    local possibleOtherTrees = Spring.GetUnitsInCylinder(tx,tz, minTreeDist)
     for _,uID in ipairs(possibleOtherTrees) do
         local uDID = Spring.GetUnitDefID(uID)
         if UnitDefs[uDID].customParams.tree or uID==spireID then
-            return false
+            return false, nil
         end    
     end
     
-    -- thank fuck
+    local t = {x=tx,z=tz}
+    return true, t
+end
+
+function SpawnATreeHereNOW(tx,tz)
     SpawnUnit(treeLevel1DefID, tx, tz)
-    SpawnGrass(tx, tz, 3, 5, minDist, 10)
-    return true
+    SpawnGrass(tx, tz, 3, 5, minTreeDist, 10)
 end
 
 --------------------------------------------------------------------------------
