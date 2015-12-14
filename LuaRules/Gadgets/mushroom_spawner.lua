@@ -103,8 +103,8 @@ local waveConfig = {
 --------------------------------------------------------------------------------
 
 local function SpawnUnit(unitDefID, x, z, noRotate)
-    x = x+50*(math.random()-1)
-    z = z+50*(math.random()-1)
+    x = x+20*(2*math.random()-1)
+    z = z+20*(2*math.random()-1)
 	local unitID = Spring.CreateUnit(unitDefID, x, 0, z, 0, 0, false, false)
 	if not noRotate then
 		Spring.SetUnitRotation(unitID, 0, math.random()*2*math.pi, 0)
