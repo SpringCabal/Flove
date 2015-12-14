@@ -62,9 +62,14 @@ local function SpawnShot(def, spawnx, spawny, spawnz, dx, dy, dz)
 	
 	local params = {
 		pos = {spawnx, spawny, spawnz},
+		['end'] = {dx,dy,dz},
+		maxRange = 90000,
 		speed = {dirx * v, diry * v, dirz * v},
 		owner  = spireID,
+		ttl = 9000,
+		gravity = 0,
 	}
+	
 	Spring.SpawnProjectile(def.id, params)
 end
 
