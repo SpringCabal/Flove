@@ -11,6 +11,7 @@ local Zap = Weapon:New{
 	collideneutral = false,
 	collideground = true,
 	explosiongenerator = "custom:love_impact",
+	explosionScar = false,
 	firestarter = 100,
 	impulseboost = 0,
 	impulsefactor = 0,
