@@ -122,7 +122,7 @@ function gadget:GameFrame(frame)
     
     -- list all covered units
     -- watch newly covered units, and slow them
-    for i=1,#watchedCenters do
+    for i=1,#watchedCenters do    
         local c = watchedCenters[i]
         local units = Spring.GetUnitsInCylinder(c.x, c.z, radius)
         for i=1,#units do
@@ -155,6 +155,9 @@ function gadget:GameFrame(frame)
             if TESTING_MODE then Spring.Echo("Removing center at ", c.x, c.z) end
             table.remove(watchedCenters,i)
         else
+			if frame-c.f %30 == 0 then
+				Spring.SpawnCEG("grassfield", c.x, Spring.GetGroundHeight(c.x,c.z), c.z, 0, 0, 0, 0)
+			end
             i = i + 1
         end
     end
