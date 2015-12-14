@@ -46,6 +46,13 @@ local Mushroom = Unit:New {
 	collisionVolumeType       =  "sphere",
 	
 	idleAutoHeal = 0,
+	script		 	= "UnitBase.Lua",
+	customparams = {  
+		basepiece	= "Trunk",
+		moveanim	= "headers/bipedal_mushroom_movement.lua", 
+		deathanim   = "headers/death/bipedfallover.lua",
+		centeraim	= "head",
+	},
 
 }
 
@@ -53,6 +60,8 @@ local NormalMushroom = Mushroom:New {
 	name                = "Normal Mushroom",
 	maxDamage			= 600,
 	MaxVelocity 		= 90,
+	FootprintX = 3,
+    FootprintZ = 3,
 	weapons = {
 		[1]  = {
 		name               = "normalmushroomspray",
@@ -77,6 +86,8 @@ local BigMushroom = Mushroom:New {
 	name                = "Big Mushroom",
 	maxDamage			= 2000,
 	MaxVelocity 		= 20,
+	FootprintX = 4,
+    FootprintZ = 4,
 	weapons = {
 		[1]  = {
 		name               = "bigmushroomspray",
@@ -89,6 +100,8 @@ local MushroomCluster = Mushroom:New {
 	maxDamage			= 1000,
 	MaxVelocity 		= 50,
 	script 				= "clustermushroom.lua",
+	FootprintX = 5,
+    FootprintZ = 5,
 	weapons = {
 		[1]  = {
 		name               = "mushroomclusterspray",
@@ -99,6 +112,9 @@ local MushroomCluster = Mushroom:New {
 local PoisonMushroom = Mushroom:New {
 	name                = "Poison Mushroom",
 	maxDamage			= 1500,
+	FootprintX = 3,
+    FootprintZ = 3,
+
 	weapons = {
 		[1]  = {
 		name               = "poisonmushroomspray",
