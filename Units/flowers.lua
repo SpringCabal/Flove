@@ -20,9 +20,6 @@ local Flower = Unit:New {
 	 customParams        = {
 		modelradius        = [[10]],
 		midposoffset       = [[0 0 0]],
-
-		terrainblock_x     = 0,
-		terrainblock_z     = 0,
 		shrubs 			   = true,
     },
 

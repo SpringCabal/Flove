@@ -4,7 +4,7 @@ local weaponDef = {
   areaOfEffect       = 2,
   beamWeapon         = true,
   craterMult         = 0,
-  duration 			 = 0.1,
+  duration 			 = 1,
   fireStarter        = 290,
   id                 = 138,
   impulseFactor      = 0,
@@ -13,7 +13,7 @@ local weaponDef = {
   minIntensity       = 1,
   name               = "shroombarf",
   noSelfDamage       = true,
-  range              = 400,
+  range              = 600,
   reloadtime         = 3,
   renderType         = 0,
   rgbColor           = "1 1 0.4",
@@ -32,6 +32,8 @@ local weaponDef = {
   damage = {
     default            = 30,
   },
+  collideFriendly = false,
+  collideNeutral = false,
 }
 --------------------------------------------------------------------------------
 

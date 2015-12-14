@@ -19,14 +19,11 @@ local SpireBase = Unit:New {
 
 	 customParams        = {
 		modelradius        = [[30]],
-		midposoffset       = [[0 50 0]],
-
-		terrainblock_x     = 64,
-		terrainblock_z     = 64,
+		midposoffset       = [[0 200 0]],
     },
 
 	-- Hitbox
-	collisionVolumeOffsets = "0 200 0",
+	collisionVolumeOffsets = "0 0 0",
 	collisionVolumeScales  = "200 300 200",
 	collisionVolumeType    = "cylY",
 

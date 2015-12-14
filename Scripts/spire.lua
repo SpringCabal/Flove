@@ -20,8 +20,26 @@ function ShowBranch()
 	Show(Leaves[n]);
 end
 
+function HideBranch()
+	local branches = Spring.GetUnitRulesParam(unitID, "branches") or 0
+	branches = branches - 1
+	Spring.SetUnitRulesParam(unitID, "branches", branches)
+	local n = branches + 1
+	x,y,z = Spring.GetUnitPiecePosDir(unitID,Leaves[n]);
+	Spring.SpawnCEG("dirtfling", x, y, z, 0, 0, 0, 0);
+	Hide(Leaves[n]);
+		
+	Sleep(500)
+	local x,y,z = Spring.GetUnitPiecePosDir(unitID,Branch[n]);
+	Spring.SpawnCEG("dirtfling", x, y, z, 0, 0, 0, 0);
+	Hide(Branch[n]);
+end
+
 function ShowBranchNoThread()
 	StartThread(ShowBranch);
+end
+function HideBranchNoThread()
+	StartThread(HideBranch);
 end
 
 local function GlowEye()
