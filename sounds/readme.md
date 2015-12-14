@@ -8,20 +8,20 @@ fairydustleaves.wav
 Fairy Dust (Contented sigh)(Heal my tree)
 fairy dust sigh.wav + 2 - 4
 
-Mushroom squeak (multiple octive variants)(When mushroom is damaged)
+Mushroom squeak (multiple octive variants)(When mushroom is LOVED)
 mushroomsqueak.wav + 2 - 5
 
-Hiss of sparks (like from fireworks)(Pre-explosion)
+Hiss of sparks (bombshroom fire sound)(Pre-explosion)
 hissofsparks.wav
 
 Mushroom squeaksplosion (for bomb shroom)
 mushroomsqueaksplosion-bomb.wav
 
-Mushroom Spores Dispersion
+Mushroom Spores Dispersion(mushroom shots)
 sporedispersal.wav
 
-Pillow drop dust poof
+Pillow drop dust poof (mushrooms land after cluster shroom dies)
 pillow drop dust poof.wav
 
-Not Done
+Not Done(cluster shroom)
 Cluster mushroom explode squeak
