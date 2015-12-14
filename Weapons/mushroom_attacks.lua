@@ -47,7 +47,7 @@ local NormalMushroomSpray = SporeSprayBase:New {
 local SmallMushroomSpray = SporeSprayBase:New {
 	name                    = "SmallMushroomSpray",
 	damage = {
-		default            = 30,
+		default            = 10,
 	},
 }
 local BigMushroomSpray = SporeSprayBase:New {
