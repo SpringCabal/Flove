@@ -92,6 +92,9 @@ local BigMushroom = Mushroom:New {
 	MaxVelocity 		= 20,
 	FootprintX = 4,
     FootprintZ = 4,
+	customparams = {  
+		moveanim	= "headers/bipedal_heavymushroom_movement.lua", 	
+	},
 	weapons = {
 		[1]  = {
 		name               = "bigmushroomspray",
@@ -108,7 +111,8 @@ local MushroomCluster = Mushroom:New {
 	FootprintX = 5,
     FootprintZ = 5,
 	customparams = {  
-		deathanim   = "headers/death/clustershroom.lua",	
+		deathanim   = "headers/death/clustershroom.lua",
+		moveanim	= "headers/bipedal_heavymushroom_movement.lua", 	
 	},
 	weapons = {
 		[1]  = {

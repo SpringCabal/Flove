@@ -31,7 +31,9 @@ animations = {
 			
 			Turn(modelParts["Trunk"], z_axis, math.rad(-6), math.rad(10 * speedMult))
 			
-			Move(modelParts["Trunk"], y_axis, 0.4, 0)				
+			Move(modelParts["Trunk"], y_axis, 4, 0)	
+			CustomEmitter( modelParts["leftFoot"], animData["dirt"])	
+			CustomEmitter( modelParts["rightFoot"], animData["dirt"])				
 			Sleep(500/speedMult)	
 							
 			Turn(modelParts["Trunk"], z_axis, math.rad(6), math.rad(10 * speedMult))
@@ -43,7 +45,9 @@ animations = {
 			Move(modelParts["Trunk"], y_axis, 2.5, 60)			--if(isMoving == true) then
 			Sleep(658/speedMult)
 
-			Move(modelParts["Trunk"], y_axis, 0.4, 0)					
+			Move(modelParts["Trunk"], y_axis, 4, 0)		
+			CustomEmitter( modelParts["leftFoot"], animData["dirt"])	
+			CustomEmitter( modelParts["rightFoot"], animData["dirt"])				
 			Sleep(500/speedMult)
 
 
