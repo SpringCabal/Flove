@@ -197,8 +197,6 @@ local BombMushroom = Mushroom:New {
 	}
 }
 local KingShroom = Mushroom:New {
-	-- FIXME: uses old script
-	script = "mushroom.lua",
 	name                = "King Shroom",
 	maxDamage			= 6000,
 	MaxVelocity 		= 50,
