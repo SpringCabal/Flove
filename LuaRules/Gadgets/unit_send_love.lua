@@ -67,9 +67,12 @@ function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, w
 		if not unitDef.customParams.mushroom then
 			Spring.SpawnCEG("love_heals", x, y, z, 0, 0, 0, 0)
 			if unitDef.customParams.tree then
-				local indx = math.random(1, #sighs)
-				local sigh = sighs[indx]
-				Spring.PlaySoundFile(sigh, 5, x, y, z)
+				local hp, maxhp = Spring.GetUnitHealth(unitID)
+				if hp ~= maxhp then
+					local indx = math.random(1, #sighs)
+					local sigh = sighs[indx]
+					Spring.PlaySoundFile(sigh, 10, x, y, z)
+				end
 			end
 			return -damage, 1.0
 		end
