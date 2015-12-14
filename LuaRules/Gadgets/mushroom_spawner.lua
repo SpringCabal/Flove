@@ -43,13 +43,54 @@ local spawnPoints = nil
 
 local treesTakeNoDamage = false
 
+local firstSpawnFrame = nil
+
 local waveConfig = {
 	[1] = {
-		[normalMushroomDefID] = 5,
+		units = {
+			[normalMushroomDefID] = 5,
+		},
+		time = 5,
 	},
 	[2] = {
-		[normalMushroomDefID] = 5,
-	--	[smallMushroomDefID] = 3,
+		units = {
+			[normalMushroomDefID] = 5,
+			[smallMushroomDefID] = 3,
+		},
+		time = 35,
+	},
+	[3] = {
+		units = {
+			[bigMushroomDefID] = 3,
+			[smallMushroomDefID] = 3,
+		},
+		time = 60,
+	},
+	[4] = {
+		units = {
+			[normalMushroomDefID] = 10,
+		},
+		time = 90,
+	},
+	[5] = {
+		units = {
+			[mushroomclusterDefID] = 1,
+		},
+		time = 120,
+	},
+	[6] = {
+		units = {
+			[bombmushroomDefID] = 1,
+			[normalMushroomDefID] = 3,
+		},
+		time = 150,
+	},
+	[7] = {
+		units = {
+			[poisonMushroomDefID] = 1,
+			[normalMushroomDefID] = 3,
+		},
+		time = 190,
 	},
 }
 
@@ -90,7 +131,8 @@ function gadget:Initialize()
 end
 
 function gadget:GameFrame(frame)
-	if frame < startSpawnFrame then
+	local gameFrame = frame - startSpawnFrame
+	if gameFrame < 0 then
 		return
 	end
 	if spawnPoints == nil then
@@ -102,29 +144,31 @@ function gadget:GameFrame(frame)
 			end
 		end
 	end
-	if frame % 33 * 10 == 0 then
-		SpawnWave()
+	for id, config in pairs(waveConfig) do
+		if not config.spawned and config.time*33 <= gameFrame then
+			config.spawned = true
+			Spring.Log("spawn", LOG.NOTICE, "Spawning wave " .. tostring(id))
+			SpawnWave(config.units)
+		end
 	end
-    
-    if frame%15==0 then
+	
+    if gameFrame%15==0 then
         CheckForIdleMushrooms()
     end
 end
 
 
-function SpawnWave()
+function SpawnWave(spawnUnits)
     if AI_TESTING_MODE then return end
-    
-	currentWave = currentWave + 1
-	local config = waveConfig[currentWave]
-	if config == nil then
-		return
-	end
-	Spring.Log("spawn", LOG.NOTICE, "Spawning wave " .. tostring(currentWave))
+-- 	local config = waveConfig[currentWave]
+-- 	if config == nil then
+-- 		return
+-- 	end
+	
 	
 	for _, spawnPointID in pairs(spawnPoints) do
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
-		for unitDefID, count in pairs(config) do
+		for unitDefID, count in pairs(spawnUnits) do
 			for i = 1, count do
 				SpawnUnit(unitDefID, x, z)
 			end

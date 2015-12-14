@@ -45,7 +45,7 @@ local particleList
 local useDrawList = false
 
 local DENSITY     = 10
-local SCALE       = 100
+local SCALE       = 300
 local SPEED       = 0.1
 local TEXTURE     = 'LuaRules/Gadgets/snowflake.tga'
 local WIND_SCALE  = 1.2
@@ -261,11 +261,11 @@ function CreateShader()
 
         gl_PointSize = (0.1 + gl_Vertex.w) * scale * hBoxSize / length(eyePos.xyz) * stage;
 		if (stage == 1) {
-			gl_FrontColor.rgb = vec3(1, 0.7, 0);
+			gl_FrontColor.rgb = vec3(0.0, 0.2, 0.4);
 		} else if (stage == 2) {
-			gl_FrontColor.rgb = vec3(0.4, 0.4, 1);
+			gl_FrontColor.rgb = vec3(0.5, 0.7, 1);
 		} else if (stage == 3) {
-			gl_FrontColor.rgb = vec3(1, 1, 1);
+			gl_FrontColor.rgb = vec3(0.8, 0.9, 1);
 		}
         gl_FrontColor.a   = gl_Color.a * (1. - (camPos.y - origPosY) / boxSize);
         gl_Position = gl_ProjectionMatrix * eyePos;
