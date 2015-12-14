@@ -45,7 +45,7 @@ local particleList
 local useDrawList = false
 
 local DENSITY     = 10
-local SCALE       = 100
+local SCALE       = 300
 local SPEED       = 0.1
 local TEXTURE     = 'LuaRules/Gadgets/snowflake.tga'
 local WIND_SCALE  = 1.2
