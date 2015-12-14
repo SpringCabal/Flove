@@ -25,9 +25,12 @@ local SporeSprayBase = Weapon:New{
   weaponTimer        = 2,
   weaponVelocity     = 1200,
   soundstart         = "sporedispersal.wav",
-  customparams = {
-	damagetype		= "beam",  
-  },  
+	customparams = {
+		effect1			= "greymuzzle",
+		damagetype		= "explosive",	
+		--explosion		= "sparklered",
+		animation		= "headers/weapons/shroombarf.lua",
+	},	
   damage = {
     default            = 30,
   },

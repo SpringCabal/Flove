@@ -50,8 +50,10 @@ local Mushroom = Unit:New {
 	customparams = {  
 		basepiece	= "Trunk",
 		moveanim	= "headers/bipedal_mushroom_movement.lua", 
+		mountanimdefaultto	 = "headers/weaponmounts/shroommouth.lua",
 		--deathanim   = "headers/death/bipedfallover.lua",
-		centeraim	= "head",
+		centeraim	= "Trunk",
+		
 	},
 
 }
@@ -66,6 +68,8 @@ local NormalMushroom = Mushroom:New {
 		[1]  = {
 		name               = "normalmushroomspray",
 		onlyTargetCategory = "TREE",
+		mainDir				= "0 0 1",
+		maxAngleDif			= 210,	
 		},
 	},
 }
@@ -79,6 +83,8 @@ local SmallMushroom = Mushroom:New {
 		[1]  = {
 		name               = "smallmushroomspray",
 		onlyTargetCategory = "TREE",
+		mainDir				= "0 0 1",
+		maxAngleDif			= 210,	
 		},
 	},
 }
@@ -92,6 +98,8 @@ local BigMushroom = Mushroom:New {
 		[1]  = {
 		name               = "bigmushroomspray",
 		onlyTargetCategory = "TREE",
+		mainDir				= "0 0 1",
+		maxAngleDif			= 210,	
 		},
 	},
 }
@@ -106,6 +114,8 @@ local MushroomCluster = Mushroom:New {
 		[1]  = {
 		name               = "mushroomclusterspray",
 		onlyTargetCategory = "TREE",
+		mainDir				= "0 0 1",
+		maxAngleDif			= 210,	
 		},
 	},
 }
@@ -119,6 +129,8 @@ local PoisonMushroom = Mushroom:New {
 		[1]  = {
 		name               = "poisonmushroomspray",
 		onlyTargetCategory = "TREE",
+		mainDir				= "0 0 1",
+		maxAngleDif			= 210,	
 		},
 	},
 }

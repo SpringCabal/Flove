@@ -80,7 +80,6 @@ animations = {
 		
 		for k,v in pairs(partsList) do
 			if pieces[v] then
-				Spring.Echo("part", v, piece(v))
 				modelParts[v]	= piece (v)
 			end
 		end
