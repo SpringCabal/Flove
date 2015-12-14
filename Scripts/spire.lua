@@ -4,7 +4,11 @@ local Eye = piece('Eye');
 local Leaves={};
 local Branch={};
 
-local function ShowBranch(n)
+function ShowBranch()
+	local branches = Spring.GetUnitRulesParam(unitID, "branches") or 0
+	branches = branches + 1
+	Spring.SetUnitRulesParam(unitID, "branches", branches)
+	local n = branches
 	local x,y,z = Spring.GetUnitPiecePosDir(unitID,Branch[n]);
 	Spring.SpawnCEG("dirtfling", x, y, z, 0, 0, 0, 0);
 	Show(Branch[n]);
@@ -16,16 +20,24 @@ local function ShowBranch(n)
 	Show(Leaves[n]);
 end
 
+function ShowBranchNoThread()
+	StartThread(ShowBranch);
+end
+
 local function GlowEye()
 	SetSignalMask(1);
 	while true do
 		x,y,z = Spring.GetUnitPiecePosDir(unitID,Eye);
-		Spring.SpawnCEG("mordor", x, y, z, 0, 0, 0, 0);
+		local power = Spring.GetGameRulesParam("power") or 0
+		local mordorLevel = math.min(8, math.floor(1 + math.sqrt(power) / 5))
+		local mordorStr = "mordor" .. tostring(mordorLevel)
+		Spring.SpawnCEG(mordorStr, x, y, z, 0, 0, 0, 0);
 		Sleep(300);
 	end
 end
 
 function script.Create()
+	Spring.SetGameRulesParam("power", 0)
 	for i=1,9 do
 		Leaves[i] = piece('Leaves'..i);
 		Branch[i] = piece('Branch'..i);
@@ -37,10 +49,11 @@ function script.Create()
 	
 	Sleep(1000);
 	
-	for i=1,9 do
-		ShowBranch(i);
-		Sleep(1000);
-	end
+	Spring.SetUnitRulesParam(unitID, "branches", 0)
+-- 	for i=1,2 do
+-- 		ShowBranch(i);
+-- 		Sleep(1000);
+-- 	end
 end
 
 function script.Killed(recentDamage, maxHealth)

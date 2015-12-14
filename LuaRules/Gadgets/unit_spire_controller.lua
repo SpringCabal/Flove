@@ -76,7 +76,13 @@ local function FireZap(x, y, z)
 	local zapDef = WeaponDefNames.zap
 	
 	local frame = Spring.GetGameFrame()
-	if zapFiredFrame == nil or (frame - zapFiredFrame) >= zapDef.reload*33 then
+	
+	local reloadTime = zapDef.reload * 33
+	local power = Spring.GetGameRulesParam("power") or 0
+	local mordorLevel = math.min(8, math.floor(1 + math.sqrt(power) / 5))
+	reloadTime = reloadTime / (1 + mordorLevel * mordorLevel / 16)
+	
+	if zapFiredFrame == nil or (frame - zapFiredFrame) >= reloadTime then
 		zapFiredFrame = frame
 	else
 		return
@@ -149,7 +155,6 @@ end
 function gadget:UnitCreated(unitID, unitDefID, unitTeam)
 	if unitDefID == spireDefID then
 		spireID = unitID
-		Spring.GiveOrderToUnit(unitID, CMD.IDLEMODE, {0}, {}) --no land
 	end
 end
 
@@ -158,7 +163,25 @@ function gadget:GameStart()
 end
 
 function gadget:GameFrame(n)
-	if not spireID or not targetx then
+	if not spireID then
+		return
+	end
+	
+	-- Recalculate mordor level and show/hide branches
+	local power = Spring.GetGameRulesParam("power") or 0
+	-- FIXME: in this case we're allowing up to 9 growths, even though the mechanics only allow for 7
+	local mordorLevel = math.min(10, math.floor(1 + math.sqrt(power) / 5))
+	local branches = Spring.GetUnitRulesParam(spireID, "branches") or 0
+	local env = Spring.UnitScript.GetScriptEnv(spireID)
+	local desiredBranches = mordorLevel - 2
+	for i = branches, desiredBranches do
+		Spring.UnitScript.CallAsUnit(spireID, env.ShowBranchNoThread)
+	end
+	for i = branches-1, desiredBranches+1, -1 do
+ 		Spring.UnitScript.CallAsUnit(spireID, env.HideBranchNoThread)
+	end
+	
+	if not targetx then
 		return
 	end
 	
@@ -169,7 +192,6 @@ function gadget:GameFrame(n)
 	local pitch = math.atan2(dy, dist)
 	
 	Spring.SetUnitCOBValue(spireID, COB.HEADING, newHeading)
-	local env = Spring.UnitScript.GetScriptEnv(spireID)
 	Spring.UnitScript.CallAsUnit(spireID, env.SetPitch, pitch)
 end
 

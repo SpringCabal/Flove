@@ -22,18 +22,21 @@ local treeConfiguration = {
 		wisps = 3,
 		minWispCreationSpeed = 33 * 2,
 		maxWispCreationSpeed = 33 * 3,
+		power = 3,
 	},
 	treelevel2 = {
 		level = 2,
 		wisps = 7,
 		minWispCreationSpeed = 33 * 1.5,
 		maxWispCreationSpeed = 33 * 2.5,
+		power = 15,
 	},
 	treelevel3 = {
 		level = 3,
 		wisps = 12,
 		minWispCreationSpeed = 33 * 1,
 		maxWispCreationSpeed = 33 * 2,
+		power = 50,
 	}
 }
 local wispConfiguration = {
@@ -45,32 +48,39 @@ local UPGRADE_PROGRESS = 3
 
 local trees = {}
 
-local function TreeCreated(unitID)
+local function GetTreeConfig(unitID)
 	local unitDefID = Spring.GetUnitDefID(unitID)
 	local unitDefName = UnitDefs[unitDefID].name
-	local config = treeConfiguration[unitDefName]
-	if config == nil then
-		Spring.Log("tree", LOG.ERROR, "No config for tree of type: " .. tostring(unitDefName))
-		return
-	end
-	Spring.Log("tree", LOG.NOTICE, "Created tree of type: " .. tostring(unitDefName))
+	return treeConfiguration[unitDefName]
+end
+
+local function TreeCreated(unitID)
+	local config = GetTreeConfig(unitID)
 	local tree = {}
 	trees[unitID] = tree
 	
 	tree.wisps = {}
 	tree.createWispFrame = math.random(config.minWispCreationSpeed, config.maxWispCreationSpeed) + Spring.GetGameFrame()
 	Spring.SetUnitRulesParam(unitID, "upgradeProgress", 0)
+	
+	local power = Spring.GetGameRulesParam("power") or 0
+	power = power + config.power
+	Spring.SetGameRulesParam("power", power)
 end
 
 local function TreeDestroyed(unitID)
 	local tree = trees[unitID]
+	local config = GetTreeConfig(unitID)
+	
+	local power = Spring.GetGameRulesParam("power") or 0
+	power = power - config.power
+	Spring.SetGameRulesParam("power", power)
+	
 	trees[unitID] = nil
 end
 
 local function UpgradeTree(unitID)
-	local unitDefID = Spring.GetUnitDefID(unitID)
-	local unitDefName = UnitDefs[unitDefID].name
-	local config = treeConfiguration[unitDefName]
+	local config = GetTreeConfig(unitID)
 	local level = config.level + 1
 	local newConfig, newDefName
 	for defName, config in pairs(treeConfiguration) do
@@ -92,9 +102,7 @@ end
 
 local function AddUpgradeProgress(unitID)
 	local tree = trees[unitID]
-	local unitDefID = Spring.GetUnitDefID(unitID)
-	local unitDefName = UnitDefs[unitDefID].name
-	local config = treeConfiguration[unitDefName]
+	local config = GetTreeConfig(unitID)
 	if config.level == 3 then
 		return false
 	end
@@ -130,9 +138,7 @@ local function UpdateWisps()
 			end
 		end
 		
-		local unitDefID = Spring.GetUnitDefID(unitID)
-		local unitDefName = UnitDefs[unitDefID].name
-		local config = treeConfiguration[unitDefName]
+		local config = GetTreeConfig(unitID)
 		if tree.createWispFrame == frame and #tree.wisps < config.wisps then
 			tree.createWispFrame = math.random(config.minWispCreationSpeed, config.maxWispCreationSpeed) + frame
 			table.insert(wisps, { creationFrame = frame, stageFrame = frame, stage = 1})
@@ -144,16 +150,14 @@ local function UpdateWisps()
 end
 
 function gadget:UnitCreated(unitID, unitDefID, ...)
-	local unitDefName = UnitDefs[unitDefID].name
-	local config = treeConfiguration[unitDefName]
+	local config = GetTreeConfig(unitID)
 	if config ~= nil then
 		TreeCreated(unitID)
 	end
 end
 
 function gadget:UnitDestroyed(unitID, unitDefID, ...)
-	local unitDefName = UnitDefs[unitDefID].name
-	local config = treeConfiguration[unitDefName]
+	local config = GetTreeConfig(unitID)
 	if config ~= nil then
 		TreeDestroyed(unitID)
 	end
