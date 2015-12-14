@@ -30,6 +30,7 @@ function widget:Initialize()
 	for k, v in pairs(s) do
 		print(k .. " = " .. v .. ",")
 	end
+	ResetCamera()
 end
 
 function ResetCamera()	
