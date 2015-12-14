@@ -45,7 +45,7 @@ local particleList
 local useDrawList = false
 
 local DENSITY     = 10
-local SCALE       = 300
+local SCALE       = 600
 local SPEED       = 0.1
 local TEXTURE     = 'LuaRules/Gadgets/wisp1.png'
 local WIND_SCALE  = 1.2

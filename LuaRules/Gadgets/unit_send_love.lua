@@ -39,7 +39,11 @@ function gadget:ProjectileCreated(proID, proOwnerID, weaponDefID)
 end
 
 function gadget:ProjectileDestroyed(proID)
-	Spring.PlaySoundFile("sounds/fairy dust.wav", 2, x, y, z)
+	if watchedProjectiles[proID]  then 
+		local px,py,pz = Spring.GetProjectilePosition(proID)
+		Spring.PlaySoundFile("sounds/fairy dust.wav", 5, px,py,pz)
+		watchedProjectiles[proID] = nil
+	end
 end
 
 function gadget:GameFrame(frame)
@@ -53,6 +57,7 @@ function gadget:GameFrame(frame)
 end
 
 local sighs = { "sounds/fairy dust sigh.wav", "sounds/fairy dust sigh2.wav", "sounds/fairy dust sigh3.wav", "sounds/fairy dust sigh4.wav"}
+local squeaks = { "sounds/mushroomsqueak.wav", "sounds/mushroomsqueak2.wav", "sounds/mushroomsqueak3.wav", "sounds/mushroomsqueak4.wav", "sounds/mushroomsqueak5.wav" }
 function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
 
 	if weaponDefID == zapWDID then
@@ -69,6 +74,9 @@ function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, w
 			return -damage, 1.0
 		end
 		
+		local indx = math.random(1, #squeaks)
+		local squeak = squeaks[indx]
+		Spring.PlaySoundFile(squeak, 3, x, y, z)
 		Spring.SpawnCEG("love_hurts", x, y, z, 0, 0, 0, 0)
 	end
 	
