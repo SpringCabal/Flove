@@ -31,11 +31,15 @@ local texts = {
 But war raged in neighbouring kingdoms, displacing hundreds of ordinary mushrooms from their broken homes. ]],
 
 -- Spawn mushrooms for players to defend
-[[Repel borders! Push back the oncoming mushrooms, or they'll take the soil and sunlight from our native fauna!]],
+[[Repel borders! Push back the oncoming mushrooms, or they'll take the soil and sunlight from our native fauna!
+
+]] .. "\255\0\128\128Hint: Left click on mushrooms to send love.\b",
 
 -- Damage trees and have player heal them up
 [[They reject our love and kindness, but the trees do not... 
-Mend the wounds inflicted by the wretched fungi and ease their suffering!]],
+Mend the wounds inflicted by the wretched fungi and ease their suffering!
+
+]] .. "\255\0\128\128Hint: Left click on trees to heal them.\b",
 
 -- Spawn a wave of enemies
 [[Blasted, another wave of enemies approaches. Protect the forest, purify the invaders!]],
@@ -43,12 +47,16 @@ Mend the wounds inflicted by the wretched fungi and ease their suffering!]],
 -- Make the player upgrade a tree
 [[This seems to be the end of them for now. We must bolster our defences for what is to come.
 
-Make our little garden stronger]],
+Make our little garden stronger
+
+]] .. "\255\0\128\128Hint: Right click on trees to upgrade them.\b",
 
 -- Waves start coming
 [[It's a beautiful sight indeed. But will it be enough for what is to come? Take good care of the fauna. Nurture it and it will grow.
 
-Also, beware of suicide bombing mushrooms.]],
+Also, beware of suicide bombing mushrooms.
+
+]] .. "\255\0\128\128Hint: Right click on mushrooms to create flower fields that slows them.\b",
 
 -- Mushroom king appears...?
 
