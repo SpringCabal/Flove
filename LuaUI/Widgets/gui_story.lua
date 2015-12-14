@@ -174,7 +174,7 @@ function CreateGUI()
     }
 	
 	
-    next_button = Chili.Button:New{
+    skip_button = Chili.Button:New{
         parent = mission_name_window,
         y = 0,
         right = 80,
