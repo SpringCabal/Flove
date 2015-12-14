@@ -17,26 +17,36 @@ function widget:GetInfo()
 	}
 end
 
+local CONTROL_CAMERA = true
+
 function widget:Initialize()
-    local devMode = (tonumber(Spring.GetModOptions().play_mode) or 0) == 0
-    if devMode then
+--     local devMode = (tonumber(Spring.GetModOptions().play_mode) or 0) == 0
+    if not CONTROL_CAMERA then
         widgetHandler:RemoveWidget(widget)
         return
     end
+	
+	s = Spring.GetCameraState()
+	for k, v in pairs(s) do
+		print(k .. " = " .. v .. ",")
+	end
+end
 
+function ResetCamera()	
     s = {
-        px = 3150,
-        py = 102.34146118164,
-        pz = 3480,
-        mode = 1,
-        flipped = -1,
-        dy = -0.90149933099747,
-        dz = -0.43356931209564,
-        fov = 45,
-        height = 3300,
-        angle = 0.46399998664856,
-        dx = 0,
-        name = "spring",
+		dist = 2384.8950195312,
+		px = 4742.3002929688,
+		py = 1380.3073730469,
+		pz = 5785.755859375,
+		rz = 0,
+		dx = 0,
+		dy = -0.72166359424591,
+		dz = -0.69224387407303,
+		fov = 45,
+		ry = 0,
+		mode = 2,
+		rx = 2.3769989013672,
+		name = "spring",
     }
     Spring.SetCameraState(s, 0)
 end
@@ -48,3 +58,5 @@ function widget:MouseWheel(up,value)
     -- uncomment this to disable zoom/panning
     --return true
 end
+
+WG.ResetCamera = ResetCamera

@@ -208,18 +208,21 @@ end
 -------------------------------------------------------------------
 
 function HandleLuaMessage(msg)
+	if not spireID then
+		return
+	end
 	local msg_table = explode('|', msg)
 	if msg_table[1] == 'zap' then --LMB
 		local x = tonumber(msg_table[2])
 		local y = tonumber(msg_table[3])
 		local z = tonumber(msg_table[4])	
-        
-		FireZap(x, y, z)        
+
+		FireZap(x, y, z)
 	elseif msg_table[1] == 'field_of_flowers' then -- RMB
 		local x = tonumber(msg_table[2])
 		local y = tonumber(msg_table[3])
 		local z = tonumber(msg_table[4])
-        
+
 		FireFlowerShot(x, y, z)
 	end
 end

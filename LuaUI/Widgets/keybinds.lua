@@ -67,9 +67,9 @@ function widget:Initialize()
     }
     
     mouseText = {
-        purple .. "Left click: " .. white .. "Zap/Upgrade tree",
-        purple .. "Right click : " .. white .. "Field of Flowers/Burn wisps",
-        purple .. "Scroll Wheel : " .. white .. "Zoom",
+        purple .. "Left click: " .. white .. "Love",
+        purple .. "Right click : " .. white .. "Flowers",
+        --purple .. "Scroll Wheel : " .. white .. "Zoom",
         purple .. "Ctrl+Q : " .. white .. "Quit",
     }
 

@@ -74,7 +74,7 @@ local grass = { grass1DefID, grass2DefID, grass3DefID, grass4DefID, grass5DefID 
 local spireDefID = UnitDefNames["spire"].id
 local spireID = nil
 
-local startSpawnFrame = 100
+local startSpawnFrame
 local firstSpawnFrame = nil
 local spawnPoints = nil
 local currentWave = 1
@@ -103,18 +103,6 @@ local function SpawnUnit(unitDefID, x, z, noRotate)
 	return unitID
 end
 
-local function CleanUnits()
-	for _, unitID in ipairs(Spring.GetAllUnits()) do
-		local unitDefID = Spring.GetUnitDefID(unitID)
-		local unitDef = UnitDefs[unitDefID]
-		if unitDef.customParams.tree or unitDef.customParams.shrubs then
-			Spring.DestroyUnit(unitID, false, false)
-		else
-			RecordUnitCreatedFrame(unitID, unitDefID)
-		end
-	end
-end
-
 function RecordUnitCreatedFrame(unitID, unitDefID)
 	local frame = Spring.GetGameFrame()
 	Spring.SetUnitRulesParam(unitID, "createdFrame", frame, {public=true})
@@ -133,18 +121,16 @@ end
 --------------------------------------------------------------------------------
 
 function gadget:Initialize()
-	CleanUnits()
-	startSpawnFrame = 10 + Spring.GetGameFrame()
     nextTreeSpawnTime = NewTreeSpawnTime()
 end
 
+local _loadFrame
 function gadget:GameFrame(frame)
-	if frame < startSpawnFrame then
-		return
+	-- spawn base wave
+	if _loadFrame == nil then
+		_loadFrame = frame + 3
 	end
-    
-    -- spawn base wave
-	if spawnPoints == nil then
+	if _loadFrame == frame and spawnPoints == nil then
 		spawnPoints = {}
 		local basePoints = {}
 		spawnPoints.base = basePoints
@@ -156,7 +142,14 @@ function gadget:GameFrame(frame)
 		end
 		SpawnWave(spawnPoints.base)
 	end
-    
+	
+	local story = Spring.GetGameRulesParam("story")
+	if story ~= 0 then
+		return
+	elseif startSpawnFrame == nil then
+		startSpawnFrame = 10 + Spring.GetGameFrame()
+	end
+
     -- gradually spawn new trees
     if frame >= nextTreeSpawnTime then
         nextTreeSpawnTime = NewTreeSpawnTime()
@@ -206,6 +199,7 @@ end
 
 function SpawnWave(spawns)
 	for _, spawnPointID in pairs(spawns) do
+		--Spring.Echo("SPAWN")
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
 		SpawnUnit(treeLevel1DefID, x, z)
 		SpawnGrass(x, z, MIN_GRASS, MAX_GRASS, GRASS_SPAWN_RADIUS)
@@ -358,5 +352,6 @@ function SpawnFlowers(x, z, inverseDensity, radius)
 end
 
 GG.SpawnFlowers = SpawnFlowers
+GG.SpawnTree = SpawnTree
 
 end
