@@ -16,10 +16,35 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- SYNCED ONLY
+-- SYNCED ONLY (only suppress trigger drawing)
 if (not gadgetHandler:IsSyncedCode()) then
-   return false
+
+function IsEffect(unitID)
+	local unitDefID = Spring.GetUnitDefID(unitID)
+	local unitDef = UnitDefs[unitDefID]
+	return unitDef.customParams.effect
 end
+
+function gadget:Initialize(unitID)
+	for _, unitID in ipairs(Spring.GetAllUnits()) do
+		local unitDefID = Spring.GetUnitDefID(unitID)
+		gadget:UnitCreated(unitID, unitDefID)
+	end
+end
+
+function gadget:UnitCreated(unitID)
+	if IsEffect(unitID) then
+		Spring.UnitRendering.SetUnitLuaDraw(unitID, true)
+	end
+end
+	
+function gadget:DrawUnit(unitID)
+	if IsEffect(unitID) then
+		return true
+	end
+end
+	
+else
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -334,4 +359,4 @@ end
 
 GG.SpawnFlowers = SpawnFlowers
 
-
+end
