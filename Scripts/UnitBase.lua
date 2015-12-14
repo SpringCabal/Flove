@@ -29,7 +29,7 @@ Spring.Echo(myUnitDef.customParams, myUnitDef.customParams.basepiece)
 
 if myUnitDef.customParams.basepiece then
 	--Spring.Echo("base",	myUnitDef.customParams.basepiece)
-	base = 	piece myUnitDef.customParams.basepiece
+	base = 	piece (myUnitDef.customParams.basepiece)
 else
 	base = piece 'base'
 end
@@ -291,7 +291,7 @@ function script.QueryWeapon(weaponID)
 	if weaponQueryPiece[weaponID] then
 		return weaponQueryPiece[weaponID]
 	else
-		Spring.Echo(base)
+		--Spring.Echo(base)
 		return base
 	end
 end
@@ -401,7 +401,7 @@ end
 function script.Killed(recentDamage, maxHealth)
 	local severity = 1 
 	
-	Spring.Echo("Killed!")
+
 	if	type(deathAnimation) == "function" then
 		deathAnimation(deathAnimationPieces, deathData, recentDamage, maxHealth)
 	else
@@ -409,7 +409,6 @@ function script.Killed(recentDamage, maxHealth)
 		--Spring.SpawnCEG("bigbulletimpact",x,y,z)
 		
 		Sleep (10)	
-		Spring.Echo("I DIED!")
 		if (severity <= 99) then
 			return 3
 		else
