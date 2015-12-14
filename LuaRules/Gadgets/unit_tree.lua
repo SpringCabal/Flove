@@ -86,9 +86,9 @@ local function UpgradeTree(unitID)
 	local teamID = Spring.GetUnitTeam(unitID)
 	local dx, dy, dz = Spring.GetUnitDirection(unitID)
 	Spring.DestroyUnit(unitID, false, true)
-	Spring.CreateUnit(newDefName, x, y, z, 0, teamID)
+	local newUnitID = Spring.CreateUnit(newDefName, x, y, z, 0, teamID)
 	Spring.PlaySoundFile("sounds/fairydustleaves.wav", 50, x, y, z)
-	Spring.SetUnitDirection(dx, dy, dz)
+	Spring.SetUnitDirection(newUnitID, dx, dy, dz)
 end
 
 local function AddUpgradeProgress(unitID)
