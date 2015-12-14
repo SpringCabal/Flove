@@ -1,62 +1,38 @@
 Done
 
 Fairy dust for flowers (birds?)(create flower field)
-
-fairy dust birds.wav
+- fairy dust birds.wav
 
 
 Fairy Dust (leaves?)(Sparkles)(Tree upgrade)
-
-fairydustleaves.wav
+- fairydustleaves.wav
 
 
 Fairy Dust (Contented sigh)(Heal my tree)
+- fairy dust sigh.wav + 2 - 4
 
-fairy dust sigh.wav + 2 - 4
-
-<<<<<<< HEAD
 Mushroom squeak (multiple octive variants)(When mushroom is LOVED)
-mushroomsqueak.wav + 2 - 5
+- mushroomsqueak.wav + 2 - 5
 
 Hiss of sparks (bombshroom fire sound)(Pre-explosion)
-=======
+-hissofsparks.wav
 
 Mushroom squeak (multiple octive variants)(When mushroom is damaged)
-
-mushroomsqueak.wav + 2 - 5
+- mushroomsqueak.wav + 2 - 5
 
 
 Hiss of sparks (like from fireworks)(Pre-explosion)
-
->>>>>>> f2aaece00e2613d0e1d03d249db38aadec417c57
-hissofsparks.wav
+- hissofsparks.wav
 
 
-Mushroom squeaksplosion (for bomb shroom)
+Mushroom squeaksplosion (for bomb shroom(fire sound))
+- mushroomsqueaksplosion-bomb.wav
 
-mushroomsqueaksplosion-bomb.wav
-
-<<<<<<< HEAD
 Mushroom Spores Dispersion(mushroom shots)
-sporedispersal.wav
+- sporedispersal.wav
 
 Pillow drop dust poof (mushrooms land after cluster shroom dies)
-pillow drop dust poof.wav
+- pillow drop dust poof.wav
 
-Not Done(cluster shroom)
-=======
-
-Mushroom Spores Dispersion
-
-sporedispersal.wav
-
-
-Pillow drop dust poof
-
-pillow drop dust poof.wav
-
-
-Not Done
-
->>>>>>> f2aaece00e2613d0e1d03d249db38aadec417c57
-Cluster mushroom explode squeak
+Not Done(cluster shroom death explode)
+- Cluster mushroom explode squeak
