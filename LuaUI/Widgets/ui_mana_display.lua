@@ -13,7 +13,7 @@ end
 
 local Chili, Screen0
 local textBox
-local manaColour = "\255\204\0\99"
+local manaColour = "\255\255\0\99"
 local nMana = 0
 
 function resizeUI(vsx,vsy)
@@ -32,8 +32,8 @@ function widget:Initialize()
     
     textBox = Chili.TextBox:New{
         parent = Screen0,
-        x = 10,
-        y = Screen0.height-175,
+        x = "45%",
+        bottom = 20,
         width = 200,
         text = "Mana: " .. manaColour .. "0",        
         font = {
