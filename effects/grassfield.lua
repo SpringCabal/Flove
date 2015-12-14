@@ -65,5 +65,24 @@ return {
         texture            = [[largelove]],
       },
     },
-  }
+  },
+  ["grassfield_aura"] = {
+    groundflash = {
+      air                = true,
+      alwaysvisible      = true,
+      circlealpha        = 0.6,
+      circlegrowth       = 12,
+      flashalpha         = 0.5,
+      flashsize          = 150,
+      ground             = true,
+      ttl                = 40,
+      water              = true, 
+	  underwater         = true,
+      color = {
+        [1]  = 0,
+        [2]  = 1,
+        [3]  = 0.2,
+      },
+    },
+   }
 }

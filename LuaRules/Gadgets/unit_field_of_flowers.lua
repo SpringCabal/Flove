@@ -125,6 +125,11 @@ function gadget:GameFrame(frame)
     for i=1,#watchedCenters do    
         local c = watchedCenters[i]
         local units = Spring.GetUnitsInCylinder(c.x, c.z, radius)
+        
+		if (frame-c.f) % 30 == 0 then
+			Spring.SpawnCEG("grassfield_aura", c.x, Spring.GetGroundHeight(c.x,c.z), c.z, 0, 0, 0, 0)
+		end
+		
         for i=1,#units do
             local uID = units[i]
             coveredUnits[uID] = true   
@@ -149,15 +154,12 @@ function gadget:GameFrame(frame)
     -- remove no longer covered centers
     local i = 1
     while i<=#watchedCenters do
-        local c = watchedCenters[i]
+        local c = watchedCenters[i]		
         local inForce = (c.f+duration) > frame
         if not inForce then
             if TESTING_MODE then Spring.Echo("Removing center at ", c.x, c.z) end
             table.remove(watchedCenters,i)
         else
-			if frame-c.f %30 == 0 then
-				Spring.SpawnCEG("grassfield", c.x, Spring.GetGroundHeight(c.x,c.z), c.z, 0, 0, 0, 0)
-			end
             i = i + 1
         end
     end
