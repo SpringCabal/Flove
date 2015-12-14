@@ -50,6 +50,10 @@ function gadget:ProjectileCreated(proID, proOwnerID, weaponDefID)
     end
 end
 
+local function DistanceCompare(a, b)
+	return a.length < b.length
+end
+
 function gadget:ProjectileDestroyed(proID)
     if watchedProjectiles[proID] then
     
@@ -62,16 +66,26 @@ function gadget:ProjectileDestroyed(proID)
 			local upgraded = false
             -- upgrades
 			local units = Spring.GetUnitsInCylinder(px, pz, radius)
-			for i=1,#units do
+			
+			local trees = {}
+			for i=1, #units do
 				local uID = units[i]
 				local uDID = Spring.GetUnitDefID(uID)
 				local uDef = UnitDefs[uDID]
 				if uDef.customParams.tree then
-					if GG.AddUpgradeProgress(uID) then
-						Spring.PlaySoundFile("sounds/fairydustleaves.wav", 50, px, py, pz)
-						upgraded = true
-						break
-					end
+					local x, y, z = Spring.GetUnitPosition(uID)
+					local dx, dy, dz = x - px, y - py, z - pz
+					local d = dx * dx + dy * dy + dz * dz
+					table.insert(trees, {uID = uID, length = d})
+				end
+			end
+			table.sort(trees, DistanceCompare)
+			for i = 1, #trees do
+				local uID = trees[i].uID
+				if GG.AddUpgradeProgress(uID) then
+					Spring.PlaySoundFile("sounds/fairydustleaves.wav", 50, px, py, pz)
+					upgraded = true
+					break
 				end
 			end
 			
