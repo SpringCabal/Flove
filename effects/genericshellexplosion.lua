@@ -198,6 +198,36 @@ return {
         texture            = [[flare]],
       },
     },
+    
+	sparks = {
+      air                = true,
+      class              = [[CSimpleParticleSystem]],
+      count              = 4,
+      ground             = true,
+      water              = true, 
+	  underwater         = true,
+      properties = {
+        airdrag            = 0.7,
+        alwaysvisible      = true,
+        colormap           = [[1 1 0 0.15	0 0 0 0.0]], 
+        directional        = true,
+        emitrot            = 0,
+        emitrotspread      = 180,
+        emitvector         = [[1, 0, 0]],
+        gravity            = [[0, -4, 0]],
+        numparticles       = 20,
+        particlelife       = [[20]], -- same as groundflash ttl
+        particlelifespread = 0,
+        particlesize       = 10, -- groundflash flashsize 25 = 1, so if flashsize is 200, particlesize here would be 8
+        particlesizespread = 1,
+        particlespeed      = 50,
+        particlespeedspread = 25,
+        pos                = [[r20 r-20, -50, r20 r-20]],
+        sizegrowth         = 5, -- same as groundflash circlegrowth
+        sizemod            = 0.9,
+        texture            = [[flare]],
+      },
+    },
 	
 	-- put this next to groundflash
 	explosionwave = {
