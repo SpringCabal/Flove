@@ -59,7 +59,7 @@ local waveConfig = {
 	},
 	[2] = {
 		units = {
-			[normalMushroomDefID] = 5,
+			[normalMushroomDefID] = 3,
 			[smallMushroomDefID] = 3,
 		},
 		time = 5,
@@ -69,26 +69,26 @@ local waveConfig = {
 			[bigMushroomDefID] = 1,
 			[smallMushroomDefID] = 3,
 		},
-		time = 30,
+		time = 50,
 	},
 	[4] = {
 		units = {
 			[normalMushroomDefID] = 10,
 		},
-		time = 60,
+		time = 100,
 	},
 	[5] = {
 		units = {
 			[mushroomclusterDefID] = 1,
 		},
-		time = 90,
+		time = 150,
 	},
 	[6] = {
 		units = {
 			[bombmushroomDefID] = 1,
 			[normalMushroomDefID] = 3,
 		},
-		time = 120,
+		time = 200,
 	},
 	[7] = {
 		units = {
@@ -491,6 +491,13 @@ function HandleLuaMessage(msg)
 		if stage ~= 3 and stage ~= 4 and stage ~= 5 and stage ~= 6 then
 			StoryStage(stage)
 		end
+	elseif msg_table[1] == 'skip_tutorial' then
+		StoryStage(7)
+		GG.SpawnTree()
+		GG.SpawnTree()
+		GG.SpawnTree()
+		Spring.SetGameRulesParam("mana", 30)
+		waveConfig[1].spawned = true -- make the first wave spawned (its used in the tutorial)
 	end
 end
 

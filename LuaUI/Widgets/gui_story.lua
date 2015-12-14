@@ -58,6 +58,7 @@ Also, beware of suicide bombing mushrooms.]],
 
 local currentText = 1
 local currentIndex = 1
+local skip_tutorial = false
 
 local closeTexts = {
 	[2] = true,
@@ -88,6 +89,19 @@ function NextClose()
 		next_button:SetCaption(grey .. "Continue")
 	else
 		next_button:SetCaption(grey .. "Next")
+	end
+end
+
+function SkipTutorial()
+	local _, _, paused = Spring.GetGameSpeed()
+	if paused then
+		Spring.Echo(paused)
+		Spring.SendCommands("pause")
+	end
+	Spring.SendLuaRulesMsg('skip_tutorial')
+	skip_tutorial = true
+	if not window.hidden then
+		window:Hide()
 	end
 end
 
@@ -159,10 +173,23 @@ function CreateGUI()
         onclick = {NextClose},
     }
 	
+	
+    next_button = Chili.Button:New{
+        parent = mission_name_window,
+        y = 0,
+        right = 80,
+        height = 33,
+        width = 100,
+        caption = grey .. "Skip Tutorial",
+        onclick = {SkipTutorial},
+    }
 
 end
 
 function widget:Update()
+	if skip_tutorial then
+		return
+	end
 	local time = os.clock()
 	if time < 5 then
 		return
