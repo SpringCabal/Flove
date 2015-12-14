@@ -90,7 +90,7 @@ local unitMaterials = {
    treelevel1 = "tree",
    treelevel2 = "tree",
    treelevel3 = "tree",
-   
+--[[   
    grass1 = "tree",
    grass2 = "tree",
    grass3 = "tree",
@@ -101,7 +101,7 @@ local unitMaterials = {
    flower2 = "tree",
    flower3 = "tree",
    flower4 = "tree",
-   flower5 = "tree",
+   flower5 = "tree",]]
    flower6 = "tree",
    
    spire = "tree",
