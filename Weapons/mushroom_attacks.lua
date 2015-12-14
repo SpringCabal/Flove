@@ -1,49 +1,78 @@
 local SporeSprayBase = Weapon:New{
-	name                    = "Spore Spray Base",
-	areaOfEffect            = 128,
-	avoidFeature            = false,
-	avoidFriendly           = false,
-	avoidNeutral            = false,
-	avoidGround             = false,
-
-	collideFriendly         = false,
-
-	beamTime                = 5,
-	beamTtl                 = 3,
-	coreThickness           = 0.2,
-	craterBoost             = 0,
-	craterMult              = 0,
-	impulseFactor			= 0,
-
-	damage                  = {
-		default = 2,
-	},
-	explosionGenerator      = [[custom:genericshellexplosion-small-firey-modified]],
-	interceptedByShieldType = 1,
-	largeBeamLaser          = true,
-	laserFlareSize          = 0.1,
-	minIntensity            = 1,
-	noSelfDamage            = true,
-	range                   = 100,
-	reloadtime              = 10,
-	rgbColor                = "0.6 0.1 0.1",
-	scrollSpeed             = 10,
-	soundTrigger            = true,
-	sweepfire               = false,
-	thickness               = 20,
-	tileLength              = 10000,
-	tolerance               = 5000,
-	turret                  = true,
-	weaponType              = "BeamLaser",
-	weaponVelocity          = 100,
-	pulseSpeed				= 0.1,
--- 	soundstart  			= "firemono.wav",
+  areaOfEffect       = 2,
+  beamWeapon         = true,
+  craterMult         = 0,
+  duration 			 = 1,
+  fireStarter        = 290,
+  id                 = 138,
+  impulseFactor      = 0,
+  largeBeamLaser     = true,
+  lineOfSight        = true,
+  minIntensity       = 1,
+  name               = "shroombarf",
+  noSelfDamage       = true,
+  range              = 600,
+  reloadtime         = 3,
+  renderType         = 0,
+  rgbColor           = "1 1 0.4",
+  rgbColor2          = "0.9 0.9 0.4",  
+  texture1           = "flare",
+  texture2           = "flare",
+  thickness          = 7,
+  --corethickness      = 2,
+  tolerance          = 500,
+  turret             = true,
+  weaponTimer        = 2,
+  weaponVelocity     = 1200,
+  soundstart         = "sporedispersal.wav",
+  customparams = {
+	damagetype		= "beam",  
+  },  
+  damage = {
+    default            = 30,
+  },
+  collideFriendly = false,
+  collideNeutral = false,
 }
 
 local NormalMushroomSpray = SporeSprayBase:New {
 	name                    = "NormalMushroomSpray",
+	damage = {
+		default            = 30,
+	},
+}
+local SmallMushroomSpray = SporeSprayBase:New {
+	name                    = "SmallMushroomSpray",
+	damage = {
+		default            = 30,
+	},
+}
+local BigMushroomSpray = SporeSprayBase:New {
+	name                    = "BigMushroomSpray",
+	reloadtime         		= 8,
+	thickness          		= 20,
+	beamTime 				= 3,
+	damage = {
+		default            = 300,
+	},
+}
+local MushroomClusterSpray = SporeSprayBase:New {
+	name                    = "MushroomClusterSpray",
+	damage = {
+		default            = 45,
+	},
+}
+local PoisonMushroomSpray = SporeSprayBase:New {
+	name                    = "PoisonMushroomSpray",
+	damage = {
+		default            = 60,
+	},
 }
 
 return lowerkeys{
 	NormalMushroomSpray = NormalMushroomSpray,
+	SmallMushroomSpray = SmallMushroomSpray,
+	BigMushroomSpray = BigMushroomSpray,
+	MushroomClusterSpray = MushroomClusterSpray,
+	PoisonMushroomSpray = PoisonMushroomSpray,
 }

@@ -10,10 +10,10 @@ function script.Killed(recentDamage, maxHealth)
 	-- spawn small mushrooms on death
 	local x, y, z = Spring.GetUnitPosition(unitID)
 	local teamID = Spring.GetUnitTeam(unitID)
-	local radius = 200
+	local radius = 300
 	local height = 70
-	for i = 1, 3 do
-		Spring.CreateUnit(smallMushroomDefID, x + math.random() * radius, y + height, z + math.random() * radius, 0, teamID)
+	for i = 1, 10 do
+		Spring.CreateUnit(smallMushroomDefID, x + math.random() * radius - radius/2, y + height, z + math.random() * radius - radius/2, 0, teamID)
 	end
 	
 	return 0

@@ -66,7 +66,7 @@ local waveConfig = {
 	},
 	[3] = {
 		units = {
-			[bigMushroomDefID] = 3,
+			[bigMushroomDefID] = 1,
 			[smallMushroomDefID] = 3,
 		},
 		time = 30,
