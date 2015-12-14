@@ -130,4 +130,66 @@ return {
       },
     },
   },
+  ["love_golden"] = {
+	explosionwave = {
+      air                = true,
+      class              = [[CSimpleParticleSystem]],
+      count              = 1,
+      ground             = true,
+      water              = true, 
+	  underwater         = true,
+      properties = {
+        airdrag            = 0.8,
+        alwaysvisible      = true,
+        colormap           = [[1 1 0 0.15	0 0 0 0.0]], 
+        directional        = true,
+        emitrot            = 0,
+        emitrotspread      = 180,
+        emitvector         = [[1, 0, 0]],
+        gravity            = [[0, 2, 0]],
+        numparticles       = 5,
+        particlelife       = [[20]], -- same as groundflash ttl
+        particlelifespread = 0,
+        particlesize       = 20, -- groundflash flashsize 25 = 1, so if flashsize is 200, particlesize here would be 8
+        particlesizespread = 1,
+        particlespeed      = 10,
+        particlespeedspread = 15,
+        pos                = [[r20 r-20, -50, r20 r-20]],
+        sizegrowth         = 5, -- same as groundflash circlegrowth
+        sizemod            = 0.95,
+        texture            = [[goldlove]],
+      },
+    },
+  },
+  ["love_happy"] = {
+	explosionwave = {
+      air                = true,
+      class              = [[CSimpleParticleSystem]],
+      count              = 4,
+      ground             = true,
+      water              = true, 
+	  underwater         = true,
+      properties = {
+        airdrag            = 0.7,
+        alwaysvisible      = true,
+        colormap           = [[1 1 0 0.15	0 0 0 0.0]], 
+        directional        = true,
+        emitrot            = 0,
+        emitrotspread      = 180,
+        emitvector         = [[1, 0, 0]],
+        gravity            = [[0, -4, 0]],
+        numparticles       = 20,
+        particlelife       = [[20]], -- same as groundflash ttl
+        particlelifespread = 0,
+        particlesize       = 40, -- groundflash flashsize 25 = 1, so if flashsize is 200, particlesize here would be 8
+        particlesizespread = 1,
+        particlespeed      = 50,
+        particlespeedspread = 25,
+        pos                = [[r20 r-20, -50, r20 r-20]],
+        sizegrowth         = 5, -- same as groundflash circlegrowth
+        sizemod            = 0.95,
+        texture            = [[goldlove]],
+      },
+    },
+  },
 }

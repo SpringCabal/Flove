@@ -18,7 +18,7 @@ local Flower = Unit:New {
     script              = "flower.lua",
 
 	 customParams        = {
-		modelradius        = [[10]],
+		modelradius        = [[1]],
 		midposoffset       = [[0 0 0]],
 		shrubs 			   = true,
     },

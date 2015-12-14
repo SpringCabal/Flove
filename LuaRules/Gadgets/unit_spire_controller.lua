@@ -148,6 +148,62 @@ local function FireFlowerShot(x, y, z)
 	local env = Spring.UnitScript.GetScriptEnv(spireID)
 end
 
+local function FireUpgradeShot(unitID)
+
+	if not spireID then
+		return
+	end
+	
+	local upgradeShot = WeaponDefNames.upgradeshot
+	local mana = Spring.GetGameRulesParam("mana") or 0
+	
+	local canFire = true
+	
+	if mana < FLOWER_SHOT_MANA_COST then
+		canFire = false
+	end
+	
+	local frame = Spring.GetGameFrame()
+	if not (flowerShotFiredFrame == nil or (frame - flowerShotFiredFrame) >= 30) then
+		canFire = false
+	end
+	
+	if not canFire then
+		return
+	end
+	
+	flowerShotFiredFrame = frame
+	mana = mana - FLOWER_SHOT_MANA_COST
+	Spring.SetGameRulesParam("mana", mana)
+	
+	local flare = Spring.GetUnitPieceMap(spireID).Eye
+	local spawnx, spawny, spawnz = Spring.GetUnitPiecePosDir(spireID, flare)
+	local x,y,z = Spring.GetUnitPosition(unitID);
+
+	local params = {
+		pos = {spawnx, spawny, spawnz},
+		['end'] = {x,y,z},
+		speed = {0, 75, 0},
+		owner  = spireID,
+		ttl = 9000,
+		gravity = 0,
+		tracking = true,
+		cegTag = 'love_golden',
+		maxRange = 9000,
+	}
+
+	local p = Spring.SpawnProjectile(upgradeShot.id, params);
+	
+	
+    Spring.SetProjectileTarget(p,x,y,z);--unitID,string.byte('p'));
+    
+    Spring.SpawnCEG("mordor_flowershot", spawnx, spawny, spawnz, 0, 0, 0, 0)
+	
+	--Spring.SetUnitVelocity(spireID, -dx * 20, -dy * 20, -dz * 20)
+	local env = Spring.UnitScript.GetScriptEnv(spireID)
+end
+
+
 -------------------------------------------------------------------
 -- Handling unit
 -------------------------------------------------------------------
@@ -230,6 +286,9 @@ function HandleLuaMessage(msg)
 		local z = tonumber(msg_table[4])
 
 		FireFlowerShot(x, y, z)
+	elseif msg_table[1] == 'upgrade' then -- RMB
+		local id = tonumber(msg_table[2])
+		FireUpgradeShot(id)
 	end
 end
 
