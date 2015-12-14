@@ -44,6 +44,8 @@ local Mushroom = Unit:New {
 	collisionVolumeOffsets    =  "0 16 0",
 	collisionVolumeScales     =  "64 64 64",
 	collisionVolumeType       =  "sphere",
+	
+	idleAutoHeal = 0,
 
 }
 

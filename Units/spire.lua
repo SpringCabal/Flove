@@ -28,6 +28,8 @@ local SpireBase = Unit:New {
 	collisionVolumeType    = "cylY",
 
 	category = "TREE",
+	
+	idleAutoHeal = 0,
 }
 
 local Spire = SpireBase:New {

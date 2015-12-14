@@ -158,6 +158,12 @@ function gadget:UnitCreated(unitID, unitDefID, unitTeam)
 	end
 end
 
+function gadget:UnitDestroyed(unitID)
+	if spireID == unitID then
+		spireID = nil
+	end
+end
+
 function gadget:GameStart()
 	gameStarted = true
 end

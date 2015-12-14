@@ -150,7 +150,7 @@ function gadget:GameFrame(frame)
 		if storyWaveSpawnTime ~= nil and frame - storyWaveSpawnTime > 30 then
 			CheckMushrooms()
 		end
-		if story < 5 then
+		if story ~= 5 then
 			Spring.SetGameRulesParam("mana", 0)
 		end
 		CheckUpgradedTree()
@@ -421,7 +421,7 @@ local function explode(div,str)
 end
 
 function StoryStage(stage)
-	Spring.Echo(stage)
+	Spring.Echo("Stage: " .. tostring(stage))
 	if stage == 2 then
 		Spring.SetGameRulesParam("story", 2)
 		-- FIXME: something is broken with this call
