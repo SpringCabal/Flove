@@ -25,8 +25,8 @@ local Tree = Unit:New {
     },
 
 	-- Hitbox
-	collisionVolumeOffsets = "0 0 0",
-	collisionVolumeScales  = "70 76 70",
+	collisionVolumeOffsets = "0 -10 0",
+	collisionVolumeScales  = "100 120 100",
 	collisionVolumeType    = "cylY",
 
 	category = "TREE",
