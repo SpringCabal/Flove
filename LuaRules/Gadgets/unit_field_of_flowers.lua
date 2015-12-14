@@ -83,7 +83,7 @@ function gadget:ProjectileDestroyed(proID)
 			for i = 1, #trees do
 				local uID = trees[i].uID
 				if GG.AddUpgradeProgress(uID) then
-					Spring.PlaySoundFile("sounds/fairydustleaves.wav", 50, px, py, pz)
+					Spring.PlaySoundFile("sounds/wind+leaves.wav", 10, px, py, pz)
 					upgraded = true
 					break
 				end
@@ -92,7 +92,7 @@ function gadget:ProjectileDestroyed(proID)
 			if not upgraded then
 				if TESTING_MODE then Spring.Echo("Adding new center at ", px, pz) end
 
-				Spring.PlaySoundFile("sounds/fairy dust birds.wav", 20, px,py,pz)
+				Spring.PlaySoundFile("sounds/birds.wav", 20, px,py,pz)
 				table.insert(watchedCenters, {x=px, z=pz, f=Spring.GetGameFrame()})
 				
 				-- spawn the flowers
@@ -103,6 +103,7 @@ function gadget:ProjectileDestroyed(proID)
 			end
         end
     end
+	watchedProjectiles[proID] = nil
 end
 
 function gadget:UnitDestroyed(uID)
