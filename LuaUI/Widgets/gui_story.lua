@@ -68,16 +68,24 @@ local closeTexts = {
 }
 
 function NextClose()
+	local _, _, paused = Spring.GetGameSpeed()
 	Spring.SendLuaRulesMsg('story')
 	-- we should close it
 	if closeTexts[currentText] then
+		if paused then
+			Spring.SendCommands("pause")
+		end
 		window:Hide()
+	else
+		if not paused then
+			Spring.SendCommands("pause")
+		end
 	end
 	currentIndex = 0
 	currentText = currentText + 1
 	UpdateText()
 	if closeTexts[currentText] then
-		next_button:SetCaption(grey .. "Close")
+		next_button:SetCaption(grey .. "Continue")
 	else
 		next_button:SetCaption(grey .. "Next")
 	end
@@ -172,6 +180,10 @@ function widget:Update()
 	
 	if window.hidden and currentText == story then
 		window:Show()
+		local _, _, paused = Spring.GetGameSpeed()
+		if not paused then
+			Spring.SendCommands("pause")
+		end
 	end
 	if math.floor(time * 1000) % 2 == 0 and not window.hidden then
 		currentIndex = currentIndex + 1
