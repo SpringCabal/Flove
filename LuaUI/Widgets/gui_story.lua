@@ -94,13 +94,9 @@ end
 function SkipTutorial()
 	local _, _, paused = Spring.GetGameSpeed()
 	if paused then
-		Spring.Echo(paused)
 		Spring.SendCommands("pause")
 	end
 	Spring.SendLuaRulesMsg('skip_tutorial')
-	if not window.hidden then
-		window:Hide()
-	end
 end
 
 function CreateGUI()
