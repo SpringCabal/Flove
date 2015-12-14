@@ -58,17 +58,8 @@ function gadget:ProjectileDestroyed(proID)
         if math.abs(py-gy)<5 or true then
             -- cause it to happen
      		local frame = Spring.GetGameFrame()
-            if TESTING_MODE then Spring.Echo("Adding new center at ", px, pz) end
 
-			Spring.PlaySoundFile("sounds/fairy dust birds.wav", 20, px,py,pz)
-            table.insert(watchedCenters, {x=px, z=pz, f=Spring.GetGameFrame()})
-            
-			-- spawn the flowers
-            local units = GG.SpawnFlowers(px, pz, 75, radius)
-			for _, unitID in pairs(units) do
-				table.insert(tempUnits, {unitID = unitID, frame = frame + duration -15 +math.random(30)})
-			end
-            
+			local upgraded = false
             -- upgrades
 			local units = Spring.GetUnitsInCylinder(px, pz, radius)
 			for i=1,#units do
@@ -77,8 +68,23 @@ function gadget:ProjectileDestroyed(proID)
 				local uDef = UnitDefs[uDID]
 				if uDef.customParams.tree then
 					if GG.AddUpgradeProgress(uID) then
+						Spring.PlaySoundFile("sounds/fairydustleaves.wav", 50, px, py, pz)
+						upgraded = true
 						break
 					end
+				end
+			end
+			
+			if not upgraded then
+				if TESTING_MODE then Spring.Echo("Adding new center at ", px, pz) end
+
+				Spring.PlaySoundFile("sounds/fairy dust birds.wav", 20, px,py,pz)
+				table.insert(watchedCenters, {x=px, z=pz, f=Spring.GetGameFrame()})
+				
+				-- spawn the flowers
+				local units = GG.SpawnFlowers(px, pz, 75, radius)
+				for _, unitID in pairs(units) do
+					table.insert(tempUnits, {unitID = unitID, frame = frame + duration -15 +math.random(30)})
 				end
 			end
         end
