@@ -308,8 +308,11 @@ function CheckForIdleMushrooms()
 				local eID = SelectEnemy(uID)
 				if eID then
 					local x,y,z = Spring.GetUnitPosition(eID)
-					local d = 700
-					Spring.GiveOrderToUnit(uID, CMD.MOVE, {x + math.random()*d - d/2, y+ math.random()*d - d/2, z+ math.random()*d - d/2}, {}) 
+					local d = 500
+					local dx = x + math.random()*d - d/2
+					local dz = z + math.random()*d - d/2
+					local dy = Spring.GetGroundHeight(dx, dz)
+					Spring.GiveOrderToUnit(uID, CMD.MOVE, {dx, dy, dz}, {}) 
 				end
 			end
 		elseif Spring.GetUnitCommands(uID,2) ~= nil and #Spring.GetUnitCommands(uID,2)==0 then
