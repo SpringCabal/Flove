@@ -50,7 +50,7 @@ local Mushroom = Unit:New {
 	customparams = {  
 		basepiece	= "Trunk",
 		moveanim	= "headers/bipedal_mushroom_movement.lua", 
-		deathanim   = "headers/death/bipedfallover.lua",
+		--deathanim   = "headers/death/bipedfallover.lua",
 		centeraim	= "head",
 	},
 
