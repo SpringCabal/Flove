@@ -50,32 +50,63 @@ local Mushroom = Unit:New {
 local NormalMushroom = Mushroom:New {
 	name                = "Normal Mushroom",
 	maxDamage			= 300,
-	  weapons = {
+	MaxVelocity 		= 90,
+	weapons = {
 		[1]  = {
-		  name               = "shroombarf",
-		  onlyTargetCategory = "TREE",
+		name               = "shroombarf",
+		onlyTargetCategory = "TREE",
 		},
-	  },
+	},
 }
 local SmallMushroom = Mushroom:New {
 	name                = "Small Mushroom",
 	maxDamage			= 500,
+	MaxVelocity 		= 180,
+	weapons = {
+		[1]  = {
+		name               = "shroombarf",
+		onlyTargetCategory = "TREE",
+		},
+	},
 }
 local BigMushroom = Mushroom:New {
 	name                = "Big Mushroom",
 	maxDamage			= 700,
+	MaxVelocity 		= 50,
+	weapons = {
+		[1]  = {
+		name               = "shroombarf",
+		onlyTargetCategory = "TREE",
+		},
+	},
 }
 local MushroomCluster = Mushroom:New {
 	name                = "Mushroom Cluster",
 	maxDamage			= 300,
+	MaxVelocity 		= 50,
+	script 				= "clustermushroom.lua",
+	weapons = {
+		[1]  = {
+		name               = "shroombarf",
+		onlyTargetCategory = "TREE",
+		},
+	},
 }
 local PoisonMushroom = Mushroom:New {
 	name                = "Poison Mushroom",
 	maxDamage			= 500,
+	weapons = {
+		[1]  = {
+		name               = "shroombarf",
+		onlyTargetCategory = "TREE",
+		},
+	},
 }
 local BombMushroom = Mushroom:New {
 	name                = "Bomb Mushroom",
 	maxDamage			= 700,
+	MaxVelocity 		= 110,
+	script 				= "bombmushroom.lua",
 }
 
 return lowerkeys({

@@ -221,7 +221,7 @@ end
 function IsTooHigh(x,z)
     -- hard coded hacks ftw
     local gy = Spring.GetGroundHeight(x,z)
-    Spring.Echo(x,gy,z,MAX_TREE_HEIGHT)
+    --Spring.Echo(x,gy,z,MAX_TREE_HEIGHT)
     if not gy then return true end
     return (gy>MAX_TREE_HEIGHT)    
 end
@@ -257,7 +257,7 @@ function SpawnTree()
         if success then break end
     end    
     if not success then
-        Spring.Echo("OH NOOOO") --TODO
+        --Spring.Echo("OH NOOOO") --TODO
     end
 end
 
