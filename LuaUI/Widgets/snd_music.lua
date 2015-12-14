@@ -18,7 +18,7 @@ local dtTime = 0
 local trackTime
 local startedPlaying = false
 -- FIXME: add the music file path here
-local musicFile
+local musicFile = "music/Rain Rain Go Away.ogg"
 
 local function StartPlaying()
     playingTime = 0

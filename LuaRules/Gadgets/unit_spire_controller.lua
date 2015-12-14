@@ -89,7 +89,7 @@ local function FireZap(x, y, z)
 	for i = 1, zapDef.projectiles do
 		SpawnShot(zapDef, spawnx, spawny, spawnz, dx, dy, dz)
 	end
-    
+
     Spring.SpawnCEG("mordor_zap", spawnx, spawny, spawnz, 0, 0, 0, 0)
 	
 	--Spring.SetUnitVelocity(spireID, -dx * 20, -dy * 20, -dz * 20)

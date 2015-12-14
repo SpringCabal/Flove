@@ -19,7 +19,7 @@ local Zap = Weapon:New{
 	nogap = true,
 	projectiles = 1,
 	range = 1800,
-	reloadtime = 0.07000000238419,
+	reloadtime = 0.7,
 	separation = 0.1,
 	size = 80,
 -- 	soundstart = "shotgun1.wav",
@@ -31,7 +31,7 @@ local Zap = Weapon:New{
 	weapontype = "Cannon",
 	weaponvelocity = 1500,
 	damage = {
-		default = 20,
+		default = 300,
 	},
 }
 
