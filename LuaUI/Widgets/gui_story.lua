@@ -58,7 +58,6 @@ Also, beware of suicide bombing mushrooms.]],
 
 local currentText = 1
 local currentIndex = 1
-local skip_tutorial = false
 
 local closeTexts = {
 	[2] = true,
@@ -99,7 +98,6 @@ function SkipTutorial()
 		Spring.SendCommands("pause")
 	end
 	Spring.SendLuaRulesMsg('skip_tutorial')
-	skip_tutorial = true
 	if not window.hidden then
 		window:Hide()
 	end
@@ -187,7 +185,11 @@ function CreateGUI()
 end
 
 function widget:Update()
-	if skip_tutorial then
+	local skip_tutorial = Spring.GetGameRulesParam("skip_tutorial") or 0
+	if skip_tutorial == 1 then
+		if not window.hidden then
+			window:Hide()
+		end
 		return
 	end
 	local time = os.clock()

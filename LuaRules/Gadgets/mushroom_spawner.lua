@@ -73,7 +73,7 @@ local waveConfig = {
 	},
 	[4] = {
 		units = {
-			[normalMushroomDefID] = 10,
+			[normalMushroomDefID] = 6,
 		},
 		time = 100,
 	},
@@ -85,17 +85,69 @@ local waveConfig = {
 	},
 	[6] = {
 		units = {
-			[bombmushroomDefID] = 1,
 			[normalMushroomDefID] = 3,
+			[bigMushroomDefID] = 1,
 		},
 		time = 200,
 	},
 	[7] = {
 		units = {
 			[poisonMushroomDefID] = 1,
-			[normalMushroomDefID] = 3,
+			[normalMushroomDefID] = 10,
 		},
-		time = 150,
+		time = 250,
+	},
+	[8] = {
+		units = {
+			[normalMushroomDefID] = 6,
+			[smallMushroomDefID] = 2,
+		},
+		time = 300,
+	},
+	[9] = {
+		units = {
+			[smallMushroomDefID] = 10,
+			[bigMushroomDefID] = 2,
+		},
+		time = 350,
+	},
+	[10] = {
+		units = {
+			[normalMushroomDefID] = 3,
+			[smallMushroomDefID] = 4,
+		},
+		time = 400,
+	},
+	[11] = {
+		units = {
+			[bombmushroomDefID] = 1,
+		},
+		time = 450,
+	},
+	[12] = {
+		units = {
+			[mushroomclusterDefID] = 3,
+			[poisonMushroomDefID] = 1,
+		},
+		time = 500,
+	},
+	[13] = {
+		units = {
+			[normalMushroomDefID] = 5,
+			[smallMushroomDefID] = 15,
+			[bigMushroomDefID] = 3,
+		},
+		time = 550,
+	},
+	[14] = {
+		units = {
+			[poisonMushroomDefID] = 1,
+			[bombmushroomDefID] = 3,
+			[bigMushroomDefID] = 3,
+			[normalMushroomDefID] = 3,
+			[mushroomclusterDefID] = 2,
+		},
+		time = 600,
 	},
 }
 
@@ -119,6 +171,7 @@ end
 
 function gadget:Initialize()
 	Spring.SetGameRulesParam("story", 1)
+	Spring.SetGameRulesParam("skip_tutorial", 0)
 	for _, unitID in ipairs(Spring.GetAllUnits()) do
 		local unitDefID = Spring.GetUnitDefID(unitID)
 		self:UnitCreated(unitID, unitDefID)
@@ -492,6 +545,7 @@ function HandleLuaMessage(msg)
 			StoryStage(stage)
 		end
 	elseif msg_table[1] == 'skip_tutorial' then
+		Spring.SetGameRulesParam("skip_tutorial", 1)
 		StoryStage(7)
 		GG.SpawnTree()
 		GG.SpawnTree()
