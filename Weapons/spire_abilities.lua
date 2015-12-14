@@ -30,7 +30,7 @@ local Zap = Weapon:New{
 	turret = true,
 	weapontimer = 0.1,
 	weapontype = "Cannon",
-	weaponvelocity = 1500,
+	weaponvelocity = 1900,
 	damage = {
 		default = 300,
 	},
