@@ -259,7 +259,7 @@ function SpawnNextWave(force)
 		if config and (not config.spawned or (config.repeatWave and (config.lastFrame == nil or gameFrame - config.lastFrame > config.repeatTime*33))) and (config.time*33 <= gameFrame or force) then
 			config.spawned = true
 			config.lastFrame = gameFrame
-			Spring.Log("spawn", LOG.NOTICE, "Spawning wave " .. tostring(i))
+			--Spring.Log("spawn", LOG.NOTICE, "Spawning wave " .. tostring(i))
 			SpawnWave(config.units, config.spawnKing)
 			break
 		end
