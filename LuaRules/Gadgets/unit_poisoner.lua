@@ -22,17 +22,11 @@ local watchedProjectiles = {}
 local watchedUnits = {}
 
 function gadget:Initialize()
-	-- watch the FlowerShot weapon (from the spire unit)
-    if WDID or (not TESTING_MODE) then
-        Script.SetWatchWeapon(WDID,true)    
-    else
-        Spring.Echo("Warning: Could not find Upgrade Shot Weapon")
-    end
+   Script.SetWatchWeapon(WDID,true)    
 end
 
 function gadget:UnitCreated(unitID, unitDefID)
 	if(unitDefID == poisonUDID) then
-		Spring.Echo("poisoner created");
 		watchedUnits[unitID] = Spring.GetGameFrame();
 	end
 end
