@@ -5,8 +5,8 @@
       <author>Blender User</author>
       <authoring_tool>Blender 2.76.0 commit date:2015-11-03, commit time:10:56, hash:f337fea</authoring_tool>
     </contributor>
-    <created>2015-12-15T03:20:22</created>
-    <modified>2015-12-15T03:20:22</modified>
+    <created>2015-12-15T03:40:35</created>
+    <modified>2015-12-15T03:40:35</modified>
     <unit name="meter" meter="0.01875"/>
     <up_axis>Z_UP</up_axis>
   </asset>
@@ -522,7 +522,7 @@
         <instance_light url="#Render_001-light"/>
       </node>
       <node id="King" name="King" type="NODE">
-        <matrix sid="transform">1 0 0 1.541374 0 -4.37114e-8 -1 7.555353 0 1 -4.37114e-8 27.57893 0 0 0 1</matrix>
+        <matrix sid="transform">1 0 0 1.541374 0 -4.37114e-8 -1 7.555353 0 1 -4.37114e-8 48.12852 0 0 0 1</matrix>
         <instance_geometry url="#King-mesh" name="King">
           <bind_material>
             <technique_common>
@@ -531,7 +531,7 @@
           </bind_material>
         </instance_geometry>
         <node id="KingHead" name="KingHead" type="NODE">
-          <matrix sid="transform">1 1.49012e-8 -9.77026e-16 -6.663053 0 1 -8.74228e-8 48.65257 0 -3.17865e-8 1 -31.99073 0 0 0 1</matrix>
+          <matrix sid="transform">1 7.45058e-9 1.49012e-8 -6.663054 0 1 -8.74228e-8 48.65257 0 -1.68854e-8 1 -31.99073 0 0 0 1</matrix>
           <instance_geometry url="#KingHead-mesh" name="KingHead">
             <bind_material>
               <technique_common>
@@ -541,7 +541,7 @@
           </instance_geometry>
         </node>
         <node id="FR" name="FR" type="NODE">
-          <matrix sid="transform">1 1.49012e-8 -9.77026e-16 -75.76301 0 1 -8.74228e-8 -8.66416 0 -3.17865e-8 1 62.51635 0 0 0 1</matrix>
+          <matrix sid="transform">1 7.45058e-9 1.49012e-8 -75.76301 0 1 -8.74228e-8 -8.664158 0 -1.68854e-8 1 62.51635 0 0 0 1</matrix>
           <instance_geometry url="#FR-mesh" name="FR">
             <bind_material>
               <technique_common>
@@ -552,7 +552,7 @@
           </instance_geometry>
         </node>
         <node id="RR" name="RR" type="NODE">
-          <matrix sid="transform">1 1.49012e-8 -9.77026e-16 -77.68245 0 1 -8.74228e-8 -5.206573 0 -3.17865e-8 1 -95.83771 0 0 0 1</matrix>
+          <matrix sid="transform">1 7.45058e-9 1.49012e-8 -77.68245 0 1 -8.74228e-8 -5.206573 0 -1.68854e-8 1 -95.83771 0 0 0 1</matrix>
           <instance_geometry url="#RR-mesh" name="RR">
             <bind_material>
               <technique_common>
@@ -563,7 +563,7 @@
           </instance_geometry>
         </node>
         <node id="RL" name="RL" type="NODE">
-          <matrix sid="transform">1 1.49012e-8 -9.77026e-16 72.99384 0 1 -8.74228e-8 -11.33005 0 -3.17865e-8 1 -94.63926 0 0 0 1</matrix>
+          <matrix sid="transform">1 7.45058e-9 1.49012e-8 72.99384 0 1 -8.74228e-8 -11.33005 0 -1.68854e-8 1 -94.63926 0 0 0 1</matrix>
           <instance_geometry url="#RL-mesh" name="RL">
             <bind_material>
               <technique_common>
@@ -574,7 +574,7 @@
           </instance_geometry>
         </node>
         <node id="FL" name="FL" type="NODE">
-          <matrix sid="transform">1 1.49012e-8 -9.77026e-16 72.88561 0 1 -8.74228e-8 -0.5412617 0 -3.17865e-8 1 61.86046 0 0 0 1</matrix>
+          <matrix sid="transform">1 7.45058e-9 1.49012e-8 72.88561 0 1 -8.74228e-8 -0.5412598 0 -1.68854e-8 1 61.86046 0 0 0 1</matrix>
           <instance_geometry url="#FL-mesh" name="FL">
             <bind_material>
               <technique_common>
