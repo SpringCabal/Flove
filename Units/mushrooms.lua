@@ -202,11 +202,21 @@ local KingShroom = Mushroom:New {
 	name                = "King Shroom",
 	maxDamage			= 6000,
 	MaxVelocity 		= 50,
-	FootprintX = 4,
-    FootprintZ = 4,
+	FootprintX = 10,
+    FootprintZ = 10,
+	customparams = { 
+		turnaccel = 500,
+		mushroom = true, 
+		basepiece	= "King",
+		moveanim	= "headers/bipedal_kingmushroom_movement.lua", 
+		mountanimdefaultto	 = "headers/weaponmounts/kingshroommouth.lua",
+		--deathanim   = "headers/death/bipedfallover.lua",
+		centeraim	= "King",
+		
+	},
 	weapons = {
 		[1]  = {
-			name               = "bigmushroomspray",
+			name               = "kingmushroomspray",
 			onlyTargetCategory = "TREE",
 			mainDir				= "0 0 1",
 			maxAngleDif			= 210,	
@@ -226,8 +236,8 @@ local KingShroom = Mushroom:New {
 
 			exteriorShield          = true,
 			shieldAlpha             = 0.7,
-			shieldBadColor          = [[0 0 0]],
-			shieldGoodColor         = [[0 0 1]],
+			shieldBadColor          = [[1 0.2 0.2]],
+			shieldGoodColor         = [[0.2 1 0.1]],
 			shieldInterceptType     = 3,
 			shieldPower             = 10000,
 			shieldPowerRegen        = 10,

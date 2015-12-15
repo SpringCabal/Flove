@@ -27,7 +27,6 @@ local SporeSprayBase = Weapon:New{
   soundstart         = "sporedispersal.wav",
 	customparams = {
 		effect1			= "greymuzzle",
-		damagetype		= "explosive",	
 		--explosion		= "sparklered",
 		animation		= "headers/weapons/shroombarf.lua",
 	},	
@@ -50,15 +49,19 @@ local SmallMushroomSpray = SporeSprayBase:New {
 		default            = 10,
 	},
 }
-local BigMushroomSpray = SporeSprayBase:New {
-	name                    = "BigMushroomSpray",
+local KingMushroomSpray = SporeSprayBase:New {
+	name                    = "KingMushroomSpray",
 	reloadtime         		= 8,
 	thickness          		= 20,
 	beamTime 				= 3,
+	customparams = {
+		animation		= "headers/weapons/kingshroombarf.lua",
+	},	
 	damage = {
 		default            = 300,
 	},
 }
+
 local MushroomClusterSpray = SporeSprayBase:New {
 	name                    = "MushroomClusterSpray",
 	damage = {
@@ -76,6 +79,7 @@ return lowerkeys{
 	NormalMushroomSpray = NormalMushroomSpray,
 	SmallMushroomSpray = SmallMushroomSpray,
 	BigMushroomSpray = BigMushroomSpray,
+	KingMushroomSpray = KingMushroomSpray,
 	MushroomClusterSpray = MushroomClusterSpray,
 	PoisonMushroomSpray = PoisonMushroomSpray,
 }
