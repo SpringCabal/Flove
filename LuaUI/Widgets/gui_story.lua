@@ -91,6 +91,7 @@ local closeTexts = {
 }
 
 function StartGame(difficulty)
+	WG.ResetCamera()
 	Spring.SendLuaRulesMsg('difficulty|' .. tostring(difficulty))
 	CreateGUI()
 	startWindow:Hide()
