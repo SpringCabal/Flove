@@ -51,6 +51,17 @@ local SmallMushroomSpray = SporeSprayBase:New {
 		default            = 10,
 	},
 }
+
+local BigMushroomSpray = SporeSprayBase:New {
+	name                    = "KingMushroomSpray",
+	reloadtime         		= 8,
+	thickness          		= 20,
+	beamTime 				= 3,
+	damage = {
+		default            = 300,
+	},
+}
+
 local KingMushroomSpray = SporeSprayBase:New {
 	name                    = "KingMushroomSpray",
 	reloadtime         		= 8,
