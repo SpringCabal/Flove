@@ -22,7 +22,7 @@ local grey = "\255\190\190\190"
 
 function widget:Initialize()
     Chili = WG.Chili
-    CreateGUI()
+	CreateStartWindow()
 end
 
 local MissionName = [[OPERATION MUSHROOM]]
@@ -84,6 +84,12 @@ local closeTexts = {
 	[6] = true,
 }
 
+function StartGame(difficulty)
+	Spring.SendLuaRulesMsg('difficulty|' .. tostring(difficulty))
+	CreateGUI()
+	startWindow:Hide()
+end
+
 function NextClose()
 	local _, _, paused = Spring.GetGameSpeed()
 	Spring.SendLuaRulesMsg('story')
@@ -114,6 +120,59 @@ function SkipTutorial()
 		Spring.SendCommands("pause")
 	end
 	Spring.SendLuaRulesMsg('skip_tutorial')
+end
+
+function CreateStartWindow()
+	startWindow = Chili.Control:New {
+        parent = Chili.Screen0,
+        x = 0,
+        y = 0,
+        bottom = 0,
+		right = 0,
+        minHeight = 25,
+		padding         = {0, 0, 0, 0},
+		children = { 
+			Chili.Button:New {
+				y = 300,
+				right = 400,
+				height = 80,
+				width = 300,
+				caption = "Normal",
+				OnClick = { function() StartGame(1) end },
+			},
+			Chili.Button:New {
+				y = 400,
+				right = 400,
+				height = 80,
+				width = 300,
+				caption = "Hard",
+				OnClick = { function() StartGame(2) end },
+			},
+			Chili.Button:New {
+				y = 500,
+				right = 400,
+				height = 80,
+				width = 300,
+				caption = "Extreme",
+				OnClick = { function() StartGame(3) end },
+			},
+			Chili.Button:New {
+				y = 600,
+				right = 400,
+				height = 80,
+				width = 300,
+				caption = "Leave",
+				OnClick = { function() Spring.SendCommands("quitforce") end },
+			},
+			Chili.Image:New {
+				x = 0,
+				y = 0,
+				width = "100%",
+				height = "100%",
+				file = "Bitmaps/start_screen.png",
+			},
+		},
+    }
 end
 
 function CreateGUI()
@@ -193,11 +252,14 @@ function CreateGUI()
         width = 100,
         caption = grey .. "Skip Tutorial",
         onclick = {SkipTutorial},
-    }
-
+	}
 end
 
 function widget:Update()
+	if not window then
+		return
+	end
+	
 	local skip_tutorial = Spring.GetGameRulesParam("skip_tutorial") or 0
 	if skip_tutorial == 1 then
 		if not window.hidden then

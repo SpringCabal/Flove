@@ -577,6 +577,48 @@ function HandleLuaMessage(msg)
 		GG.SpawnTree()
 		Spring.SetGameRulesParam("mana", 30)
 		waveConfig[1].spawned = true -- make the first wave spawned (its used in the tutorial)
+	elseif msg_table[1] == 'difficulty' then
+		local difficulty = tonumber(msg_table[2])
+		Spring.SetGameRulesParam("difficulty", difficulty)
+		
+		if difficulty >= 2 then
+			table.insert(waveConfig, {
+				units = {
+					[normalMushroomDefID] = 3,
+					[smallMushroomDefID] = 3,
+				},
+				time = 75,
+				repeatWave = true, -- we'll repeat this one
+				repeatTime = 100,
+			})
+			table.insert(waveConfig, {
+				units = {
+					[mushroomclusterDefID] = 1,
+				},
+				time = 90,
+				repeatWave = true, -- we'll repeat this one
+				repeatTime = 100,
+			})
+		end
+		if difficulty >= 3 then
+			table.insert(waveConfig, {
+				units = {
+					[poisonMushroomDefID] = 1,
+					[bigMushroomDefID] = 2,
+				},
+				time = 230,
+				repeatWave = true, -- we'll repeat this one
+				repeatTime = 60,
+			})
+			table.insert(waveConfig, {
+				units = {
+					[bigMushroomDefID] = 3,
+				},
+				time = 166,
+				repeatWave = true, -- we'll repeat this one
+				repeatTime = 66,
+			})
+		end
 	end
 end
 
