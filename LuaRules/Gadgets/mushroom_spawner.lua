@@ -33,8 +33,14 @@ local bigMushroomDefID     = UnitDefNames["bigmushroom"].id
 local mushroomclusterDefID = UnitDefNames["mushroomcluster"].id
 local poisonMushroomDefID  = UnitDefNames["poisonmushroom"].id
 local bombmushroomDefID    = UnitDefNames["bombmushroom"].id
+local kingshroomDefID      = UnitDefNames["kingshroom"].id
 
 local treeLevel2DefID      = UnitDefNames["treelevel2"].id
+
+local tunneltube1DefID  = UnitDefNames["tunneltube1"].id
+local tunneltube2DefID  = UnitDefNames["tunneltube2"].id
+local tunneltube3DefID  = UnitDefNames["tunneltube3"].id
+local tunnelTubes = { tunneltube1DefID, tunneltube2DefID, tunneltube3DefID }
 
 local spireDefID = UnitDefNames["spire"].id
 local spireID = nil
@@ -141,13 +147,23 @@ local waveConfig = {
 	},
 	[14] = {
 		units = {
-			[poisonMushroomDefID] = 1,
 			[bombmushroomDefID] = 3,
 			[bigMushroomDefID] = 3,
 			[normalMushroomDefID] = 3,
 			[mushroomclusterDefID] = 2,
 		},
 		time = 600,
+		spawnKing = true,
+	},
+	[15] = {
+		units = {
+			[smallMushroomDefID] = 10,
+			[normalMushroomDefID] = 7,
+			[bigMushroomDefID] = 2,
+		},
+		time = 650,
+		repeatWave = true, -- we'll repeat this one
+		repeatTime = 50,
 	},
 }
 
@@ -189,6 +205,15 @@ function gadget:GameFrame(frame)
 			local unitDefID = Spring.GetUnitDefID(unitID)
 			if unitDefID == mushroomSpawnDefID then
 				table.insert(spawnPoints, unitID)
+				local x, _, z = Spring.GetUnitPosition(unitID)
+				local TUBE_RADIUS = 800
+				for i = 1, 12 do
+					local indx = math.random(1, 3)
+					local tunnelTubeDef = tunnelTubes[indx]
+					local ux = x + math.random()*TUBE_RADIUS - TUBE_RADIUS/2
+					local uz = z + math.random()*TUBE_RADIUS - TUBE_RADIUS/2
+					SpawnUnit(tunnelTubeDef, ux, uz)
+				end
 			end
 		end
 	end
@@ -230,27 +255,27 @@ function SpawnNextWave(force)
 	local gameFrame = frame - (startSpawnFrame or 0)
 	for i = 1, 100 do
 		local config = waveConfig[i]
-		if config and not config.spawned and (config.time*33 <= gameFrame or force) then
+		if config and (not config.spawned or (config.repeatWave and (config.lastFrame == nil or gameFrame - config.lastFrame > config.repeatTime*33))) and (config.time*33 <= gameFrame or force) then
 			config.spawned = true
+			config.lastFrame = gameFrame
 			Spring.Log("spawn", LOG.NOTICE, "Spawning wave " .. tostring(i))
-			SpawnWave(config.units)
+			SpawnWave(config.units, config.spawnKing)
 			break
 		end
 	end
 end
 
-function SpawnWave(spawnUnits)
+function SpawnWave(spawnUnits, spawnKing)
     if AI_TESTING_MODE then return end
 -- 	local config = waveConfig[currentWave]
 -- 	if config == nil then
 -- 		return
 -- 	end
 	
-	
-	for _, spawnPointID in pairs(spawnPoints) do
+	for indx, spawnPointID in pairs(spawnPoints) do
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
-		if x == nil or z == nil then
-			break
+		if spawnKing and indx == 2 then
+			SpawnUnit(kingshroomDefID, x, z)
 		end
 		for unitDefID, count in pairs(spawnUnits) do
 			for i = 1, count do
