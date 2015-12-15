@@ -73,8 +73,16 @@ animations = {
 
 	stopAnim = function (modelParts, animData)
 		
+		Turn(modelParts["RR"], x_axis, math.rad(0), math.rad(70 * speedMult))
+		Turn(modelParts["FL"], x_axis, math.rad(0), math.rad(70 * speedMult))
+		Turn(modelParts["RL"], x_axis, math.rad(0), math.rad(70 * speedMult))
+		Turn(modelParts["FR"], x_axis, math.rad(0), math.rad(70 * speedMult))
 		Sleep(50)
-		Move(modelParts["King"], y_axis, -2.8)
+		Move(modelParts["King"], y_axis, -2.8)	
+		CustomEmitter( modelParts["FR"], animData["dirt"])	
+		CustomEmitter( modelParts["FL"], animData["dirt"])
+		CustomEmitter( modelParts["FL"], animData["dirt"])	
+		CustomEmitter( modelParts["FR"], animData["dirt"])
 	end,
 	
 	getMovePieces = function ()
