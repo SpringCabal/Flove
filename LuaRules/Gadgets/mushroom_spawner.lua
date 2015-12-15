@@ -188,6 +188,7 @@ end
 function gadget:Initialize()
 	Spring.SetGameRulesParam("story", 1)
 	Spring.SetGameRulesParam("skip_tutorial", 0)
+	Spring.SetGameRulesParam("shroomEvent", 0)
 	for _, unitID in ipairs(Spring.GetAllUnits()) do
 		local unitDefID = Spring.GetUnitDefID(unitID)
 		self:UnitCreated(unitID, unitDefID)
@@ -302,6 +303,9 @@ end
 function gadget:UnitCreated(unitID, unitDefID)
 	CheckForSpire(unitID, unitDefID)
 
+	if unitDefID == kingshroomDefID then
+		Spring.SetGameRulesParam("shroomEvent", 1)
+	end
     if UnitDefs[unitDefID].customParams.mushroom and not (Spring.GetUnitRulesParam(unitID, "aiDisabled")==1) then
 		aiMushrooms[unitID] = true
     end
@@ -318,6 +322,10 @@ function gadget:UnitDestroyed(unitID, unitDefID)
 		if c == 0 then
 			StoryStage(3)
 		end
+	end
+	
+	if unitDefID == kingshroomDefID then
+		Spring.SetGameRulesParam("shroomEvent", 2)
 	end
 	
 	aiMushrooms[unitID] = nil
@@ -564,9 +572,15 @@ end
 function HandleLuaMessage(msg)
 	local msg_table = explode('|', msg)
 	if msg_table[1] == 'story' then
+		local shroomEvent = Spring.GetGameRulesParam("shroomEvent") or 0
+		if shroomEvent == 2 then
+			Spring.SetGameRulesParam("gameOver", 1)
+			Spring.SetGameRulesParam("won", 1)
+			return
+		end
 		local stage = Spring.GetGameRulesParam("story")
 		stage = stage + 1
-		if stage ~= 3 and stage ~= 4 and stage ~= 5 and stage ~= 6 then
+		if stage ~= 3 and stage ~= 4 and stage ~= 5 and stage ~= 6 and stage ~= 7 then
 			StoryStage(stage)
 		end
 	elseif msg_table[1] == 'skip_tutorial' then

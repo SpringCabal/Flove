@@ -68,7 +68,7 @@ local function SetupControls()
     local survialTime = Spring.GetGameRulesParam("survivalTime") or 0 
     local rabbitKills = Spring.GetGameRulesParam("rabbits_killed") or 0 
     
-	Chili.Label:New{
+	caption = Chili.Label:New{
  		x = 60,
  		y = 30,
  		width = 100,
@@ -168,7 +168,11 @@ local function SetupControls()
 				nameBox = nil
 				restartButton = nil
 				submitButton = nil
-				Spring.SendCommands("cheat", "luarules reload", "cheat")
+				if Spring.IsCheatingEnabled() then
+					Spring.SendCommands("luarules reload")
+				else
+					Spring.SendCommands("cheat", "luarules reload", "cheat")
+				end
                 window_endgame:Dispose()
                 window_endgame = nil
                 frame_delay = Spring.GetGameFrame()
@@ -245,7 +249,7 @@ function widget:GameFrame()
 --     end
 	local gameOver = Spring.GetGameRulesParam("gameOver")
 	local won = Spring.GetGameRulesParam("won") or 0
-    if gameOver == 1 then
+    if won == 1 then
         widget:GameOver(won == 1)
     end
 end

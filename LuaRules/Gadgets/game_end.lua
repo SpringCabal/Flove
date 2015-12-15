@@ -29,6 +29,7 @@ local initializeFrame = 0
 function gadget:Initialize()
 	initializeFrame = Spring.GetGameFrame() or 0
 	Spring.SetGameRulesParam("gameOver", 0)
+	Spring.SetGameRulesParam("won", 0)
 end
 
 local spireDefID = UnitDefNames["spire"].id

@@ -60,8 +60,10 @@ Also, beware of suicide bombing mushrooms.
 
 -- Mushroom king appears...?
 
--- Mushroom king is defeated
+[[A vast enemy army approaches, defend the forest at all costs!]],
 
+-- Mushroom king is defeated
+[[The mushroom king lies defeated. The day is saved!]],
 }
 
 local narrations = {
@@ -71,6 +73,8 @@ local narrations = {
 	"sounds/narration_amplified/BlastedAnoterWaveOfEnemies.ogg",
 	"sounds/narration_amplified/ThisSeemsToBeTheEndOfThemForNow.ogg",
 	"sounds/narration_amplified/ItsABeautifulSightIndeed.ogg",
+	"sounds/narration_amplified/AVastEnemyArmyApproaches.ogg",
+	"sounds/narration_amplified/TheMushroomKingLiesDefeated.ogg",
 }
 
 local currentText = 1
@@ -82,6 +86,8 @@ local closeTexts = {
 	[4] = true,
 	[5] = true,
 	[6] = true,
+	[7] = true,
+	[8] = true,
 }
 
 function StartGame(difficulty)
@@ -260,18 +266,35 @@ function widget:Update()
 		return
 	end
 	
-	local skip_tutorial = Spring.GetGameRulesParam("skip_tutorial") or 0
-	if skip_tutorial == 1 then
-		if not window.hidden then
-			window:Hide()
-		end
-		return
-	end
 	local time = os.clock()
 	if time < 5 then
 		return
 	end
 	local story = Spring.GetGameRulesParam("story")
+	local shroomEvent = Spring.GetGameRulesParam("shroomEvent") or 0
+	if shroomEvent == 1 then
+		story = 7
+		if currentText < 7 then 
+			currentText = 7
+		end
+		if not skip_button.hidden then
+			skip_button:Hide()
+		end
+	elseif shroomEvent == 2 then
+		story = 8
+		if not skip_button.hidden then
+			skip_button:Hide()
+		end
+	end
+	
+	local skip_tutorial = Spring.GetGameRulesParam("skip_tutorial") or 0
+	if skip_tutorial == 1 and shroomEvent == 0 then
+		if not window.hidden then
+			window:Hide()
+		end
+		return
+	end
+	
 	-- FIXME: minor race condition here; too tired to redesign this right
 	if story == 1 and currentText > 2 then
 		Spring.Echo("Reset story", story, currentText)
