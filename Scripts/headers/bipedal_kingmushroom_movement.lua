@@ -73,7 +73,7 @@ animations = {
 
 	stopAnim = function (modelParts, animData)
 		
-		Turn(modelParts["RR"], x_axis, math.rad(0), math.rad(70 ))
+		Turn(modelParts["RR"], x_axis, math.rad(0), math.rad(70))
 		Turn(modelParts["FL"], x_axis, math.rad(0), math.rad(70))
 		Turn(modelParts["RL"], x_axis, math.rad(0), math.rad(70))
 		Turn(modelParts["FR"], x_axis, math.rad(0), math.rad(70))

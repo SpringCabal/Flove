@@ -27,28 +27,13 @@ animations = {
 	end,
 	
 	StartAnim = function (animationPieces, weaponData)
-		if animationPieces["weaponTurret"] ~= nil then
-			Turn(animationPieces["weaponTurret"], y_axis, weaponData["rotationy"])
-			Turn(animationPieces["weaponSleeve"], x_axis, 0)
-		end
 	end,
 	
 	RestoreAnim = function (animationPieces, weaponData)
-		if animationPieces["weaponTurret"] ~= nil then
-			Turn(animationPieces["weaponTurret"], y_axis, weaponData["rotationy"], math.rad(90))
-			Turn(animationPieces["weaponSleeve"], x_axis, 0, math.rad(100))	
-			WaitForTurn(animationPieces["weaponSleeve"], x_axis)
-			WaitForTurn(animationPieces["weaponTurret"], y_axis)
-		end
 	end,
 
 	AimAnim = function (animationPieces, data, heading, pitch)
-		if animationPieces["weaponTurret"] ~= nil then
-			Turn(animationPieces["weaponTurret"], y_axis, heading, math.rad(40))		
-			Turn(animationPieces["weaponSleeve"], x_axis, 0 - pitch, math.rad(100))
-			WaitForTurn(animationPieces["weaponSleeve"], x_axis)
-			WaitForTurn(animationPieces["weaponTurret"], y_axis)
-		end
+
 	end,
 }
 
