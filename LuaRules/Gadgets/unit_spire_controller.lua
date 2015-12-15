@@ -169,7 +169,7 @@ local function FireUpgradeShot(unitID)
 	end
 	
 	local frame = Spring.GetGameFrame()
-	if not (flowerShotFiredFrame == nil or (frame - flowerShotFiredFrame) >= 30) then
+	if not (flowerShotFiredFrame == nil or (frame - flowerShotFiredFrame) >= 15) then
 		canFire = false
 	end
 	
