@@ -98,6 +98,9 @@ function StartGame(difficulty)
 end
 
 function NextClose()
+	if not skip_button.hidden then
+		skip_button:Hide()
+	end
 	local _, _, paused = Spring.GetGameSpeed()
 	Spring.SendLuaRulesMsg('story')
 	-- we should close it
@@ -303,6 +306,9 @@ function widget:Update()
 		-- reset everything
 		currentText = 1
 		currentIndex = 0
+		if skip_button.hidden then
+			skip_button:Show()
+		end
 		next_button:SetCaption(grey .. "Next")
 	end
 	
