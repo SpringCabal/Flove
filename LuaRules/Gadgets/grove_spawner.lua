@@ -290,7 +290,8 @@ function SpawnTree()
             end
         end
     end
-    
+
+	
     if #potentialSpawnPoints>0 then
         -- pick potential spawn points with probability proportional to 1/d^2 where d is square distance to spire
         local sx,_,sz = Spring.GetUnitPosition(spireID) 
@@ -315,9 +316,9 @@ function SpawnTree()
                 return
             end    
         end
-    else
-        -- Spring.Echo("OH NOOOO") 
-    end
+	else
+		SpawnATreeHereNOW(4688 + 200, 5552)
+	end
 end
 
 function TryToSpawnANewTreeSomewhereNearToThisTree(unitID)
