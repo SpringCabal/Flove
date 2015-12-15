@@ -266,6 +266,7 @@ function CreateGUI()
 	}
 end
 
+local lastTime = 0
 function widget:Update()
 	if not window then
 		return
@@ -320,7 +321,8 @@ function widget:Update()
 			Spring.SendCommands("pause")
 		end
 	end
-	if math.floor(time * 1000) % 2 == 0 and not window.hidden then
+	if time - lastTime > 0.04 and not window.hidden then
+		lastTime = time
 		currentIndex = currentIndex + 1
 		UpdateText()
 	end
