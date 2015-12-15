@@ -22,7 +22,7 @@ animations = {
 		end
 
 		
-		weaponData["flare"]	= piece 'King'
+		weaponData["flare"]	= piece 'KingHead'
 		pieceList["e"]		= weaponData["flare"]
 		
 		return pieceList, weaponData

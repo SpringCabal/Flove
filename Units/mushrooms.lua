@@ -211,7 +211,7 @@ local KingShroom = Mushroom:New {
 		moveanim	= "headers/bipedal_kingmushroom_movement.lua", 
 		mountanimdefaultto	 = "headers/weaponmounts/kingshroommouth.lua",
 		--deathanim   = "headers/death/bipedfallover.lua",
-		centeraim	= "King",
+		centeraim	= "KingHead",
 		
 	},
 	weapons = {

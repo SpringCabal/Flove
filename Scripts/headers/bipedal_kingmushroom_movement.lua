@@ -19,38 +19,39 @@ animations = {
 		
 		
 		while( 1 ) do
+		
 			CustomEmitter( modelParts["RR"], animData["dirt"])	
 			CustomEmitter( modelParts["RL"], animData["dirt"])	
 			CustomEmitter( modelParts["FR"], animData["dirt"])	
 			CustomEmitter( modelParts["FL"], animData["dirt"])	
 
-			Turn(modelParts["FR"], x_axis, math.rad(-60), math.rad(70 * speedMult))
-			Turn(modelParts["RL"], x_axis, math.rad(30), math.rad(70 * speedMult))
 			Turn(modelParts["RR"], x_axis, math.rad(-60), math.rad(70 * speedMult))
-			Turn(modelParts["FL"], x_axis, math.rad(30), math.rad(70 * speedMult))
+			Turn(modelParts["FL"], x_axis, math.rad(-60), math.rad(70 * speedMult))
+			Turn(modelParts["RL"], x_axis, math.rad(30), math.rad(70 * speedMult))
+			Turn(modelParts["FR"], x_axis, math.rad(30), math.rad(70 * speedMult))
 				
 			Turn(modelParts["King"], z_axis, math.rad(0), math.rad(10 * speedMult))
 			
-			Move(modelParts["King"], y_axis, 2.2, 60)
+			Move(modelParts["King"], y_axis, 4.2, 100)
 			Sleep(650/speedMult)
 			
 			Turn(modelParts["King"], z_axis, math.rad(-6), math.rad(10 * speedMult))
 			
-			Move(modelParts["King"], y_axis, 0.4, 0)				
+			Move(modelParts["King"], y_axis, 2.4, 0)				
 			Sleep(500/speedMult)	
 							
 			Turn(modelParts["King"], z_axis, math.rad(6), math.rad(10 * speedMult))
 			
 			Turn(modelParts["RL"], x_axis, math.rad(-60), math.rad(70 * speedMult))
-			Turn(modelParts["FR"], x_axis, math.rad(30), math.rad(70 * speedMult))
-			Turn(modelParts["FL"], x_axis, math.rad(-60), math.rad(70 * speedMult))
+			Turn(modelParts["FR"], x_axis, math.rad(-60), math.rad(70 * speedMult))
+			Turn(modelParts["FL"], x_axis, math.rad(30), math.rad(70 * speedMult))
 			Turn(modelParts["RR"], x_axis, math.rad(30), math.rad(70 * speedMult))
 			
 
-			Move(modelParts["King"], y_axis, 2.5, 60)			--if(isMoving == true) then
+			Move(modelParts["King"], y_axis, 1, 100)			--if(isMoving == true) then
 			Sleep(658/speedMult)
 
-			Move(modelParts["King"], y_axis, 0.4, 0)					
+			Move(modelParts["King"], y_axis, 0, 0)					
 			Sleep(500/speedMult)
 
 

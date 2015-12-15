@@ -8,7 +8,7 @@ animations = {
 			return pieceList, weaponData
 		else
 		
-			pieceList["weaponSleeve"] = piece 'King'
+			pieceList["weaponSleeve"] = piece 'KingHead'
 			
 			if weaponUnitDef.slavedTo ~= 0 then
 				weaponDesignation = "weapon".. weaponUnitDef.slavedTo
