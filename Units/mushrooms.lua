@@ -200,7 +200,7 @@ local BombMushroom = Mushroom:New {
 }
 local KingShroom = Mushroom:New {
 	name                = "King Shroom",
-	maxDamage			= 6000,
+	maxDamage			= 26000,
 	MaxVelocity 		= 50,
 	FootprintX = 10,
     FootprintZ = 10,
@@ -221,39 +221,39 @@ local KingShroom = Mushroom:New {
 			mainDir				= "0 0 1",
 			maxAngleDif			= 210,	
 		},
-		[2] = {
-			def 			   = "Shield",
-		}
+-- 		[2] = {
+-- 			def 			   = "Shield",
+-- 		}
 	},
 	
-	weaponDefs = {
-		shield = {
-			name                    = "Shield",
-
-			damage                  = {
-				default = 10,
-			},
-
-			exteriorShield          = true,
-			shieldAlpha             = 0.7,
-			shieldBadColor          = [[1 0.2 0.2]],
-			shieldGoodColor         = [[0.2 1 0.1]],
-			shieldInterceptType     = 3,
-			shieldPower             = 10000,
-			shieldPowerRegen        = 10,
-			shieldPowerRegenEnergy  = 0,
-			shieldRadius            = 600,
-			shieldRepulser          = false,
-			shieldStartingPower     = 10000,
-			smartShield             = true,
-			smart                   = true,
--- 			texture1                = [[shield3mist]],
-			visibleShield           = true,
-			visibleShieldHitFrames  = 20,
-			visibleShieldRepulse    = true,
-			weaponType              = "Shield",
-		},
-	}
+-- 	weaponDefs = {
+-- 		shield = {
+-- 			name                    = "Shield",
+-- 
+-- 			damage                  = {
+-- 				default = 10,
+-- 			},
+-- 
+-- 			exteriorShield          = true,
+-- 			shieldAlpha             = 0.7,
+-- 			shieldBadColor          = [[1 0.2 0.2]],
+-- 			shieldGoodColor         = [[0.2 1 0.1]],
+-- 			shieldInterceptType     = 3,
+-- 			shieldPower             = 10000,
+-- 			shieldPowerRegen        = 10,
+-- 			shieldPowerRegenEnergy  = 0,
+-- 			shieldRadius            = 600,
+-- 			shieldRepulser          = false,
+-- 			shieldStartingPower     = 10000,
+-- 			smartShield             = true,
+-- 			smart                   = true,
+-- -- 			texture1                = [[shield3mist]],
+-- 			visibleShield           = true,
+-- 			visibleShieldHitFrames  = 20,
+-- 			visibleShieldRepulse    = true,
+-- 			weaponType              = "Shield",
+-- 		},
+-- 	}
 }
 
 return lowerkeys({
