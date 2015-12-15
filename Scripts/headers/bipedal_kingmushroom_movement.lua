@@ -22,30 +22,36 @@ animations = {
 		
 			CustomEmitter( modelParts["RR"], animData["dirt"])	
 			CustomEmitter( modelParts["RL"], animData["dirt"])	
-			CustomEmitter( modelParts["FR"], animData["dirt"])	
-			CustomEmitter( modelParts["FL"], animData["dirt"])	
 
-			Turn(modelParts["RR"], x_axis, math.rad(-60), math.rad(70 * speedMult))
-			Turn(modelParts["FL"], x_axis, math.rad(-60), math.rad(70 * speedMult))
-			Turn(modelParts["RL"], x_axis, math.rad(30), math.rad(70 * speedMult))
-			Turn(modelParts["FR"], x_axis, math.rad(30), math.rad(70 * speedMult))
+			Turn(modelParts["RL"], x_axis, math.rad(-40), math.rad(40 * speedMult))
+			Turn(modelParts["FR"], x_axis, math.rad(-40), math.rad(40 * speedMult))
+			Turn(modelParts["FL"], x_axis, math.rad(20), math.rad(60 * speedMult))
+			Turn(modelParts["RR"], x_axis, math.rad(20), math.rad(60 * speedMult))	
 				
 			Turn(modelParts["King"], z_axis, math.rad(0), math.rad(10 * speedMult))
 			
 			Move(modelParts["King"], y_axis, 4.2, 100)
 			Sleep(650/speedMult)
 			
+			Turn(modelParts["KingHead"], x_axis, math.rad(3), math.rad(5 * speedMult))
+			Turn(modelParts["KingHead"], z_axis, math.rad(7), math.rad(12 * speedMult))
 			Turn(modelParts["King"], z_axis, math.rad(-6), math.rad(10 * speedMult))
+			Turn(modelParts["King"], x_axis, math.rad(2), math.rad(10 * speedMult))
 			
 			Move(modelParts["King"], y_axis, 2.4, 0)				
 			Sleep(500/speedMult)	
 							
+			Turn(modelParts["KingHead"], x_axis, math.rad(-4), math.rad(5 * speedMult))
+			Turn(modelParts["KingHead"], z_axis, math.rad(-7), math.rad(12 * speedMult))
 			Turn(modelParts["King"], z_axis, math.rad(6), math.rad(10 * speedMult))
+			Turn(modelParts["King"], x_axis, math.rad(-2), math.rad(10 * speedMult))
 			
-			Turn(modelParts["RL"], x_axis, math.rad(-60), math.rad(70 * speedMult))
-			Turn(modelParts["FR"], x_axis, math.rad(-60), math.rad(70 * speedMult))
-			Turn(modelParts["FL"], x_axis, math.rad(30), math.rad(70 * speedMult))
-			Turn(modelParts["RR"], x_axis, math.rad(30), math.rad(70 * speedMult))
+			CustomEmitter( modelParts["FR"], animData["dirt"])	
+			CustomEmitter( modelParts["FL"], animData["dirt"])
+			Turn(modelParts["RR"], x_axis, math.rad(-40), math.rad(60 * speedMult))
+			Turn(modelParts["FL"], x_axis, math.rad(-40), math.rad(60 * speedMult))
+			Turn(modelParts["RL"], x_axis, math.rad(20), math.rad(40 * speedMult))
+			Turn(modelParts["FR"], x_axis, math.rad(20), math.rad(40 * speedMult))
 			
 
 			Move(modelParts["King"], y_axis, 1, 100)			--if(isMoving == true) then
