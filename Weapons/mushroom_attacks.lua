@@ -77,7 +77,20 @@ local PoisonMushroomSpray = SporeSprayBase:New {
 	},
 }
 
+local poison = SporeSprayBase:New {
+	name                    = "poison",
+	damage = {
+		default            = 1,
+	},
+	explosionGenerator = [[custom:barfgas]],
+	areaOfEffect       = 320,
+	soundstart         = "",
+	burnBlow = true,
+	weaponType = "Cannon",
+}
+
 return lowerkeys{
+	poison = poison,
 	NormalMushroomSpray = NormalMushroomSpray,
 	SmallMushroomSpray = SmallMushroomSpray,
 	BigMushroomSpray = BigMushroomSpray,

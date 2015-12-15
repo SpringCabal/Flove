@@ -119,6 +119,37 @@ return {
       },
     },
   },
-
+  
+["barfgas"] = {
+	particles = {
+	  air                = true,
+	  class              = [[CSimpleParticleSystem]],
+	  count              = 1,
+	  ground             = true,
+	  water              = true, 
+	  underwater         = true,
+	  properties = {
+		airdrag            = 0.6,
+		alwaysvisible      = true,
+		colormap           = [[0.6 1.0 0.05 0.5	0 0 0 0.0]],
+		directional        = true,
+		emitrot            = 0,
+		emitrotspread      = 180,
+		emitvector         = [[0, 1, 0]],
+		gravity            = [[0, -0.5, 0]],
+		numparticles       = 20,
+		particlelife       = [[25]], -- same as groundflash ttl
+		particlelifespread = 5,
+		particlesize       = 8, -- groundflash flashsize 25 = 1, so if flashsize is 200, particlesize here would be 8
+		particlesizespread = 1,
+		particlespeed      = 20,
+		particlespeedspread = 20,
+		pos                = [[r5 r-5, 0, r5 r-5]],
+		sizegrowth         = 2, -- same as groundflash circlegrowth
+		sizemod            = 1.05,
+		texture            = [[flame]],
+	  },
+	},
+  },
 }
 
