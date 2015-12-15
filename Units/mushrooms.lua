@@ -8,7 +8,7 @@ local Mushroom = Unit:New {
 	holdSteady = true,
 	transportCapacity = 10,
 	transportSize = 10,
-	
+	explodeAs     = "mushroompop",
 	--Pathfinding and related
     Acceleration = 0.2,
     BrakeRate = 0.1,
@@ -22,11 +22,7 @@ local Mushroom = Unit:New {
 	TurnInPlaceSpeedLimit = 1.6, 
 	turnInPlaceAngleLimit = 90,
     TurnRate = 3000,
-	
-	customParams = {
-		turnaccel = 500,
-		mushroom = true,
-	},
+
 
 	--Abilities
     Builder = 0,
@@ -45,7 +41,9 @@ local Mushroom = Unit:New {
 	
 	idleAutoHeal = 0,
 	script		 	= "UnitBase.lua",
-	customparams = {  
+	customparams = { 
+		turnaccel = 500,
+		mushroom = true, 
 		basepiece	= "Trunk",
 		moveanim	= "headers/bipedal_mushroom_movement.lua", 
 		mountanimdefaultto	 = "headers/weaponmounts/shroommouth.lua",

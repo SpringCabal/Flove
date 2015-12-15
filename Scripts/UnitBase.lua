@@ -186,7 +186,7 @@ local function getWeaponData()
 			end
 
 			-- allow units to use a single specific piece for aiming
-			if myUnitDef.customParams.centeraim then
+			if myUnitDef.customParams.centeraim and weaponAnimationPieces[weaponNum]then
 				weaponAnimationPieces[weaponNum]["centeraim"] = piece (myUnitDef.customParams.centeraim)
 			end
 			
