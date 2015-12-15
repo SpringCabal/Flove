@@ -1,10 +1,10 @@
 local modinfo = {
-	name = "LD34",
-	shortname = "LD34",
-	game = "LD34",
-	shortgame = "LD34",
-    version = "Git",
-	description = "LD34",
+	name = "Flove",
+	shortname = "Flove",
+	game = "Flove",
+	shortgame = "Flove",
+    version = "1.0",
+	description = "Flove",
 	
 	modtype = "1",
 	depend = {
