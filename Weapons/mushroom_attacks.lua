@@ -53,7 +53,7 @@ local SmallMushroomSpray = SporeSprayBase:New {
 }
 
 local BigMushroomSpray = SporeSprayBase:New {
-	name                    = "KingMushroomSpray",
+	name                    = "BigMushroomSpray",
 	reloadtime         		= 8,
 	thickness          		= 20,
 	beamTime 				= 3,

@@ -180,6 +180,7 @@ function CreateStartWindow()
 				width = "100%",
 				height = "100%",
 				file = "Bitmaps/start_screen.png",
+				keepAspect = false,
 			},
 		},
     }
