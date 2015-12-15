@@ -38,7 +38,6 @@ end
 function gadget:GameFrame(f)
 	for unitID, frame in pairs(watchedUnits) do
 		if f % 30 == 0 then
-			Spring.Echo('Shooting poison!')
 			local x,y,z = Spring.GetUnitPosition(unitID);
 			local params = {
 				pos = {x, y, z},
