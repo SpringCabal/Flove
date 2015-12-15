@@ -18,7 +18,7 @@ local Tree = Unit:New {
     script              = "tree.lua",
 
 	 customParams        = {
-		modelradius        = [[10]],
+		modelradius        = [[50]],
 		midposoffset       = [[0 0 0]],
 
 		tree 			   = true,

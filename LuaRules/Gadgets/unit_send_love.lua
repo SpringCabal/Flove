@@ -106,6 +106,8 @@ function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, w
 			Spring.SpawnCEG("love_hurts", x, y, z, 0, 0, 0, 0)
 			return damage, 1.0
 		end
+		
+		return 0,0
 	end
-	return 0,0
+	return damage, paralyzer
 end
