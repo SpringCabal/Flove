@@ -15,7 +15,7 @@ function widget:Initialize()
     local devMode = (tonumber(Spring.GetModOptions().play_mode) or 0) == 0
     if not devMode or true then
         -- NOTICE: uncomment this to disable the console
-        --Spring.SendCommands("Console 0")
+        Spring.SendCommands("Console 0")
     end
 
     -- remove Springs default UI stuff
