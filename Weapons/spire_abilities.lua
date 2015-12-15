@@ -36,6 +36,16 @@ local Zap = Weapon:New{
 	},
 }
 
+local ZapEcho = Zap:New{
+	burnBlow = true,
+	range = 1,
+	areaofeffect = 200,
+	explosiongenerator = "custom:love_echo",
+	damage = {
+		default = 150,
+	},
+}
+
 local FlowerShot = Weapon:New{
 	alwaysVisible = true,
 	--areaofeffect = 8,
@@ -112,6 +122,7 @@ local UpgradeShot = Weapon:New{
 
 return lowerkeys{
 	Zap = Zap,
+	ZapEcho = ZapEcho,
 	FlowerShot = FlowerShot,
 	UpgradeShot = UpgradeShot,
 }

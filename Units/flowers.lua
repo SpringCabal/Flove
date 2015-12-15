@@ -1,4 +1,4 @@
-local Flower = Unit:New {
+local Grass = Unit:New {
     footprintX			    = 0,
 	footprintZ			    = 0,
 	mass				    = 10e5,
@@ -32,6 +32,15 @@ local Flower = Unit:New {
 
 }
 
+local Flower = Grass:New{
+	 customParams        = {
+		modelradius        = [[1]],
+		midposoffset       = [[0 0 0]],
+		shrubs 			   = true,
+		flower             = true,
+    },
+}
+
 local flower1 = Flower:New {
 	name                = "Flower1",
 }
@@ -60,19 +69,19 @@ local grass1 = Flower:New {
 	name                = "Grass1",
 }
 
-local grass2 = Flower:New {
+local grass2 = Grass:New {
 	name                = "Grass2",
 }
 
-local grass3 = Flower:New {
+local grass3 = Grass:New {
 	name                = "Grass3",
 }
 
-local grass4 = Flower:New {
+local grass4 = Grass:New {
 	name                = "Grass4",
 }
 
-local grass5 = Flower:New {
+local grass5 = Grass:New {
 	name                = "Grass5",
 }
 

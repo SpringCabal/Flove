@@ -68,6 +68,46 @@ return {
       },
     },
   },
+  ["love_echo"] = {
+	-- put this next to groundflash
+    groundflash = {
+      air                = true,
+      alwaysvisible      = true,
+      circlealpha        = 0.6,
+      circlegrowth       = 6,
+      flashalpha         = 0.5,
+      flashsize          = 150,
+      ground             = true,
+      ttl                = 20,
+      water              = true, 
+	  underwater         = true,
+      color = {
+        [1]  = 1,
+        [2]  = 0.15,
+        [3]  = 0.4,
+      },
+    },
+    pinklove = {
+      air                = true,
+      class              = [[heatcloud]],
+      count              = 5,
+      ground             = true,
+      water              = true, 
+	  underwater         = true,
+      properties = {
+        alwaysvisible      = true,
+        heat               = 10,
+        heatfalloff        = 0.5,
+        maxheat            = 20,
+        pos                = [[r-20 r20, 10, r-20 r20]],
+        size               = 10,
+        sizegrowth         = 10,
+        speed              = [[r10, 10, r10]],
+        texture            = [[largelove]],
+      },
+    },
+  },
+
   ["love_hurts"] = {
 	explosionwave = {
       air                = true,
@@ -99,6 +139,7 @@ return {
       },
     },
   },
+  
   ["love_heals"] = {
 	explosionwave = {
       air                = true,
