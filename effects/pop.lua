@@ -1,13 +1,42 @@
 return {
-  ["redpop"] = {
-    kickedupdirt = {
+  ["red_pop"] = {
+	heartflash = {
+      air                = true,
+      class              = [[CSimpleParticleSystem]],
+      count              = 1,
+      ground             = true,
+      water              = true, 
+	  underwater         = true,
+      properties = {
+        airdrag            = 0.7,
+        alwaysvisible      = true,
+        colormap           = [[1 0 0 0.5	0 0 0 0.0]], 
+        directional        = false,
+        emitrot            = 0,
+        emitrotspread      = 180,
+        emitvector         = [[0, 1, 0]],
+        gravity            = [[0, 0, 0]],
+        numparticles       = 5,
+        particlelife       = [[20]], -- same as groundflash ttl
+        particlelifespread = 0,
+        particlesize       = 2, -- groundflash flashsize 25 = 1, so if flashsize is 200, particlesize here would be 8
+        particlesizespread = 3,
+        particlespeed      = 0,
+        particlespeedspread = 0,
+        pos                = [[0,0,0]],
+        sizegrowth         = 5, -- same as groundflash circlegrowth
+        sizemod            = 1.1,
+        texture            = [[largelove]],
+      },
+    },
+    redpop = {
       air                = true,
       class              = [[CSimpleParticleSystem]],
       count              = 1,
       ground             = true,
       alwaysvisible      = true,
       properties = {
-        airdrag            = 0.95,
+        airdrag            = 0.8,
         alwaysvisible      = true,
         colormap           = [[1 0 0 0.01   0.2 0 0 0.01   0 0 0 0.01]],
         directional        = true,
@@ -18,10 +47,10 @@ return {
         numparticles       = 30,
         particlelife       = 15,
         particlelifespread = 5,
-        particlesize       = 40,
-        particlesizespread = 1,
+        particlesize       = 50,
+        particlesizespread = 20,
         particlespeed      = 20,
-        particlespeedspread = 1,
+        particlespeedspread = 10,
         pos                = [[0, 1, 0]],
         sizegrowth         = 2,
         sizemod            = 0.96,
