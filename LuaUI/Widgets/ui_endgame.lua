@@ -249,7 +249,7 @@ function widget:GameFrame()
 --     end
 	local gameOver = Spring.GetGameRulesParam("gameOver")
 	local won = Spring.GetGameRulesParam("won") or 0
-    if won == 1 then
+    if gameOver == 1 then
         widget:GameOver(won == 1)
     end
 end

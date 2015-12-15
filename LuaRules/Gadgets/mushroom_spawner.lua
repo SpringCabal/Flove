@@ -580,7 +580,7 @@ function HandleLuaMessage(msg)
 		end
 		local stage = Spring.GetGameRulesParam("story")
 		stage = stage + 1
-		if stage ~= 3 and stage ~= 4 and stage ~= 5 and stage ~= 6 and stage ~= 7 then
+		if stage ~= 3 and stage ~= 4 and stage ~= 5 and stage ~= 6 then
 			StoryStage(stage)
 		end
 	elseif msg_table[1] == 'skip_tutorial' then

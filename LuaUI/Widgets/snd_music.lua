@@ -48,7 +48,7 @@ function widget:Update(dt)
         playingTime = playingTime + dt
         --playingTime = Spring.GetSoundStreamTime()
         if playingTime > trackTime - BUFFER then
-            StartPlaying()
+            Spring.PlaySoundStream(musicFile, VOLUME, true)
             playingTime = 0
         end
     end
