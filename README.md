@@ -12,3 +12,6 @@ This repository contains:
 - and a bunch of other useful custom widgets and gadgets
 
 Check out the wiki for detailed information.
+
+
+[![Join the chat at https://gitter.im/SpringCabal/LD34](https://badges.gitter.im/SpringCabal/LD34.svg)](https://gitter.im/SpringCabal/LD34?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
