@@ -3,7 +3,7 @@ local modinfo = {
 	shortname = "Flove",
 	game = "Flove",
 	shortgame = "Flove",
-    version = "1.1",
+    version = "1.2",
 	description = "Flove",
 	
 	modtype = "1",

@@ -66,7 +66,7 @@ function gadget:ProjectileDestroyed(proID)
 
 			if TESTING_MODE then Spring.Echo("Adding new center at ", px, pz) end
 
-			Spring.PlaySoundFile("sounds/birds.wav", 20, px,py,pz)
+			Spring.PlaySoundFile("sounds/wind+leaves.wav", 20, px,py,pz)
 			table.insert(watchedCenters, {x=px, z=pz, f=Spring.GetGameFrame()})
 			
 			-- spawn the flowers
