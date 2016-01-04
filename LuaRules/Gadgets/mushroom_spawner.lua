@@ -171,8 +171,8 @@ local waveConfig = {
 --------------------------------------------------------------------------------
 
 local function SpawnUnit(unitDefID, x, z, noRotate)
-    x = x+20*(2*math.random()-1)
-    z = z+20*(2*math.random()-1)
+    x = x+10*(2*math.random()-1)
+    z = z+10*(2*math.random()-1)
 	local unitID = Spring.CreateUnit(unitDefID, x, 0, z, 0, 0, false, false)
 	if not noRotate then
 		Spring.SetUnitRotation(unitID, 0, math.random()*2*math.pi, 0)
@@ -331,38 +331,27 @@ function gadget:UnitDestroyed(unitID, unitDefID)
 	aiMushrooms[unitID] = nil
 end
 
-function SelectEnemy(uID)
+function SelectEnemy(uID, allUnits)
     local nID = Spring.GetUnitNearestEnemy(uID, 10240, true)
     local x,y,z = Spring.GetUnitPosition(uID)
     if math.random()<0.5 and nID~=spireID then
         return nID
     else    
-        -- knuth shuffle, because Spring.GetAllUnits order is predictable
-        local units = Spring.GetAllUnits(tID)
-        local perm = {}
-        for i=1,#units do
-            perm[i] = i
-        end
-        for i=1,#units-1 do
-            local j = math.random(i,#units)
-            local temp = perm[i]
-            perm[i] = perm[j]
-            perm[j] = temp
-        end
-        
         -- sample a random enemy with probability proportional to 1 / square distance from self
         local tID = Spring.GetUnitTeam(uID)
         local weights = {}
         local totalWeight = 0
-        for i=1,#units do
-            local eID = units[perm[i]]
+        for i=1,#allUnits do
+            local eID = allUnits[i]
             local eTeamID = Spring.GetUnitTeam(eID)
             local eDID = Spring.GetUnitDefID(eID)
             if (UnitDefs[eDID].customParams.tree or spireDefID == eDID) and not Spring.AreTeamsAllied(tID, eTeamID) then
                 local ex,ey,ez = Spring.GetUnitPosition(eID)
                 local sqrDist = (x-ex)*(x-ex) + (y-ey)*(y-ey) + (z-ez)*(z-ez) 
-                weights[eID] = (sqrDist>10*10) and 1/(sqrDist) or 0
-                totalWeight = totalWeight + weights[eID]
+                weights[i] = (sqrDist>10*10) and 1/(sqrDist) or 0
+                totalWeight = totalWeight + weights[i]
+            else
+                weights[i] = 0
             end
         end
         if totalWeight<=0 then
@@ -370,10 +359,10 @@ function SelectEnemy(uID)
         end
         local p = math.random()*totalWeight
         local q = 0
-        for eID,w in pairs(weights) do
-            q = q + w
+        for i=1,#weights do
+            q = q + weights[i]
             if q>p then
-                return eID
+                return allUnits[i]
             end
         end
     end
@@ -383,6 +372,7 @@ end
 local SMALL_MUSHROOM_ORDER_CHANGE = 30
 function CheckForIdleMushrooms()
 	local frame = Spring.GetGameFrame()
+    local allUnits = Spring.GetAllUnits()
     for uID, _ in pairs(aiMushrooms) do
 		local unitDefID = Spring.GetUnitDefID(uID)
 		if unitDefID == smallMushroomDefID then
@@ -391,7 +381,7 @@ function CheckForIdleMushrooms()
 				lastOrderFrame = frame
 				Spring.SetUnitRulesParam(uID, "lastOrderFrame", lastOrderFrame)
 				
-				local eID = SelectEnemy(uID)
+				local eID = SelectEnemy(uID, allUnits)
 				if eID then
 					local x,y,z = Spring.GetUnitPosition(eID)
 					local d = 500
@@ -402,7 +392,7 @@ function CheckForIdleMushrooms()
 				end
 			end
 		elseif Spring.GetUnitCommands(uID,2) ~= nil and #Spring.GetUnitCommands(uID,2)==0 then
-            local eID = SelectEnemy(uID)
+            local eID = SelectEnemy(uID, allUnits)
             if eID then
                 local x,y,z = Spring.GetUnitPosition(eID)
                 local cx,cy,cz = Spring.GetUnitPosition(uID)
@@ -417,7 +407,8 @@ end
 function GoForAShortWalk(uID)
     local x,y,z = Spring.GetUnitPosition(uID)
     local theta = math.random(1,360) / 360 * (2*math.pi)
-    local dx, dz = 256*math.sin(theta), 256*math.cos(theta)
+    local d = 256
+    local dx, dz = d*math.sin(theta), d*math.cos(theta)
     local nx, ny, nz = x+dx, Spring.GetGroundHeight(x+dx,z+dz), z+dz
     Spring.GiveOrderToUnit(uID, CMD.FIGHT, {nx,ny,nz}, {})    
 end
