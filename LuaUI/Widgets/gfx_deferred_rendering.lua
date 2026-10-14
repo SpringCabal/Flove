@@ -77,7 +77,7 @@ local spGetProjectilesInRectangle = Spring.GetProjectilesInRectangle
 local spGetVisibleProjectiles     = Spring.GetVisibleProjectiles
 local spGetProjectilePosition     = Spring.GetProjectilePosition
 local spGetProjectileType         = Spring.GetProjectileType
-local spGetProjectileName         = Spring.GetProjectileName
+local spGetProjectileDefID        = Spring.GetProjectileDefID
 local spGetCameraPosition         = Spring.GetCameraPosition
 local spGetPieceProjectileParams  = Spring.GetPieceProjectileParams 
 local spGetProjectileVelocity     = Spring.GetProjectileVelocity 
@@ -189,13 +189,13 @@ local function GetLightsFromUnitDefs()
                 if (WeaponDefs[weaponID]['type'] == 'Cannon') then
                     if verbose then Spring.Echo('Cannon',WeaponDefs[weaponID]['name'],'size', WeaponDefs[weaponID]['size']) end
                     size=WeaponDefs[weaponID]['size']
-                    plighttable[WeaponDefs[weaponID]['name']]={r=0.5,g=0.5,b=0.25,radius=100,beam=false}
+                    plighttable[weaponID]={r=0.5,g=0.5,b=0.25,radius=100,beam=false}
                     
 -- 					plighttable[WeaponDefs[weaponID]['name']]={r=r,g=g,b=b,radius=math.min(WeaponDefs[weaponID]['range'],500) * WeaponDefs[weaponID]['visuals']["thickness"]/7,beam=true}
                 elseif (WeaponDefs[weaponID]['type'] == 'DGun') then
                     if verbose then Spring.Echo('DGun',WeaponDefs[weaponID]['name'],'size', WeaponDefs[weaponID]['size']) end
                     --size=WeaponDefs[weaponID]['size']
-                    plighttable[WeaponDefs[weaponID]['name']]={r=2,g=2,b=1,radius=300,beam=false}
+                    plighttable[weaponID]={r=2,g=2,b=1,radius=300,beam=false}
                     
                 elseif (WeaponDefs[weaponID]['type'] == 'MissileLauncher') then
                     if verbose or true then Spring.Echo('MissileLauncher',WeaponDefs[weaponID]['name'],'size', WeaponDefs[weaponID]['size']) end
@@ -204,30 +204,30 @@ local function GetLightsFromUnitDefs()
                     local g = WeaponDefs[weaponID]['visuals']['colorG']
                     local b = WeaponDefs[weaponID]['visuals']['colorB']
 					Spring.Echo(r,g,b)
-                    plighttable[WeaponDefs[weaponID]['name']]={r=r or 0.5,g=g or 0.5,b=b or 0.6,radius=320* size, beam=true}
+                    plighttable[weaponID]={r=r or 0.5,g=g or 0.5,b=b or 0.6,radius=320* size, beam=true}
                     
                 elseif (WeaponDefs[weaponID]['type'] == 'StarburstLauncher') then
                     if verbose then Spring.Echo('StarburstLauncher',WeaponDefs[weaponID]['name'],'size', WeaponDefs[weaponID]['size']) end
                     --size=WeaponDefs[weaponID]['size']
-                    plighttable[WeaponDefs[weaponID]['name']]={r=0.5,g=0.5,b=0.4,radius=200,beam=false}
+                    plighttable[weaponID]={r=0.5,g=0.5,b=0.4,radius=200,beam=false}
                 elseif (WeaponDefs[weaponID]['type'] == 'LightningCannon') then
                     if verbose then Spring.Echo('LightningCannon',WeaponDefs[weaponID]['name'],'size', WeaponDefs[weaponID]['size']) end
                     --size=WeaponDefs[weaponID]['size']
-                    plighttable[WeaponDefs[weaponID]['name']]={r=0.3,g=0.3,b=1.5,radius=100,beam=true}
+                    plighttable[weaponID]={r=0.3,g=0.3,b=1.5,radius=100,beam=true}
                 elseif (WeaponDefs[weaponID]['type'] == 'BeamLaser') then
                     if verbose then Spring.Echo('BeamLaser',WeaponDefs[weaponID]['name'],'rgbcolor', WeaponDefs[weaponID]['visuals']['colorR']) end
                     --size=WeaponDefs[weaponID]['size']
                     local r = WeaponDefs[weaponID]['visuals']['colorR']
                     local g = WeaponDefs[weaponID]['visuals']['colorG']
                     local b = WeaponDefs[weaponID]['visuals']['colorB']
-                    plighttable[WeaponDefs[weaponID]['name']]={r=r,g=g,b=b,radius=math.min(WeaponDefs[weaponID]['range'],500) * WeaponDefs[weaponID]['visuals']["thickness"]/7,beam=true}
+                    plighttable[weaponID]={r=r,g=g,b=b,radius=math.min(WeaponDefs[weaponID]['range'],500) * WeaponDefs[weaponID]['visuals']["thickness"]/7,beam=true}
 				elseif (WeaponDefs[weaponID]['type'] == 'LaserCannon') then
                     if verbose then Spring.Echo('LaserCannon',WeaponDefs[weaponID]['name'],'rgbcolor', WeaponDefs[weaponID]['visuals']['colorR']) end
                     --size=WeaponDefs[weaponID]['size']
                     local r = WeaponDefs[weaponID]['visuals']['colorR']
                     local g = WeaponDefs[weaponID]['visuals']['colorG']
                     local b = WeaponDefs[weaponID]['visuals']['colorB']
-                    plighttable[WeaponDefs[weaponID]['name']]={r=r,g=g,b=b,radius=math.min(WeaponDefs[weaponID]['range'],500) * WeaponDefs[weaponID]['visuals']["thickness"]/7,beam=true}
+                    plighttable[weaponID]={r=r,g=g,b=b,radius=math.min(WeaponDefs[weaponID]['range'],500) * WeaponDefs[weaponID]['visuals']["thickness"]/7,beam=true}
                 end
             end
         end
@@ -531,7 +531,7 @@ function widget:DrawWorld()
                         table.insert(pointlightprojectiles,{r=0.5,g=0.5,b=0.25,radius=100,constant=1,squared=1,linear=0,beam=false,px=x,py=y,pz=z,dx=0,dy=0,dz=0})
                     end
                 else
-                    lightparams=projectileLightTypes[spGetProjectileName(pID)]
+                    lightparams=projectileLightTypes[spGetProjectileDefID(pID)]
                     if lightparams then
                         if lightparams.beam then --BEAM type
                             local deltax,deltay,deltaz=spGetProjectileVelocity(pID) -- for beam types, this returns the endpoint of the beam
