@@ -317,7 +317,9 @@ local function RestoreAfterDelay(weaponID)
 end
 
 function script.AimWeapon(weaponID, heading, pitch)
-	if(weaponData[weaponID]["abilityWeapon"]) then
+	-- AimWeapon can arrive before Create() has finished filling weaponData,
+	-- the same race QueryWeapon already guards against above.
+	if weaponData[weaponID] and weaponData[weaponID]["abilityWeapon"] then
 		return false
 	end
 	

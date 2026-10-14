@@ -22,8 +22,8 @@ animations = {
 		end
 
 		
-		weaponData["flare"]	= piece 'Muzzle'
-		pieceList["e"]		= weaponData["flare"]
+		weaponData["flare"]	= weaponDefCustom.effect1
+		pieceList["e"]		= piece 'Muzzle'
 		
 		return pieceList, weaponData
 	end,
@@ -39,7 +39,7 @@ animations = {
 	--------------------------------------------------------------------
 	ShotAnim = function (pieces, data, emitterId)
 		--Spring.Echo(shotNumber, "(shotNumber) ShotAnim")
-		local shotEmitter		= data["flare"]
+		local shotEmitter		= pieces["e"]
 		CustomEmitter( shotEmitter, data["flare"])
 				
 		--Spring.Echo("ShotAnim", shotEmitter, shotNumber)

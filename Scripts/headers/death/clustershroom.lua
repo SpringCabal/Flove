@@ -13,7 +13,7 @@
 		
 		local smallMushroomDefID   = UnitDefNames["smallmushroom"].id	
 		local x,y,z = Spring.GetUnitPiecePosDir(unitID,pieces.cap);
-		Spring.SpawnCEG("redpop", x, y, z, 0, 2, 0, 10,10);
+		Spring.SpawnCEG("red_pop", x, y, z, 0, 2, 0, 10,10);
 		Spring.PlaySoundFile("sounds/clusterexplosion.wav", 10, x, y, z)
 		
 		-- spawn small mushrooms on death
