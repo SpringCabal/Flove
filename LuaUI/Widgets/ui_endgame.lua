@@ -168,11 +168,7 @@ local function SetupControls()
 				nameBox = nil
 				restartButton = nil
 				submitButton = nil
-				if Spring.IsCheatingEnabled() then
-					Spring.SendCommands("luarules reload")
-				else
-					Spring.SendCommands("cheat", "luarules reload", "cheat")
-				end
+				WG.RestartFlove()
                 window_endgame:Dispose()
                 window_endgame = nil
                 frame_delay = Spring.GetGameFrame()
@@ -191,14 +187,14 @@ local function SetupControls()
 			function() 
 				nameBox = nil
 				restartButton = nil
-				Spring.SendCommands("quit","quitforce") 
+				Spring.SendCommands("reloadforce")
 			end
 		};
 		parent = window_endgame;
 	}
     
-	screen0:AddChild(window_endgame)
-
+	-- Attaching is ShowEndGameWindow's job; both callers run it right after
+	-- this, and adding here too made Chili reject the second AddChild.
 end
 
 --------------------------------------------------------------------------------
@@ -277,5 +273,4 @@ function widget:GameOver(won)
     SetupControls()
     ShowEndGameWindow()
 end
-
 

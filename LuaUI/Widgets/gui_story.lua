@@ -79,6 +79,8 @@ local narrations = {
 
 local currentText = 1
 local currentIndex = 1
+local selectedDifficulty = 1
+local restartFrame
 
 local closeTexts = {
 	[2] = true,
@@ -91,10 +93,42 @@ local closeTexts = {
 }
 
 function StartGame(difficulty)
+	selectedDifficulty = difficulty
 	WG.ResetCamera()
 	Spring.SendLuaRulesMsg('difficulty|' .. tostring(difficulty))
 	CreateGUI()
 	startWindow:Hide()
+end
+
+-- Rules reload clears the world; explicitly reset the UI that stays loaded.
+function WG.RestartFlove()
+    Spring.SendCommands("pause 0")
+    if Spring.IsCheatingEnabled() then
+        Spring.SendCommands("luarules reload")
+    else
+        Spring.SendCommands("cheat", "luarules reload", "cheat")
+    end
+    restartFrame = Spring.GetGameFrame() + 2
+end
+
+local function FinishRestart()
+    if Spring.GetGameFrame() < restartFrame or Spring.GetGameRulesParam("gameOver") ~= 0
+        or Spring.GetGameRulesParam("story") ~= 1 then
+        Spring.SendCommands("pause 0")
+        return
+    end
+    restartFrame = nil
+    currentText, currentIndex = 1, 0
+    if skip_button.hidden then skip_button:Show() end
+    next_button:SetCaption(grey .. "Next")
+    if window.hidden then window:Show() end
+    UpdateText()
+    WG.ResetCamera()
+    Spring.SendLuaRulesMsg('difficulty|' .. tostring(selectedDifficulty))
+end
+
+function widget:Shutdown()
+    WG.RestartFlove = nil
 end
 
 function NextClose()
@@ -172,7 +206,7 @@ function CreateStartWindow()
 				height = 80,
 				width = 300,
 				caption = "Leave",
-				OnClick = { function() Spring.SendCommands("quitforce") end },
+				OnClick = { function() Spring.SendCommands("reloadforce") end },
 			},
 			Chili.Image:New {
 				x = 0,
@@ -268,6 +302,10 @@ end
 
 local lastTime = 0
 function widget:Update()
+	if restartFrame then
+		FinishRestart()
+		return
+	end
 	if not window then
 		return
 	end

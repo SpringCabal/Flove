@@ -21,14 +21,10 @@ local white = "\255\255\255\255"
 function SetBindings()
     local binds = { --real keybinds
         
-        "Any+pause  pause",
-        
         --"Alt+b  debug",
         --"--Alt+v  debugcolvol",
 
-		"ctrl+q quitforce",
-		
-		"f12 screenshot",
+		"ctrl+q reloadforce",
 		
 		"Any+up moveforward ",
 		"Any+left moveleft ",
@@ -52,9 +48,6 @@ end
 function widget:Initialize()
     local devMode = (tonumber(Spring.GetModOptions().play_mode) or 0) == 0
     if not devMode then 
-        -- NOTICE: uncomment this for release
-        --Spring.SendCommands("unbindall") --muahahahaha
-        --Spring.SendCommands("unbindkeyset enter chat") --because because.
     end
     SetBindings()
     
