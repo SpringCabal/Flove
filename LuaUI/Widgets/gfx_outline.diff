@@ -1,4 +1,0 @@
-149a151
->     gl.Blending("alpha")
-155a158
->     gl.Blending(false)
