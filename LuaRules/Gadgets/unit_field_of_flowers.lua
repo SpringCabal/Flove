@@ -80,6 +80,11 @@ function gadget:ProjectileDestroyed(proID)
 end
 
 function gadget:UnitDestroyed(uID)
+	for i = #tempUnits, 1, -1 do
+		if tempUnits[i].unitID == uID then
+			table.remove(tempUnits, i)
+		end
+	end
     if watchedUnits[uID] then
         watchedUnits[uID] = nil
     end
@@ -142,8 +147,8 @@ function gadget:GameFrame(frame)
     for i = #tempUnits, 1, -1 do
 		local unit = tempUnits[i]
 		if unit.frame <= frame then
-			Spring.DestroyUnit(unit.unitID)
 			table.remove(tempUnits, i)
+			Spring.DestroyUnit(unit.unitID)
 		end
 	end
     

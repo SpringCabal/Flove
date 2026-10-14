@@ -295,6 +295,7 @@ function SpawnTree()
     if #potentialSpawnPoints>0 then
         -- pick potential spawn points with probability proportional to 1/d^2 where d is square distance to spire
         local sx,_,sz = Spring.GetUnitPosition(spireID) 
+        if not sx then return end -- The spire can disappear before the next growth tick.
         local totalWeight = 0
         for i,t in ipairs(potentialSpawnPoints) do
             local d = (sx-t.x)*(sx-t.x) + (sz-t.z)*(sz-t.z)

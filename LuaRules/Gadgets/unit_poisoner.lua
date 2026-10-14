@@ -31,6 +31,10 @@ function gadget:UnitCreated(unitID, unitDefID)
 	end
 end
 
+function gadget:UnitDestroyed(unitID)
+	watchedUnits[unitID] = nil
+end
+
 function gadget:Shutdown()
     Script.SetWatchWeapon(WDID,false)    
 end
