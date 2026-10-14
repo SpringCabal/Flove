@@ -335,24 +335,28 @@ local function DrawVisibleUnits(overrideEngineDraw)
  
   local visibleUnits = GetVisibleUnits(ALL_UNITS,nil,false)
   for i=1,#visibleUnits do  
-	local createdFrame = Spring.GetUnitRulesParam(visibleUnits[i], "createdFrame") or 0
-	local growTime = 33 * 0.5
-	local duration = Spring.GetGameFrame() - createdFrame
-	local grownPercentage = math.min(1, duration / growTime)
-	local unitDefID = Spring.GetUnitDefID(visibleUnits[i])
-	local unitDef = UnitDefs[unitDefID]
-
-    if checknow then
-      local unitProgress = select(5, GetUnitHealth(visibleUnits[i]))
-      if unitProgress == nil or unitProgress >= 1 then
-        unbuiltUnits[visibleUnits[i]] = nil
-      else
-        unbuiltUnits[visibleUnits[i]] = true
+    local unitDefID = Spring.GetUnitDefID(visibleUnits[i])
+    -- GetVisibleUnits can hand back a unit whose def this player cannot see,
+    -- or one that died between the query and here.  Nothing to outline, and
+    -- it is not worth a log line per unit per frame.
+    if unitDefID ~= nil then
+      local unitDef = UnitDefs[unitDefID]
+      local createdFrame = Spring.GetUnitRulesParam(visibleUnits[i], "createdFrame") or 0
+      local growTime = 33 * 0.5
+      local duration = Spring.GetGameFrame() - createdFrame
+      local grownPercentage = math.min(1, duration / growTime)
+      if checknow then
+        local unitProgress = select(5, GetUnitHealth(visibleUnits[i]))
+        if unitProgress == nil or unitProgress >= 1 then
+          unbuiltUnits[visibleUnits[i]] = nil
+        else
+          unbuiltUnits[visibleUnits[i]] = true
+        end
       end
-    end
- 
-    if not unbuiltUnits[visibleUnits[i]] and (grownPercentage == 1 or not unitDef.customParams.tree) then
-      glUnit(visibleUnits[i],overrideEngineDraw)
+    
+      if not unbuiltUnits[visibleUnits[i]] and (grownPercentage == 1 or not unitDef.customParams.tree) then
+        glUnit(visibleUnits[i],overrideEngineDraw)
+      end
     end
   end
 end

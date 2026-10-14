@@ -51,8 +51,9 @@ local function WeaponControl()
 		local traceType, unitID = Spring.TraceScreenRay(mx, my)
 		
 		if (traceType == 'unit') then
-			local ud = UnitDefs[Spring.GetUnitDefID(unitID)];
-			if ud.customParams.tree then
+			local defID = Spring.GetUnitDefID(unitID)
+			local ud = defID and UnitDefs[defID]
+			if ud and ud.customParams.tree then
 				Spring.SendLuaRulesMsg('upgrade|' .. unitID )
 			else
 				shootFlowers(mx,my);
@@ -81,8 +82,9 @@ function widget:MousePress(mx, my, button)
 			local traceType, unitID = Spring.TraceScreenRay(mx, my)
 			
 			if (traceType == 'unit') then
-				local ud = UnitDefs[Spring.GetUnitDefID(unitID)];
-				if ud.customParams.tree and not (ud.name == 'treelevel3') then
+				local defID = Spring.GetUnitDefID(unitID)
+				local ud = defID and UnitDefs[defID]
+				if ud and ud.customParams.tree and not (ud.name == 'treelevel3') then
 					Spring.SendLuaRulesMsg('upgrade|' .. unitID )
 					mouseControl3 = true
 					return true
