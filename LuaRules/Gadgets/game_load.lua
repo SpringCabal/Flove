@@ -49,9 +49,6 @@ function gadget:setUnitProperties(unitId, unit)
     if unit.experience ~= nil then
         Spring.SetUnitExperience(unitId, unit.experience)
     end
-    if unit.fuel ~= nil then
-        Spring.SetUnitFuel(unitId, unit.fuel)
-    end
     if unit.neutral ~= nil then
         Spring.SetUnitNeutral(unitId, unit.neutral)
     end

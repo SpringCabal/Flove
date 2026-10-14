@@ -1,29 +1,9 @@
 local Sounds = {
-  SoundItems = {
-    IncomingChat = {
-      --- always play on the front speaker(s)
-      file = "sounds/beep4.wav",
-      in3d = "false",
-    },
-    MultiSelect = {
-      --- always play on the front speaker(s)
-      file = "sounds/button9.wav",
-      in3d = "false",
-    },
-    MapPoint = {
-      --- respect where the point was set, but don't attenuate in distance
-      --- also, when moving the camera, don't pitch it
-      file = "sounds/beep6.wav",
-      rolloff = 0,
-      dopplerscale = 0,
-    },
-    digitout = {
-      --- some things you can do with this file
-      --- can be either ogg or wav
-      file = "sounds/digitout.wav",
-	  in3d = "true",
-    },
-  },
+  -- The .wav files these entries referenced (beep4, button9, beep6, digitout)
+  -- are not present in this archive, so each definition only produced a
+  -- LoadSoundBuffer error at startup. Left empty so the engine falls back to
+  -- its own defaults for IncomingChat, MultiSelect and MapPoint.
+  SoundItems = {},
 }
 
 return Sounds
