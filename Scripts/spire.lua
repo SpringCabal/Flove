@@ -6,6 +6,7 @@ local Branch={};
 
 function ShowBranch()
 	local branches = Spring.GetUnitRulesParam(unitID, "branches") or 0
+	if branches >= #Branch then return end
 	branches = branches + 1
 	Spring.SetUnitRulesParam(unitID, "branches", branches)
 	local n = branches
@@ -22,6 +23,7 @@ end
 
 function HideBranch()
 	local branches = Spring.GetUnitRulesParam(unitID, "branches") or 0
+	if branches <= 0 then return end
 	branches = branches - 1
 	Spring.SetUnitRulesParam(unitID, "branches", branches)
 	local n = branches + 1
@@ -55,7 +57,7 @@ local function GlowEye()
 end
 
 function script.Create()
-	Spring.SetGameRulesParam("power", 0)
+	Spring.SetUnitRulesParam(unitID, "branches", 0)
 	for i=1,9 do
 		Leaves[i] = piece('Leaves'..i);
 		Branch[i] = piece('Branch'..i);
@@ -67,7 +69,6 @@ function script.Create()
 	
 	Sleep(1000);
 	
-	Spring.SetUnitRulesParam(unitID, "branches", 0)
 -- 	for i=1,2 do
 -- 		ShowBranch(i);
 -- 		Sleep(1000);

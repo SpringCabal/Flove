@@ -168,6 +168,7 @@ function gadget:GameFrame()
 end
 
 function gadget:Initialize()
+	Spring.SetGameRulesParam("power", 0)
 	for _, unitID in ipairs(Spring.GetAllUnits()) do
 		local unitDefID = Spring.GetUnitDefID(unitID)
 		gadget:UnitCreated(unitID, unitDefID)

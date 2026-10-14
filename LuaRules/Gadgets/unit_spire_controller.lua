@@ -249,11 +249,11 @@ function gadget:GameFrame(n)
 	local mordorLevel = math.min(10, math.floor(1 + math.sqrt(power) / 5))
 	local branches = Spring.GetUnitRulesParam(spireID, "branches") or 0
 	local env = Spring.UnitScript.GetScriptEnv(spireID)
-	local desiredBranches = mordorLevel - 2
-	for i = branches, desiredBranches do
+	local desiredBranches = math.max(0, math.min(9, mordorLevel - 2))
+	for i = branches + 1, desiredBranches do
 		Spring.UnitScript.CallAsUnit(spireID, env.ShowBranchNoThread)
 	end
-	for i = branches-1, desiredBranches+1, -1 do
+	for i = branches, desiredBranches+1, -1 do
  		Spring.UnitScript.CallAsUnit(spireID, env.HideBranchNoThread)
 	end
 	
