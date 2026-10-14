@@ -244,30 +244,30 @@ function CreateShader()
 
       void main(void)
       {
-        const float boxSize = 4096.;
+        const float boxSize = 4096.0;
         float hBoxSize = boxSize * 0.25;
 
-        vec3 scalePos = vec3(gl_Vertex) * boxSize;
+        vec3 scalePos = gl_Vertex.xyz * boxSize;
         vec3 eye = camPos;
 
-        vec3 pos = scalePos ;
-        pos.x += sin(time*gl_Vertex.w + scalePos.y+gl_Vertex.w*20) * 480. * gl_Vertex.w;
-        pos.z += cos(time*(1-gl_Vertex.w) + scalePos.x+gl_Vertex.w*20) * 480. * gl_Vertex.w;
-		pos.y += (1+sin(time*(gl_Vertex.w*0.1) + scalePos.y+gl_Vertex.w*20)) * 300. * gl_Vertex.w + 300;
-		float origPosY = pos.y;
-		glimmer = max(0, sin(time*(gl_Vertex.w*5))/2);
+        vec3 pos = scalePos;
+        pos.x += sin(time * gl_Vertex.w + scalePos.y + gl_Vertex.w * 20.0) * 480.0 * gl_Vertex.w;
+        pos.z += cos(time * (1.0 - gl_Vertex.w) + scalePos.x + gl_Vertex.w * 20.0) * 480.0 * gl_Vertex.w;
+        pos.y += (1.0 + sin(time * (gl_Vertex.w * 0.1) + scalePos.y + gl_Vertex.w * 20.0)) * 300.0 * gl_Vertex.w + 300.0;
+        float origPosY = pos.y;
+        glimmer = max(0.0, sin(time * (gl_Vertex.w * 5.0)) / 2.0);
 
         vec4 eyePos = gl_ModelViewMatrix * vec4(pos, 1.0);
 
         gl_PointSize = (0.1 + gl_Vertex.w) * scale * hBoxSize / length(eyePos.xyz) * stage;
-		if (stage == 1) {
-			gl_FrontColor.rgb = vec3(0.0, 0.2, 0.4);
-		} else if (stage == 2) {
-			gl_FrontColor.rgb = vec3(0.5, 0.7, 1);
-		} else if (stage == 3) {
-			gl_FrontColor.rgb = vec3(0.8, 0.9, 1);
-		}
-        gl_FrontColor.a   = gl_Color.a * (1. - (camPos.y - origPosY) / boxSize);
+        if (stage == 1.0) {
+            gl_FrontColor.rgb = vec3(0.0, 0.2, 0.4);
+        } else if (stage == 2.0) {
+            gl_FrontColor.rgb = vec3(0.5, 0.7, 1.0);
+        } else if (stage == 3.0) {
+            gl_FrontColor.rgb = vec3(0.8, 0.9, 1.0);
+        }
+        gl_FrontColor.a   = gl_Color.a * (1.0 - (camPos.y - origPosY) / boxSize);
         gl_Position = gl_ProjectionMatrix * eyePos;
       }
     ]],

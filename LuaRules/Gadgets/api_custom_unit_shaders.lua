@@ -104,7 +104,7 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-VFS.Include("luarules/utilities/unitrendering.lua", nil, VFS.BASE)
+VFS.Include("luarules/utilities/unitrendering.lua", nil, VFS.RAW_FIRST)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -248,11 +248,6 @@ function GetUnitMaterial(unitDefID)
 
   local luaMat = Spring.UnitRendering.GetMaterial("opaque",{
                    shader          = mat.shader,
-                   cameraposloc    = mat.cameraPosLoc,
-                   cameraloc       = mat.cameraLoc,
-                   camerainvloc    = mat.cameraInvLoc,
-                   shadowloc       = mat.shadowMatrixLoc,
-                   shadowparamsloc = mat.shadowParamsLoc,
                    usecamera       = mat.usecamera,
                    culling         = mat.culling,
                    texunits        = texUnits,
@@ -279,10 +274,10 @@ function ToggleShadows()
   for _,unitID in pairs(units) do
     local unitDefID = Spring.GetUnitDefID(unitID)
     local teamID    = Spring.GetUnitTeam(unitID)
-    UnitDestroyed(nil,unitID)
+    gadget:RenderUnitDestroyed(unitID,unitDefID)
     Spring.UnitRendering.DeactivateMaterial(unitID,3)
     if not select(3,Spring.GetUnitIsStunned(unitID)) then --// inbuild?
-      UnitFinished(nil,unitID,unitDefID,teamID)
+      gadget:UnitFinished(unitID,unitDefID,teamID)
     end
   end
 end
@@ -324,7 +319,7 @@ function ToggleNormalmapping(_,_,_, playerID)
       if (unitMat) then
         local mat = materialDefs[unitMat[1]]
         if (not mat.force) then
-          gadget:UnitDestroyed(unitID,unitDefID)
+          gadget:RenderUnitDestroyed(unitID,unitDefID)
         end
       end
     end

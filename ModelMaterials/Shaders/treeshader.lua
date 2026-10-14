@@ -44,14 +44,14 @@ return {
       vec4 vertex = gl_Vertex;
       vec3 normal = gl_Normal;
 
-	  float distanceFromTrunk=(abs(vertex.x)+abs(vertex.z))/10;
+	  float distanceFromTrunk=(abs(vertex.x)+abs(vertex.z))/10.0;
 	  
 	  vertex.x += distanceFromTrunk * vertex.y * frameLoc;
 	  vertex.z += distanceFromTrunk * vertex.y * frameLoc;
 	  
-	  vertex.x += sin(distanceFromTrunk) * (1 - grownPercentage) * 10;
-	  vertex.x += cos(distanceFromTrunk) * (1 - grownPercentage) * 10;
-	  vertex.y -= (1 - grownPercentage) * height;
+	  vertex.x += sin(distanceFromTrunk) * (1.0 - grownPercentage) * 10.0;
+	  vertex.x += cos(distanceFromTrunk) * (1.0 - grownPercentage) * 10.0;
+	  vertex.y -= (1.0 - grownPercentage) * height;
 	  
       %%VERTEX_PRE_TRANSFORM%%
 
@@ -174,8 +174,8 @@ return {
 
        gl_FragColor     = albedoColor;
        gl_FragColor.rgb = mix(gl_FragColor.rgb, teamColor.rgb, gl_FragColor.a); // teamcolor
-	   gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0), 1-healthFactor);
-	   gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0, 1.0, 0), colorFactor);
+	   gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), 1.0 - healthFactor);
+	   gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0, 1.0, 0.0), colorFactor);
        gl_FragColor.rgb = gl_FragColor.rgb * reflection + specular;
 
        gl_FragColor.a   = extraColor.a;

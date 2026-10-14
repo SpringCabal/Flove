@@ -8,10 +8,18 @@ local glUniform=gl.Uniform
 local sine =math.sin
 local maximum=math.max
 
-local frameLocID, healthFactorID, grownPercentageID, heightID, colorFactorID
+local frameLocID, healthFactorID, grownPercentageID, heightID, colorFactorID, uniformShader
 
 local function DrawUnit(unitID, material)
-	if frameLocID == nil then
+	if material.shader == nil then
+		-- The shader failed to compile; without it there are no uniform
+		-- locations to set, and returning true here would leave the unit
+		-- undrawn.  Let the engine draw it plainly instead of raising a
+		-- Lua error on every unit, every frame.
+		return false
+	end
+	if uniformShader ~= material.shader then
+		uniformShader = material.shader
 		frameLocID = gl.GetUniformLocation(material.shader, "frameLoc")
 		healthFactorID = gl.GetUniformLocation(material.shader, "healthFactor")
 		grownPercentageID = gl.GetUniformLocation(material.shader, "grownPercentage")
