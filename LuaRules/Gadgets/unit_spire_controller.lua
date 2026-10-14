@@ -27,7 +27,7 @@ local targetx, targety, targetz
 local COB_ANGULAR = 182
 
 local zapFiredFrame
-local flowerFiredFrame
+local flowerShotFiredFrame
 local FLOWER_SHOT_MANA_COST = 10
 -------------------------------------------------------------------
 -------------------------------------------------------------------
@@ -159,6 +159,15 @@ local function FireUpgradeShot(unitID)
 		return
 	end
 	
+	-- The target comes from a LuaRules message, so it can already be gone by
+	-- the time we read it: upgrading a tree replaces the unit, and the widget
+	-- keeps sending the id it saw under the cursor.  Resolve the position
+	-- first and give up before spending mana if there is nothing there.
+	local x, y, z = Spring.GetUnitPosition(unitID)
+	if not x then
+		return
+	end
+	
 	local upgradeShot = WeaponDefNames.upgradeshot
 	local mana = Spring.GetGameRulesParam("mana") or 0
 	
@@ -183,7 +192,6 @@ local function FireUpgradeShot(unitID)
 	
 	local flare = Spring.GetUnitPieceMap(spireID).Eye
 	local spawnx, spawny, spawnz = Spring.GetUnitPiecePosDir(spireID, flare)
-	local x,y,z = Spring.GetUnitPosition(unitID);
 
 	local params = {
 		pos = {spawnx, spawny, spawnz},
@@ -199,8 +207,9 @@ local function FireUpgradeShot(unitID)
 
 	local p = Spring.SpawnProjectile(upgradeShot.id, params);
 	
-	
-    Spring.SetProjectileTarget(p,x,y,z);--unitID,string.byte('p'));
+	if p then
+		Spring.SetProjectileTarget(p, x, y, z) --unitID,string.byte('p'));
+	end
     
     Spring.SpawnCEG("mordor_flowershot", spawnx, spawny, spawnz, 0, 0, 0, 0)
 	
