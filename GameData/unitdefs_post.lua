@@ -23,5 +23,8 @@ end
 for name, ud in pairs(UnitDefs) do
 	-- Replace all occurences of <NAME> with the respective values
 	ReplaceStrings(ud, ud.unitname or name)
-	Spring.Echo(name)
+	-- A zero power divides by zero in the engine's experience calculation.
+	if not ud.power or ud.power <= 0 then
+		ud.power = ud.maxdamage or 100
+	end
 end

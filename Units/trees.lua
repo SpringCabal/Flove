@@ -12,7 +12,7 @@ local Tree = Unit:New {
 	turnRate			    = 0,
 	upright				    = true,
     sightDistance		    = 0,
-    yardMap                 = "oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo",
+    yardMap                 = "oo oo",
 
     name                = "Tree",
     script              = "tree.lua",

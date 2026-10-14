@@ -6,7 +6,6 @@ local SporeSprayBase = Weapon:New{
   duration 			 = 0,
   explosionGenerator = [[custom:barfsplurge]],
   fireStarter        = 290,
-  id                 = 138,
   impulseFactor      = 0,
   largeBeamLaser     = true,
   lineOfSight        = true,

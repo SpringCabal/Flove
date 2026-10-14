@@ -28,7 +28,6 @@ return {
         sizemod            = 1.0,
         texture            = [[flare]],
         useairlos          = false,
-		colorchange			= "stuffs",
       },
     },
     dirtw = {
@@ -86,7 +85,6 @@ return {
         sizemod            = 1.0,
         texture            = [[flare]],
         useairlos          = false,
-		colorchange			= "stuffs",
       },
     },
 	particles = {

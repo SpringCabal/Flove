@@ -158,7 +158,6 @@ local PoisonMushroom = Mushroom:New {
 			shieldRepulser          = false,
 			shieldStartingPower     = 1000,
 			smartShield             = true,
-			smart                   = true,
 -- 			texture1                = [[shield3mist]],
 			visibleShield           = true,
 			visibleShieldHitFrames  = 20,
