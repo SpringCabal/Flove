@@ -1,5 +1,5 @@
 return {
-  vertex = [[
+  vertex = VFS.LoadFile("ModelMaterials/Shaders/tree_deformation.glsl") .. [[
 //#define use_normalmapping
 //#define flip_normalmap
 //#define use_shadows
@@ -41,18 +41,9 @@ return {
 
     void main(void)
     {
-      vec4 vertex = gl_Vertex;
+      vec4 vertex = deformTree(gl_Vertex, frameLoc, grownPercentage, height);
       vec3 normal = gl_Normal;
 
-	  float distanceFromTrunk=(abs(vertex.x)+abs(vertex.z))/10.0;
-	  
-	  vertex.x += distanceFromTrunk * vertex.y * frameLoc;
-	  vertex.z += distanceFromTrunk * vertex.y * frameLoc;
-	  
-	  vertex.x += sin(distanceFromTrunk) * (1.0 - grownPercentage) * 10.0;
-	  vertex.x += cos(distanceFromTrunk) * (1.0 - grownPercentage) * 10.0;
-	  vertex.y -= (1.0 - grownPercentage) * height;
-	  
       %%VERTEX_PRE_TRANSFORM%%
 
     #ifdef use_normalmapping

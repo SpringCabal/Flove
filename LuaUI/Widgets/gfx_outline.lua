@@ -72,7 +72,7 @@ local blurtex
 local depthShader
 local blurShader_h
 local blurShader_v
-local uniformUseEqualityTest, uniformScreenXY, uniformScreenX, uniformScreenY
+local uniformUseEqualityTest, uniformTreeDeformation, uniformScreenXY, uniformScreenX, uniformScreenY
 
 --// geometric
 local vsx, vsy = 0,0
@@ -158,6 +158,15 @@ function widget:Initialize()
   end)
 
   depthShader = gl.CreateShader({
+    vertex = VFS.LoadFile("ModelMaterials/Shaders/tree_deformation.glsl") .. [[
+      uniform vec3 treeDeformation;
+      void main(void) {
+        vec4 vertex = deformTree(gl_Vertex, treeDeformation.x, treeDeformation.y, treeDeformation.z);
+        gl_Position = gl_ModelViewProjectionMatrix * vertex;
+        gl_FrontColor = gl_Color;
+        gl_BackColor = gl_Color;
+      }
+    ]],
     fragment = [[
       uniform sampler2D tex0;
       uniform int useEqualityTest;
@@ -168,7 +177,7 @@ function widget:Initialize()
         vec2 texCoord = vec2( gl_FragCoord.x/screenXY.x , gl_FragCoord.y/screenXY.y );
         float depth  = texture2D(tex0, texCoord ).z;
 
-        if (depth < gl_FragCoord.z) {
+        if (useEqualityTest != 0 && depth < gl_FragCoord.z) {
           discard;
         }
         gl_FragColor = gl_Color;
@@ -185,24 +194,28 @@ function widget:Initialize()
 
   blurShader_h = gl.CreateShader({
     fragment = [[
-      uniform sampler2D tex0;
-      uniform int screenX;
+uniform sampler2D tex0;
+uniform int screenX;
 
-      const vec2 kernel = vec2(0.6,0.7);
+const vec2 kernel = vec2(0.6, 0.7);
 
-      void main(void) {
-        vec2 texCoord  = vec2(gl_TextureMatrix[0] * gl_TexCoord[0]);
-        gl_FragColor = vec4(0.0);
+// Filter premultiplied colours so a coloured hover rim retains its hue.
+vec4 sampleMask(vec2 uv) {
+    vec4 c = texture2D(tex0, uv);
+    return vec4(c.rgb * c.a, c.a);
+}
 
-        float pixelsize = 1.0/float(screenX);
-        gl_FragColor += kernel[0] * texture2D(tex0, vec2(texCoord.s + 2.0*pixelsize,texCoord.t) );
-        gl_FragColor += kernel[1] * texture2D(tex0, vec2(texCoord.s + pixelsize,texCoord.t) );
-
-        gl_FragColor += texture2D(tex0, texCoord );
-
-        gl_FragColor += kernel[1] * texture2D(tex0, vec2(texCoord.s + -1.0*pixelsize,texCoord.t) );
-        gl_FragColor += kernel[0] * texture2D(tex0, vec2(texCoord.s + -2.0*pixelsize,texCoord.t) );
-      }
+void main(void) {
+    vec2 texCoord = vec2(gl_TextureMatrix[0] * gl_TexCoord[0]);
+    gl_FragColor = vec4(0.0);
+    float pixelsize = 1.0 / float(screenX);
+    gl_FragColor += kernel[0] * sampleMask(vec2(texCoord.s + 2.0 * pixelsize, texCoord.t));
+    gl_FragColor += kernel[1] * sampleMask(vec2(texCoord.s + pixelsize, texCoord.t));
+    gl_FragColor += sampleMask(texCoord);
+    gl_FragColor += kernel[1] * sampleMask(vec2(texCoord.s - 1.0 * pixelsize, texCoord.t));
+    gl_FragColor += kernel[0] * sampleMask(vec2(texCoord.s - 2.0 * pixelsize, texCoord.t));
+    gl_FragColor.rgb /= max(gl_FragColor.a, 0.00001);
+}
     ]],
     uniformInt = {
       tex0 = 0,
@@ -212,24 +225,29 @@ function widget:Initialize()
 
 
   blurShader_v = gl.CreateShader({
-    fragment = [[      uniform sampler2D tex0;
-      uniform int screenY;
+    fragment = [[
+uniform sampler2D tex0;
+uniform int screenY;
 
-      const vec2 kernel = vec2(0.6,0.7);
+const vec2 kernel = vec2(0.6, 0.7);
 
-      void main(void) {
-        vec2 texCoord  = vec2(gl_TextureMatrix[0] * gl_TexCoord[0]);
-        gl_FragColor = vec4(0.0);
+// Filter premultiplied colours so a coloured hover rim retains its hue.
+vec4 sampleMask(vec2 uv) {
+    vec4 c = texture2D(tex0, uv);
+    return vec4(c.rgb * c.a, c.a);
+}
 
-        float pixelsize = 1.0/float(screenY);
-        gl_FragColor += kernel[0] * texture2D(tex0, vec2(texCoord.s,texCoord.t + 2.0*pixelsize) );
-        gl_FragColor += kernel[1] * texture2D(tex0, vec2(texCoord.s,texCoord.t + pixelsize) );
-
-        gl_FragColor += texture2D(tex0, texCoord );
-
-        gl_FragColor += kernel[1] * texture2D(tex0, vec2(texCoord.s,texCoord.t + -1.0*pixelsize) );
-        gl_FragColor += kernel[0] * texture2D(tex0, vec2(texCoord.s,texCoord.t + -2.0*pixelsize) );
-      }
+void main(void) {
+    vec2 texCoord = vec2(gl_TextureMatrix[0] * gl_TexCoord[0]);
+    gl_FragColor = vec4(0.0);
+    float pixelsize = 1.0 / float(screenY);
+    gl_FragColor += kernel[0] * sampleMask(vec2(texCoord.s, texCoord.t + 2.0 * pixelsize));
+    gl_FragColor += kernel[1] * sampleMask(vec2(texCoord.s, texCoord.t + pixelsize));
+    gl_FragColor += sampleMask(texCoord);
+    gl_FragColor += kernel[1] * sampleMask(vec2(texCoord.s, texCoord.t - 1.0 * pixelsize));
+    gl_FragColor += kernel[0] * sampleMask(vec2(texCoord.s, texCoord.t - 2.0 * pixelsize));
+    gl_FragColor.rgb /= max(gl_FragColor.a, 0.00001);
+}
     ]],
     uniformInt = {
       tex0 = 0,
@@ -262,6 +280,8 @@ function widget:Initialize()
     return true
   end
 
+  uniformUseEqualityTest = gl.GetUniformLocation(depthShader, 'useEqualityTest')
+  uniformTreeDeformation = gl.GetUniformLocation(depthShader, 'treeDeformation')
   uniformScreenXY        = gl.GetUniformLocation(depthShader,  'screenXY')
   uniformScreenX         = gl.GetUniformLocation(blurShader_h, 'screenX')
   uniformScreenY         = gl.GetUniformLocation(blurShader_v, 'screenY')
@@ -328,47 +348,76 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local function DrawVisibleUnits(overrideEngineDraw)
-  if (Spring.GetGameFrame() % 15 == 0) then
-        checknow = true
+local function HoveredUpgradeableTree()
+  local mx, my, _, _, _, offscreen = Spring.GetMouseState()
+  if offscreen or Spring.IsAboveMiniMap(mx, my) then return end
+  local screen = WG.Chili and WG.Chili.Screen0
+  if screen and screen:IsAbove(mx, my) then return end
+  local hit, unitID = Spring.TraceScreenRay(mx, my)
+  if hit ~= "unit" or Spring.GetUnitIsDead(unitID) then return end
+  local defID = Spring.GetUnitDefID(unitID)
+  local def = defID and UnitDefs[defID]
+  if def and def.customParams.tree and (def.name == "treelevel1" or def.name == "treelevel2") then
+    return unitID
   end
- 
-  local visibleUnits = GetVisibleUnits(ALL_UNITS,nil,false)
-  for i=1,#visibleUnits do  
-    local unitDefID = Spring.GetUnitDefID(visibleUnits[i])
-    -- GetVisibleUnits can hand back a unit whose def this player cannot see,
-    -- or one that died between the query and here.  Nothing to outline, and
-    -- it is not worth a log line per unit per frame.
-    if unitDefID ~= nil then
-      local unitDef = UnitDefs[unitDefID]
-      local createdFrame = Spring.GetUnitRulesParam(visibleUnits[i], "createdFrame") or 0
-      local growTime = 33 * 0.5
-      local duration = Spring.GetGameFrame() - createdFrame
-      local grownPercentage = math.min(1, duration / growTime)
+end
+
+local function DrawVisibleUnits(overrideEngineDraw, deform)
+  local frame = Spring.GetGameFrame()
+  local checknow = frame % 15 == 0
+  local hovered = HoveredUpgradeableTree()
+  local visibleUnits = GetVisibleUnits(ALL_UNITS, nil, false)
+  for i = 1, #visibleUnits do
+    local unitID = visibleUnits[i]
+    local defID = Spring.GetUnitDefID(unitID)
+    local def = defID and UnitDefs[defID]
+    -- Units can disappear between the visibility query and this draw.
+    if def and not def.customParams.effect then
       if checknow then
-        local unitProgress = select(5, GetUnitHealth(visibleUnits[i]))
-        if unitProgress == nil or unitProgress >= 1 then
-          unbuiltUnits[visibleUnits[i]] = nil
-        else
-          unbuiltUnits[visibleUnits[i]] = true
-        end
+        local progress = select(5, GetUnitHealth(unitID))
+        unbuiltUnits[unitID] = progress and progress < 1 or nil
       end
-    
-      if not unbuiltUnits[visibleUnits[i]] and (grownPercentage == 1 or not unitDef.customParams.tree) then
-        glUnit(visibleUnits[i],overrideEngineDraw)
+      if not unbuiltUnits[unitID] then
+        local isTree = def.customParams.tree
+        local sway, grown, height = 0, 1, 0
+        if isTree or def.name == "spire" then
+          local factor = isTree and 0.002 or 0.0001
+          sway = factor * math.sin(unitID % 10 + frame / (unitID % 7 + 6))
+          if isTree then
+            local created = Spring.GetUnitRulesParam(unitID, "createdFrame") or 0
+            grown = math.min(1, (frame - created) / (33 * 0.5))
+            height = Spring.GetUnitHeight(unitID)
+          end
+        end
+        if deform then glUniform(uniformTreeDeformation, sway, grown, height) end
+        if hovered == unitID then
+          glColor(0.1, 1.0, 0.65, thickness)
+        else
+          glColor(0, 0, 0, thickness)
+        end
+        -- The silhouette owns its shader uniforms; the material callback must
+        -- not change them while raw model pieces are being drawn.
+        glUnit(unitID, overrideEngineDraw, nil, true)
       end
     end
   end
 end
 
 local MyDrawVisibleUnits = function()
+  gl.PushAttrib(GL.ALL_ATTRIB_BITS)
+  gl.AlphaTest(false)
+  gl.Blending(false)
+  gl.DepthMask(true)
+  gl.DepthTest(GL.LEQUAL)
   glClear(GL_COLOR_BUFFER_BIT,0,0,0,0)
+  glClear(GL.DEPTH_BUFFER_BIT, 1)
   glPushMatrix()
   glResetMatrices()
   glColor(0,0,0,thickness)
-  DrawVisibleUnits(true)
+  DrawVisibleUnits(true, true)
   glColor(1,1,1,1)
   glPopMatrix()
+  gl.PopAttrib()
 end
 
 local DrawVisibleUnitsLines = function(underwater) --This is expected to be a shader-less fallback for low-end machines, though it also works for refraction pass
@@ -387,7 +436,14 @@ local DrawVisibleUnitsLines = function(underwater) --This is expected to be a sh
 
   glPushMatrix()
   glResetMatrices()
-  DrawVisibleUnits(true)
+  if depthShader and not forceLowQuality then
+    glUseShader(depthShader)
+    glUniformInt(uniformUseEqualityTest, 0)
+    DrawVisibleUnits(true, true)
+    glUseShader(0)
+  else
+    DrawVisibleUnits(true, false)
+  end
   glPopMatrix()
 
   gl.LineWidth(1.0)
@@ -432,6 +488,7 @@ function widget:DrawWorldPreUnit()
     end
 
     glUseShader(depthShader)
+    glUniformInt(uniformUseEqualityTest, 1)
     glRenderToTexture(offscreentex,MyDrawVisibleUnits)
 
     glTexture(offscreentex)
