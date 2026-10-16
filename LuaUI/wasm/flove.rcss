@@ -1,0 +1,341 @@
+body {
+  position: absolute;
+  left: 0dp;
+  right: 0dp;
+  top: 0dp;
+  bottom: 0dp;
+  width: auto;
+  height: auto;
+  font-family: FreeSans;
+  color: #ffffff;
+  font-size: 14dp;
+  pointer-events: none;
+}
+
+body * {
+  pointer-events: none;
+}
+
+#start-screen,
+#start-screen *,
+#story-modal,
+#story-modal *,
+#endgame-modal,
+#endgame-modal *,
+button,
+.menu-btn,
+.story-btn {
+  pointer-events: auto;
+}
+
+.hidden,
+#start-screen.hidden,
+#story-modal.hidden,
+#endgame-modal.hidden,
+#btn-story-skip.hidden,
+#btn-story-next.hidden {
+  display: none;
+  pointer-events: none;
+}
+
+/* --- Top HUD --- */
+#hud-panel {
+  position: absolute;
+  top: 16dp;
+  left: 50%;
+  margin-left: -180dp;
+  width: 360dp;
+  box-sizing: border-box;
+  height: auto;
+  text-align: center;
+  display: block;
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background-color: rgba(12, 18, 26, 235);
+  border-width: 2dp;
+  border-radius: 6dp;
+}
+
+.hud-label {
+  font-weight: bold;
+  margin-right: 8dp;
+  line-height: 1;
+}
+
+.hud-value {
+  font-weight: bold;
+  line-height: 1;
+}
+
+#mana-panel {
+  width: 360dp;
+  height: 60dp;
+  border-color: #00f0b488;
+}
+
+#mana-panel .hud-label {
+  font-size: 20dp;
+  color: #00f0b4;
+}
+
+#mana-val {
+  font-size: 32dp;
+  color: #ffffff;
+}
+
+#power-panel {
+  width: 220dp;
+  height: 34dp;
+  margin: 0dp auto;
+  border-color: #00f0b488;
+  border-top-width: 0dp;
+  border-radius: 0dp 0dp 6dp 6dp;
+  color: #c4b5fd;
+}
+
+#power-panel .hud-label {
+  font-size: 12dp;
+}
+
+#power-val {
+  font-size: 16dp;
+}
+
+/* --- Start Screen (Original Flove Art and Layout) --- */
+#start-screen {
+  position: absolute;
+  left: 0dp;
+  top: 0dp;
+  right: 0dp;
+  bottom: 0dp;
+  width: auto;
+  height: auto;
+  z-index: 100;
+  decorator: image(../../Bitmaps/start_screen.png);
+}
+
+#start-buttons {
+  position: absolute;
+  top: 300dp;
+  right: 400dp;
+  width: 300dp;
+}
+
+.menu-btn {
+  display: block;
+  width: 300dp;
+  height: 80dp;
+  margin-bottom: 20dp;
+  background-color: rgba(20, 24, 32, 224);
+  border-width: 2dp;
+  border-color: #64b4f099;
+  border-radius: 6dp;
+  color: #ffffff;
+  font-size: 22dp;
+  font-weight: bold;
+  text-align: center;
+  line-height: 76dp;
+  cursor: pointer;
+}
+
+.menu-btn:hover {
+  background-color: rgba(40, 100, 160, 242);
+  border-color: #00f0b4;
+  color: #ffffff;
+}
+
+/* --- Story Modal (Original Flove panel layout) --- */
+#story-modal {
+  position: absolute;
+  left: 50%;
+  margin-left: -340dp;
+  bottom: 40dp;
+  width: 680dp;
+  min-height: 220dp;
+  background-color: rgba(12, 18, 26, 245);
+  border-width: 2dp;
+  border-color: #00f0b4;
+  border-radius: 10dp;
+  padding: 18dp 24dp;
+  z-index: 50;
+  display: block;
+}
+
+#story-header-bar {
+  display: block;
+  width: 100%;
+  border-bottom-width: 1dp;
+  border-bottom-color: rgba(255, 255, 255, 60);
+  padding-bottom: 8dp;
+  margin-bottom: 12dp;
+}
+
+#story-title {
+  display: block;
+  font-size: 19dp;
+  font-weight: bold;
+  color: #00f0b4;
+  letter-spacing: 1dp;
+}
+
+#story-body-content {
+  display: block;
+  width: 100%;
+  min-height: 110dp;
+  margin-bottom: 16dp;
+}
+
+#story-body {
+  display: block;
+  width: 100%;
+  font-size: 16dp;
+  line-height: 24dp;
+  color: #f0f4f8;
+  white-space: pre-wrap;
+}
+
+#story-btn-row {
+  display: block;
+  width: 100%;
+  text-align: right;
+  margin-top: 10dp;
+}
+
+.story-btn {
+  display: inline-block;
+  min-width: 140dp;
+  height: 40dp;
+  background-color: rgba(24, 48, 72, 240);
+  border-width: 1dp;
+  border-color: #00f0b488;
+  border-radius: 6dp;
+  color: #ffffff;
+  font-size: 15dp;
+  font-weight: bold;
+  text-align: center;
+  line-height: 38dp;
+  padding: 0 16dp;
+  margin-left: 14dp;
+  cursor: pointer;
+}
+
+.story-btn:hover {
+  background-color: rgba(0, 180, 140, 240);
+  border-color: #00f0b4;
+  color: #0c121a;
+}
+
+.story-btn.secondary {
+  background-color: rgba(45, 25, 25, 230);
+  border-color: #c8646499;
+  color: #f0a0a0;
+}
+
+.story-btn.secondary:hover {
+  background-color: rgba(180, 50, 50, 240);
+  border-color: #ff6060;
+  color: #ffffff;
+}
+
+/* --- Endgame Screen --- */
+#endgame-modal {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  margin-left: -250dp;
+  width: 500dp;
+  background-color: rgba(14, 20, 28, 242);
+  border-width: 2dp;
+  border-color: #00f0b4;
+  border-radius: 8dp;
+  padding: 24dp;
+  text-align: center;
+  z-index: 150;
+}
+
+#endgame-title {
+  font-size: 20dp;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 20dp;
+}
+
+#endgame-btn-row {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin-top: 16dp;
+}
+
+.endgame-btn {
+  display: inline-block;
+  min-width: 130dp;
+  height: 42dp;
+  background-color: rgba(24, 48, 72, 240);
+  border-width: 1dp;
+  border-color: #00f0b488;
+  border-radius: 6dp;
+  color: #ffffff;
+  font-size: 16dp;
+  font-weight: bold;
+  text-align: center;
+  line-height: 40dp;
+  padding: 0 16dp;
+  margin: 0 10dp;
+  cursor: pointer;
+}
+
+.endgame-btn:hover {
+  background-color: rgba(0, 180, 140, 240);
+  border-color: #00f0b4;
+  color: #0c121a;
+}
+
+.endgame-btn.secondary {
+  background-color: rgba(45, 25, 25, 230);
+  border-color: #c8646499;
+  color: #f0a0a0;
+}
+
+.endgame-btn.secondary:hover {
+  background-color: rgba(180, 50, 50, 240);
+  border-color: #ff6060;
+  color: #ffffff;
+}
+
+/* --- Keybinds HUD --- */
+#keybinds-hud {
+  position: absolute;
+  bottom: 20dp;
+  left: 20dp;
+  padding: 10dp 16dp;
+  background-color: rgba(10, 15, 25, 200);
+  border-radius: 6dp;
+  border-width: 1dp;
+  border-color: rgba(255, 255, 255, 40);
+  display: block;
+}
+
+.keybind-line {
+  display: block;
+  font-size: 14dp;
+  line-height: 22dp;
+  margin-bottom: 4dp;
+  text-align: left;
+}
+
+.keybind-key {
+  color: #ff2aff;
+  font-weight: bold;
+  display: inline;
+}
+
+.keybind-val {
+  color: #ffffff;
+  display: inline;
+}

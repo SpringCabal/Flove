@@ -385,7 +385,7 @@
         </node>
       </node>
       <node id="Trunk" name="Trunk" type="NODE">
-        <matrix sid="transform">1.2666666666666673 0.0 0.0 0.2584149 0.0 -5.536777333333331e-08 -1.266666666666666 -0.4468069 0.0 1.2666666666666662 -5.5367719047619024e-08 19.26066 0.0 0.0 0.0 1.0</matrix>
+        <matrix sid="transform">1.266667 0 0 0.2584149 0 -5.536777e-08 -1.266667 -0.4468069 0 1.266667 -5.536772e-08 19.26066 0 0 0 1</matrix>
         <instance_geometry url="#Mesh_001-mesh" name="Trunk">
           <bind_material>
             <technique_common>
@@ -424,7 +424,7 @@
           </instance_geometry>
         </node>
         <node id="Muzzle" name="Muzzle" type="NODE">
-          <matrix sid="transform">4.788189333333337 0.0 0.0 -0.3354881 0.0 -2.9301766258693825e-07 4.788189333333335 6.140352 0.0 -4.788189333333328 -1.537366697245215e-07 18.94118 0.0 0.0 0.0 1.0</matrix>
+          <matrix sid="transform">4.788189 0 0 -0.3354881 0 -2.930177e-07 4.788189 6.140352 0 -4.788189 -1.537367e-07 18.94118 0 0 0 1</matrix>
         </node>
       </node>
       <node id="Camera" name="Camera" type="NODE">

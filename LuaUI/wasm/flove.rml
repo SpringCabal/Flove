@@ -1,0 +1,61 @@
+<rml>
+  <head>
+    <link type="text/rcss" href="flove.rcss" />
+    <title>Flove</title>
+  </head>
+  <body data-model="flove">
+    <!-- Top HUD Bar -->
+    <div id="hud-panel">
+      <div class="hud-item" id="mana-panel">
+        <span class="hud-label">MANA</span>
+        <span class="hud-value" id="mana-val">{{mana}}</span>
+      </div>
+      <div class="hud-item" id="power-panel">
+        <span class="hud-label">POWER</span>
+        <span class="hud-value" id="power-val">{{power}}</span>
+      </div>
+    </div>
+
+    <!-- Start Menu Screen (Matching original Flove layout and art) -->
+    <div id="start-screen">
+      <div id="start-buttons">
+        <button class="menu-btn" id="btn-diff-normal" data-event-click="start_normal">Normal [1]</button>
+        <button class="menu-btn" id="btn-diff-hard" data-event-click="start_hard">Hard [2]</button>
+        <button class="menu-btn" id="btn-diff-extreme" data-event-click="start_extreme">Extreme [3]</button>
+        <button class="menu-btn" id="btn-diff-leave" data-event-click="leave_game">Leave [Esc]</button>
+      </div>
+    </div>
+
+    <!-- Story Dialogue Window (Matching original Flove layout and text) -->
+    <div id="story-modal" class="hidden">
+      <div id="story-header-bar">
+        <div id="story-title">Groves: OPERATION MUSHROOM</div>
+      </div>
+      <div id="story-body-content">
+        <div id="story-body">In times long gone, the trees, flowers and grasses lived peacefully in the secluded mountain groves. But war raged in neighbouring kingdoms, displacing hundreds of ordinary mushrooms from their broken homes.</div>
+      </div>
+      <div id="story-btn-row">
+        <button class="story-btn secondary" id="btn-story-skip" data-event-click="story_skip">Skip Tutorial [S]</button>
+        <button class="story-btn" id="btn-story-next" data-event-click="story_next">Next [Space]</button>
+      </div>
+    </div>
+
+    <!-- Endgame Screen -->
+    <div id="endgame-modal" class="hidden">
+      <div id="endgame-card">
+        <div id="endgame-title">The mushroom king lies defeated. The day is saved!</div>
+        <div id="endgame-btn-row">
+          <button class="endgame-btn" id="btn-endgame-restart" data-event-click="endgame_restart">Restart</button>
+          <button class="endgame-btn secondary" id="btn-endgame-quit" data-event-click="endgame_quit">Quit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keybinds HUD (Bottom Left) -->
+    <div id="keybinds-hud">
+      <div class="keybind-line"><span class="keybind-key">Left click:</span> <span class="keybind-val">Love</span></div>
+      <div class="keybind-line"><span class="keybind-key">Right click:</span> <span class="keybind-val">Flowers</span></div>
+      <div class="keybind-line"><span class="keybind-key">Ctrl+Q:</span> <span class="keybind-val">Return to Menu</span></div>
+    </div>
+  </body>
+</rml>

@@ -1,76 +1,71 @@
 -- $Id$
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-local GetGameFrame=Spring.GetGameFrame
-local GetUnitHealth=Spring.GetUnitHealth
-local modulo=math.fmod
-local glUniform=gl.Uniform
-local sine =math.sin
-local maximum=math.max
-
-local frameLocID, healthFactorID, grownPercentageID, heightID, colorFactorID, uniformShader
+local GetGameFrame = Spring.GetGameFrame
+local GetUnitHealth = Spring.GetUnitHealth
+local modulo = math.fmod
+local glUniform = gl.Uniform
+local sine = math.sin
+local maximum = math.max
 
 local function DrawUnit(unitID, material)
-	if material.shader == nil then
-		-- The shader failed to compile; without it there are no uniform
-		-- locations to set, and returning true here would leave the unit
-		-- undrawn.  Let the engine draw it plainly instead of raising a
-		-- Lua error on every unit, every frame.
+	if not material or not material.shader then
 		return false
 	end
-	if uniformShader ~= material.shader then
-		uniformShader = material.shader
-		frameLocID = gl.GetUniformLocation(material.shader, "frameLoc")
-		healthFactorID = gl.GetUniformLocation(material.shader, "healthFactor")
-		grownPercentageID = gl.GetUniformLocation(material.shader, "grownPercentage")
-		heightID = gl.GetUniformLocation(material.shader, "height")
-		colorFactorID = gl.GetUniformLocation(material.shader, "colorFactor")
-	end
+	local shader = material.shader
+	local frameLocID = gl.GetUniformLocation(shader, "frameLoc")
+	local healthFactorID = gl.GetUniformLocation(shader, "healthFactor")
+	local grownPercentageID = gl.GetUniformLocation(shader, "grownPercentage")
+	local heightID = gl.GetUniformLocation(shader, "height")
+	local colorFactorID = gl.GetUniformLocation(shader, "colorFactor")
+
 	local unitDefID = Spring.GetUnitDefID(unitID)
-	local unitDef = UnitDefs[unitDefID]
+	local unitDef = unitDefID and UnitDefs[unitDefID]
+	if not unitDef then
+		return false
+	end
+
 	local factor = 0.0001
-	if unitDef.customParams.tree then
+	if unitDef.customParams and unitDef.customParams.tree then
 		factor = 0.002
-	elseif unitDef.customParams.shrubs then
+	elseif unitDef.customParams and unitDef.customParams.shrubs then
 		factor = 0.008
 	end
-	local frame = factor * sine(modulo(unitID, 10) + GetGameFrame() / (modulo(unitID, 7) + 6))
-	glUniform(frameLocID, frame)
+	local gameFrame = GetGameFrame()
+	local frame = factor * sine(modulo(unitID, 10) + gameFrame / (modulo(unitID, 7) + 6))
 	
-	local hp, maxhp = Spring.GetUnitHealth(unitID)
-	local healthFactor = hp / maxhp
-	glUniform(healthFactorID, healthFactor)
-	
+	local hp, maxhp = GetUnitHealth(unitID)
+	local isDead = Spring.GetUnitIsDead(unitID)
+	local healthFactor = 0.0
+	if hp and maxhp and maxhp > 0 and not isDead and hp > 0 then
+		healthFactor = math.max(0.0, math.min(1.0, hp / maxhp))
+	end
+
 	local createdFrame = Spring.GetUnitRulesParam(unitID, "createdFrame") or 0
 	local growTime = 33 * 0.5
-	local duration = Spring.GetGameFrame() - createdFrame
+	local duration = gameFrame - createdFrame
 	local grownPercentage = math.min(1, duration / growTime)
-	if not unitDef.customParams.tree then
+	if not unitDef.customParams or not unitDef.customParams.tree then
 		grownPercentage = 1
 	end
-	glUniform(grownPercentageID, grownPercentage)
-	--glUniform(grownPercentageID, 0.5)
-	
-	local height = Spring.GetUnitHeight(unitID)
-	glUniform(heightID, height)
-	
+
+	local height = Spring.GetUnitHeight(unitID) or 40
+
 	local colorFactor = 0
-	if unitDef.customParams.tree then
+	if unitDef.customParams and unitDef.customParams.tree then
 		local progress = Spring.GetUnitRulesParam(unitID, "upgradeProgress") or 0
-		if progress > 0 then
-			colorFactor = (math.sin(GetGameFrame() / 3 * (progress-0.5)) / math.pi + 1) / 2.5
+		if progress > 0 and not isDead then
+			colorFactor = (sine(gameFrame / 3 * (progress - 0.5)) / math.pi + 1) / 2.5
 		end
 	end
-	glUniform(colorFactorID, colorFactor)
---   health,maxhealth=GetUnitHealth(unitID)
---   glUniform(material.healthLoc, 2*maximum(0, (-2*health)/(maxhealth)+1) )
-  
-  --Spring.Echo('Drawing tree in 1_tree_normalmapping.lua!')
-  --inverse of health, 0 if health is 100%-50%, goes to 1 by 0 health
 
+	if frameLocID then glUniform(frameLocID, frame) end
+	if healthFactorID then glUniform(healthFactorID, healthFactor) end
+	if grownPercentageID then glUniform(grownPercentageID, grownPercentage) end
+	if heightID then glUniform(heightID, height) end
+	if colorFactorID then glUniform(colorFactorID, colorFactor) end
 
-  --// engine should still draw it (we just set the uniforms for the shader)
-  return false
+	return false
 end
 
 local materials = {
@@ -98,23 +93,8 @@ local unitMaterials = {
    treelevel1 = "tree",
    treelevel2 = "tree",
    treelevel3 = "tree",
-   
---    grass1 = "tree",
---    grass2 = "tree",
---    grass3 = "tree",
---    grass4 = "tree",
---    grass5 = "tree",
---    
---    flower1 = "tree",
---    flower2 = "tree",
---    flower3 = "tree",
---    flower4 = "tree",
---    flower5 = "tree",
---    flower6 = "tree",
-   
    spire = "tree",
 }
-
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

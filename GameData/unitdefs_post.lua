@@ -3,7 +3,6 @@ local function RecursiveReplaceStrings(t, name, replacedMap)
 		return  -- avoid recursion / repetition
 	end
 	replacedMap[t] = true
-	local changes = {}
 	for k, v in pairs(t) do
 		if (type(v) == 'string') then
 			t[k] = v:gsub("<NAME>", name)
@@ -23,8 +22,19 @@ end
 for name, ud in pairs(UnitDefs) do
 	-- Replace all occurences of <NAME> with the respective values
 	ReplaceStrings(ud, ud.unitname or name)
-	-- A zero power divides by zero in the engine's experience calculation.
+	-- Ensure non-zero power to avoid division by zero in engine experience calculations
 	if not ud.power or ud.power <= 0 then
 		ud.power = ud.maxdamage or 100
+	end
+end
+
+-- Clean non-engine fields from WeaponDefs
+if WeaponDefs then
+	for _, wd in pairs(WeaponDefs) do
+		wd.new = nil
+		wd.clone = nil
+		wd.append = nil
+		wd.id = nil
+		wd.smart = nil
 	end
 end

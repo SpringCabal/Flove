@@ -287,7 +287,7 @@
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="Directional_Light_001" name="Directional_Light.001" type="NODE">
-        <matrix sid="transform">0.4758238853256069 0.23791197342437306 -0.4120756060879584 -0.0375 -0.47582395261727384 0.23791190613270696 -0.4120756060879584 -0.0375 -3.4198970961550774e-08 0.5827629205365641 0.3364583086582446 0.0375 0.0 0.0 0.0 1.0</matrix>
+        <matrix sid="transform">0.4758239 0.237912 -0.4120756 -0.0375 -0.475824 0.2379119 -0.4120756 -0.0375 -3.419897e-08 0.5827629 0.3364583 0.0375 0 0 0 1</matrix>
         <instance_light url="#Directional_Light_001-light" />
       </node>
       <node id="Tree_level2_tx1__Image___Texture__001" name="Tree_level2_tx1__Image___Texture__001" type="NODE">

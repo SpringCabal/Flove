@@ -58,16 +58,38 @@ assert(type(TEXTURE) == "string")
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-local trees ={}
+local treeUnits = {}
+local treePositions = {}
+
+function gadget:UnitCreated(unitID, unitDefID)
+  local ud = UnitDefs[unitDefID]
+  if ud and ud.customParams and ud.customParams.tree then
+    treeUnits[unitID] = true
+    local ux, uy, uz = Spring.GetUnitPosition(unitID)
+    if ux then
+      treePositions[unitID] = { ux = ux, uy = uy, uz = uz }
+    end
+  end
+end
+
+function gadget:UnitDestroyed(unitID)
+  treeUnits[unitID] = nil
+  treePositions[unitID] = nil
+end
 
 function gadget:Initialize()
   if (not ReloadResources()) then
-	  Spring.Echo("failed to reload resources")
     gadgetHandler:RemoveGadget()
     return
   end
-Spring.Echo("loaded resources")
   enabled = true
+
+  for _, unitID in ipairs(Spring.GetAllUnits()) do
+    local udef = Spring.GetUnitDefID(unitID)
+    if udef then
+      gadget:UnitCreated(unitID, udef)
+    end
+  end
 
   gadgetHandler:AddChatAction("rain", ChatAction,
     ':  [0|1]  [speed val]  [scale val]  [density val]  [texture name]'
@@ -150,23 +172,38 @@ function ChatAction(cmd, line, words, player)
 end
 
 
+local wispStageKeys = {}
+local wispOffsetKeys = {}
+for i = 1, 32 do
+	wispStageKeys[i] = "wispStage" .. tostring(i)
+	wispOffsetKeys[i] = "wispOffset" .. tostring(i)
+end
+
 function DrawParticles(stage)
     gl.BeginEnd(GL.POINTS, function()
-		for _, unitID in ipairs(Spring.GetAllUnits()) do
-			local ux, uy, uz = Spring.GetUnitPosition(unitID)
--- 			Spring.Echo(unitID)
-			for i = 1, 1000 do
-				local wispStage = Spring.GetUnitRulesParam(unitID, "wispStage" .. tostring(i))
-				local wispOffset = Spring.GetUnitRulesParam(unitID, "wispOffset" .. tostring(i))
-				if wispStage == nil then
-					break
+		for unitID in pairs(treeUnits) do
+			local wispCount = Spring.GetUnitRulesParam(unitID, "wispCount") or 0
+			if wispCount > 0 then
+				local pos = treePositions[unitID]
+				if not pos then
+					local ux, uy, uz = Spring.GetUnitPosition(unitID)
+					if ux then
+						pos = { ux = ux, uy = uy, uz = uz }
+						treePositions[unitID] = pos
+					end
 				end
-				if wispStage == stage then
-					local x = ux/4096
-					local y = Spring.GetGroundHeight(ux,uz)/4096
-					local z = uz/4096
-					local w =  0.05 + wispOffset
-					gl.Vertex(x, y, z, w)
+				if pos then
+					local x = pos.ux / 4096
+					local y = pos.uy / 4096
+					local z = pos.uz / 4096
+					for i = 1, math.min(wispCount, 32) do
+						local wispStage = Spring.GetUnitRulesParam(unitID, wispStageKeys[i])
+						if wispStage == stage then
+							local wispOffset = Spring.GetUnitRulesParam(unitID, wispOffsetKeys[i]) or 0
+							local w = 0.05 + wispOffset
+							gl.Vertex(x, y, z, w)
+						end
+					end
 				end
 			end
 		end
@@ -227,10 +264,10 @@ function CreateShader()
 
   shader = gl.CreateShader({
     uniform = {
-      time   = 0,
+      time   = 0.0,
       scale  = SCALE,
       speed  = SPEED,
-      camPos = { 0, 0, 0 },
+      camPos = { 0.0, 0.0, 0.0 },
     },
     vertex = [[
       uniform float time;

@@ -34,36 +34,32 @@ local engineIsMin101 = (Script.IsEngineMinVersion and Script.IsEngineMinVersion(
 
 if (gadgetHandler:IsSyncedCode()) then
 
-if (not engineIsMin97) then
-  function gadget:UnitFinished(unitID,unitDefID,teamID)
-    SendToUnsynced("unitshaders_finished", unitID, unitDefID,teamID)
+  function gadget:UnitCreated(unitID,unitDefID,teamID)
+    SendToUnsynced("unitshaders_finished", unitID, unitDefID, teamID)
   end
 
-  function gadget:UnitDestroyed(unitID,unitDefID,teamID)
-    SendToUnsynced("unitshaders_destroyed", unitID, unitDefID,teamID)
+  function gadget:UnitFinished(unitID,unitDefID,teamID)
+    SendToUnsynced("unitshaders_finished", unitID, unitDefID, teamID)
   end
 
   function gadget:UnitGiven(unitID,unitDefID,teamID)
-    SendToUnsynced("unitshaders_given", unitID, unitDefID,teamID)
+    SendToUnsynced("unitshaders_given", unitID, unitDefID, teamID)
   end
 
   function gadget:UnitCloaked(unitID,unitDefID,teamID)
-    SendToUnsynced("unitshaders_cloak", unitID, unitDefID,teamID)
+    SendToUnsynced("unitshaders_cloak", unitID, unitDefID, teamID)
   end
 
   function gadget:UnitDecloaked(unitID,unitDefID,teamID)
-    SendToUnsynced("unitshaders_decloak", unitID, unitDefID,teamID)
+    SendToUnsynced("unitshaders_decloak", unitID, unitDefID, teamID)
   end
 
   function gadget:GameFrame()
     for i,uid in ipairs(Spring.GetAllUnits()) do
-      if not select(3,Spring.GetUnitIsStunned(uid)) then --// inbuild?
-        gadget:UnitFinished(uid,Spring.GetUnitDefID(uid),Spring.GetUnitTeam(uid))
-      end
+      gadget:UnitFinished(uid,Spring.GetUnitDefID(uid),Spring.GetUnitTeam(uid))
     end
     gadgetHandler:RemoveCallIn('GameFrame')
   end
-end
 
   function gadget:UnitReverseBuild(unitID,unitDefID,teamID)
     SendToUnsynced("unitshaders_reverse", unitID, unitDefID,teamID)
@@ -93,18 +89,11 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
--- Unsynced
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
 if (not gl.CreateShader) then
   return false
 end
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-VFS.Include("luarules/utilities/unitrendering.lua", nil, VFS.RAW_FIRST)
+VFS.Include("LuaRules/Utilities/unitrendering.lua", nil, VFS.RAW_FIRST)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -287,12 +276,17 @@ function ToggleAdvShading()
   advShading = Spring.HaveAdvShading()
 
   if (not advShading) then
-    --// unload all materials
-    drawUnitList = {}
-
     local units = Spring.GetAllUnits()
     for _,unitID in pairs(units) do
-      Spring.UnitRendering.DeactivateMaterial(unitID,3)
+      local unitDefID = Spring.GetUnitDefID(unitID)
+      local unitMat = unitMaterialInfos[unitDefID]
+      if (unitMat) then
+        local mat = materialDefs[unitMat[1]]
+        if (not mat or not mat.force) then
+          Spring.UnitRendering.DeactivateMaterial(unitID,3)
+          drawUnitList[unitID] = nil
+        end
+      end
     end
   elseif (normalmapping) then
     --// reinitializes all shaders
@@ -330,8 +324,22 @@ function ToggleNormalmapping(_,_,_, playerID)
 end
 
 
+--// A killed unit is still drawn for a frame or two before the engine removes
+--// it. Tearing the material down right here draws those frames with the engine
+--// default material, dropping whatever the shader encodes -- in Flove that is
+--// the tree health tint, so a dying tree flashes back to full health. Hold on
+--// to the material until the unit is really gone.
+local pendingRemoval = {}
+
 local n = -1
 function gadget:Update()
+  for unitID,unitDefID in pairs(pendingRemoval) do
+    if (not Spring.ValidUnitID(unitID)) then
+      gadget:RenderUnitDestroyed(unitID, unitDefID ~= true and unitDefID or nil)
+      pendingRemoval[unitID] = nil
+    end
+  end
+
   if (n<Spring.GetDrawFrame()) then
     n = Spring.GetDrawFrame() + Spring.GetFPS()
 
@@ -344,9 +352,20 @@ function gadget:Update()
 end
 
 --------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+local function ResolveUnitArgs(arg1, arg2, arg3, arg4)
+  if type(arg1) == "string" or type(arg1) == "table" then
+    return tonumber(arg2), tonumber(arg3), tonumber(arg4)
+  else
+    return tonumber(arg1), tonumber(arg2), tonumber(arg3)
+  end
+end
 
-function gadget:UnitFinished(unitID,unitDefID,teamID)
+local function UnitFinished(...)
+  local unitID, unitDefID, teamID = ResolveUnitArgs(...)
+  if not unitID then return end
+  unitDefID = unitDefID or Spring.GetUnitDefID(unitID)
+  if not unitDefID then return end
+  pendingRemoval[unitID] = nil
   local unitMat = unitMaterialInfos[unitDefID]
   if (unitMat) then
     local mat = materialDefs[unitMat[1]]
@@ -369,10 +388,8 @@ function gadget:UnitFinished(unitID,unitDefID,teamID)
   end
 end
 
-if not engineIsMin101 then
-  function gadget:UnitDestroyed(unitID,unitDefID)
-    self:RenderUnitDestroyed(unitID,unitDefID)
-  end
+function gadget:UnitDestroyed(unitID,unitDefID)
+  pendingRemoval[unitID] = unitDefID or true
 end
 
 function gadget:RenderUnitDestroyed(unitID,unitDefID)
@@ -395,13 +412,15 @@ function gadget:DrawUnit(unitID, drawMode)
   end
 end
 
-gadget.UnitReverseBuild = gadget.UnitDestroyed
-gadget.UnitCloaked   = gadget.UnitDestroyed
+--// Cloaking, reverse-building and giving all leave the unit alive, so those
+--// keep tearing the material down immediately.
+gadget.UnitReverseBuild = gadget.RenderUnitDestroyed
+gadget.UnitCloaked   = gadget.RenderUnitDestroyed
 gadget.UnitDecloaked = gadget.UnitFinished
 
 function gadget:UnitGiven(unitID,...)
   if not select(3, Spring.GetUnitIsStunned(unitID)) then
-    gadget:UnitDestroyed(unitID, ...)
+    gadget:RenderUnitDestroyed(unitID, ...)
     gadget:UnitFinished(unitID, ...)
   end
 end
@@ -486,13 +505,10 @@ function gadget:Initialize()
   end
 
   --// insert synced actions
-  if (not engineIsMin97) then
-    gadgetHandler:AddSyncAction("unitshaders_finished", UnitFinished)
-    gadgetHandler:AddSyncAction("unitshaders_destroyed", RenderUnitDestroyed)
-    gadgetHandler:AddSyncAction("unitshaders_given", UnitGiven)
-    gadgetHandler:AddSyncAction("unitshaders_cloak", UnitCloaked)
-    gadgetHandler:AddSyncAction("unitshaders_decloak", UnitDecloaked)
-  end
+  gadgetHandler:AddSyncAction("unitshaders_finished", UnitFinished)
+  gadgetHandler:AddSyncAction("unitshaders_given", UnitGiven)
+  gadgetHandler:AddSyncAction("unitshaders_cloak", UnitCloaked)
+  gadgetHandler:AddSyncAction("unitshaders_decloak", UnitDecloaked)
 
   gadgetHandler:AddSyncAction("unitshaders_reverse", UnitReverseBuild)
   gadgetHandler:AddChatAction("normalmapping", ToggleNormalmapping)

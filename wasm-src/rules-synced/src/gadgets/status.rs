@@ -1,0 +1,51 @@
+use spring_addons::rules::Gadget;
+use springcabal::message::SendOnChange;
+
+use crate::mushrooms::{SHROOM_EVENT_KING_DEFEATED, SHROOM_EVENT_KING_SPAWNED};
+use crate::state::Global;
+use crate::status::{self, Status};
+use crate::story;
+
+#[derive(Default)]
+pub struct StatusGadget {
+    published: SendOnChange<(i32, Status)>,
+}
+
+impl StatusGadget {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl Gadget<Global> for StatusGadget {
+    fn name(&self) -> &'static str {
+        "Status"
+    }
+
+    fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, _frame: i32) {
+        let global = ctx.global();
+        let victory = global.victory.access();
+        let shroom_event = global.mushrooms.access().shroom_event;
+        let story = match shroom_event {
+            SHROOM_EVENT_KING_SPAWNED => story::STAGE_ARMY_APPROACHES,
+            SHROOM_EVENT_KING_DEFEATED => story::STAGE_VICTORY,
+            _ => global.story.access().stage,
+        };
+        let status = Status {
+            round: global.round.get() as i32,
+            power: global.trees.access().total_power(),
+            mana: *global.mana.access(),
+            story,
+            shroom_event,
+            game_over: victory.game_over,
+            won: victory.won,
+        };
+        let first_tree = global.trees.access().trees.first().map(|tree| tree.unit_id);
+        let unit = status::carrier(global.spire.access().unit_id, first_tree);
+        self.published
+            .send_if_changed((unit, status), |(unit, status)| {
+                status::publish(*unit, status);
+                true
+            });
+    }
+}

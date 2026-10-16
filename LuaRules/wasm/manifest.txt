@@ -1,0 +1,1 @@
+module(flove-rules, LuaRules/wasm/flove-rules.wasm, rules-synced, 0, 1.0.0)

@@ -1,17 +1,5 @@
-Skeleton Spring game.
-Libraries are included as files (not git submodules) so just pull/push as usual.
+# Flove WASM
 
-To use this for a new game clone it in a separate repository. Do *not* add game-specific modifications. This should be generic and usable for future Spring games as well (think of it is "Z" in SpringABC).
+The Rust/WASM port of the game.
 
-This repository contains:
-- SpringABC (using gajop's chili instead)
-- analytics
-- lups
-- modelshaders
-- S44 style OO defs
-- and a bunch of other useful custom widgets and gadgets
-
-Check out the wiki for detailed information.
-
-
-[![Join the chat at https://gitter.im/SpringCabal/LD34](https://badges.gitter.im/SpringCabal/LD34.svg)](https://gitter.im/SpringCabal/LD34?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+Use the [SpringCabal development repository](https://github.com/gajop/springcabal-dev) for engine setup, launching, builds and verification.

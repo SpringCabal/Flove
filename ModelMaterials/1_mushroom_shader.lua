@@ -1,28 +1,27 @@
 -- $Id$
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-local glUniform=gl.Uniform
-
-local healthFactorID, uniformShader
+local glUniform = gl.Uniform
 
 local function DrawUnit(unitID, material)
-	if material.shader == nil then
-		-- The shader failed to compile; without it there are no uniform
-		-- locations to set, and returning true here would leave the unit
-		-- undrawn.  Let the engine draw it plainly instead of raising a
-		-- Lua error on every unit, every frame.
+	if not material or not material.shader then
 		return false
 	end
-	if uniformShader ~= material.shader then
-		uniformShader = material.shader
-		healthFactorID = gl.GetUniformLocation(material.shader, "healthFactor")
-	end
-	local hp, maxhp = Spring.GetUnitHealth(unitID)
-	local healthFactor = hp / maxhp
-	glUniform(healthFactorID, healthFactor)
+	local shader = material.shader
+	local healthFactorID = gl.GetUniformLocation(shader, "healthFactor")
 
-  --// engine should still draw it (we just set the uniforms for the shader)
-  return false
+	local hp, maxhp = Spring.GetUnitHealth(unitID)
+	local isDead = Spring.GetUnitIsDead(unitID)
+	local healthFactor = 0.0
+	if hp and maxhp and maxhp > 0 and not isDead and hp > 0 then
+		healthFactor = math.max(0.0, math.min(1.0, hp / maxhp))
+	end
+
+	if healthFactorID then
+		glUniform(healthFactorID, healthFactor)
+	end
+
+	return false
 end
 
 local materials = {
@@ -53,8 +52,8 @@ local unitMaterials = {
 	mushroomcluster      = "mushroom",
 	poisonmushroom       = "mushroom",
 	bombmushroom         = "mushroom",
+	kingshroom           = "mushroom",
 }
-
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

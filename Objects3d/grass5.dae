@@ -93,7 +93,7 @@
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="Cube_027" name="Cube_027" type="NODE">
-        <matrix sid="transform">0.5965470487834208 0.5516392851468537 0.016431036181441965 -2.38419e-07 -0.5512852946408882 0.594509150142178 0.055566431415216284 1.19209e-07 0.025698065569053238 -0.0519347432205521 0.8106088087501107 4.76837e-07 0.0 0.0 0.0 1.0</matrix>
+        <matrix sid="transform">0.596547 0.5516393 0.01643104 -2.38419e-07 -0.5512853 0.5945092 0.05556643 1.19209e-07 0.02569807 -0.05193474 0.8106088 4.76837e-07 0 0 0 1</matrix>
         <instance_geometry url="#Cube_003-mesh" name="Cube_027">
           <bind_material>
             <technique_common>

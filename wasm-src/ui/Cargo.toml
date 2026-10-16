@@ -1,0 +1,23 @@
+[package]
+name = "flove-ui-wasm"
+version = "0.1.0"
+edition = "2024"
+publish = false
+build = "../build.rs"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+spring = { workspace = true }
+spring-addons = { workspace = true }
+libm = { workspace = true }
+springcabal = { workspace = true }
+flove-shared = { path = "../shared" }
+springcabal-control = { workspace = true }
+
+[features]
+headless-integration = []
+
+[lints]
+workspace = true

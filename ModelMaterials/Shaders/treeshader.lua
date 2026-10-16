@@ -43,7 +43,7 @@ return {
     {
       vec4 vertex = deformTree(gl_Vertex, frameLoc, grownPercentage, height);
       vec3 normal = gl_Normal;
-
+	  
       %%VERTEX_PRE_TRANSFORM%%
 
     #ifdef use_normalmapping
@@ -165,9 +165,9 @@ return {
 
        gl_FragColor     = albedoColor;
        gl_FragColor.rgb = mix(gl_FragColor.rgb, teamColor.rgb, gl_FragColor.a); // teamcolor
-	   gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), 1.0 - healthFactor);
-	   gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0, 1.0, 0.0), colorFactor);
-       gl_FragColor.rgb = gl_FragColor.rgb * reflection + specular;
+       gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.08, 0.02, 0.02), (1.0 - healthFactor) * 0.85);
+       gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0, 1.0, 0.0), colorFactor);
+       gl_FragColor.rgb = (gl_FragColor.rgb * reflection + specular) * (0.25 + 0.75 * healthFactor);
 
        gl_FragColor.a   = extraColor.a;
     #ifdef flipAlpha
