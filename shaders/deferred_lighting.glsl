@@ -20,7 +20,7 @@ uniform mat4 viewProjectionInv;
 	float attentuate(float dist, float radius)
 	{
 		//float att = clamp ( constant-linear * dist / radius - squared * dist * dist / (radius*radius),0.0,.5);
-		float att=clamp(0.7-0.3*dist/radius-1*dist*dist/(radius*radius),0.0,1.0);
+		float att=clamp(0.7-0.3*dist/radius-1.0*dist*dist/(radius*radius),0.0,1.0);
 		att*=att;
 		return att;
 	}
@@ -35,8 +35,8 @@ uniform mat4 viewProjectionInv;
 	
 	//gl_FragColor=vec4(fract(modelpos4.z*0.01),sign(mappos4.z-modelpos4.z),0,1); //worldpos debugging
 	//return;
-	float model_lighting_multiplier=1;
-	if ((mappos4.z-modelpos4.z)> 0) { // this means we are processing a model fragment, not a map fragment
+	float model_lighting_multiplier=1.0;
+	if ((mappos4.z-modelpos4.z)> 0.0) { // this means we are processing a model fragment, not a map fragment
 		map_normals4 = model_normals4;
 		mappos4 = modelpos4;
 		model_lighting_multiplier=1.5;
