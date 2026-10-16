@@ -12,6 +12,7 @@ pub mod spire;
 pub mod status;
 pub mod story;
 pub mod trees;
+pub mod unit_scripts;
 pub mod upgrade_shots;
 
 pub use command_policy::CommandPolicyGadget;
@@ -28,6 +29,7 @@ pub use spire::SpireGadget;
 pub use status::StatusGadget;
 pub use story::StoryGadget;
 pub use trees::TreesGadget;
+pub use unit_scripts::UnitScriptsGadget;
 pub use upgrade_shots::UpgradeShotsGadget;
 
 use spring_addons::register_gadgets;
@@ -41,6 +43,12 @@ pub fn setup(handler: &mut GadgetHandler<Global>) {
         "flove",
         "FLOVE E2E BUILD: add_mana, upgrade, field_of_flowers and flower accepted"
     );
+    #[cfg(feature = "animation-trace")]
+    {
+        register_gadgets!(handler, [UnitScriptsGadget::new()]);
+    }
+
+    #[cfg(not(feature = "animation-trace"))]
     {
         register_gadgets!(
             handler,
@@ -63,6 +71,7 @@ pub fn setup(handler: &mut GadgetHandler<Global>) {
         register_gadgets!(
             handler,
             [
+                UnitScriptsGadget::new(),
                 CommandPolicyGadget::new(),
                 InputGadget::new(),
                 LoveGadget::new(),

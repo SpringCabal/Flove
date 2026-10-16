@@ -25,7 +25,7 @@ impl SpireState {
         }
     }
 
-    pub fn update(&mut self, _frame: i32, total_power: i32) {
+    pub fn update(&mut self, frame: i32, total_power: i32) {
         if self.unit_id < 0 {
             return;
         }
@@ -41,6 +41,12 @@ impl SpireState {
             .is_some()
         {
             self.branches = Some(branches);
+        }
+        if frame % 10 == 0 {
+            let ceg_name = alloc::format!("mordor{}", grove::flare_level(total_power));
+            if let Some(pos) = get_spire_flare_position(self.unit_id) {
+                let _ = spring::spawn_ceg(&ceg_name, pos, Float3::ZERO, 0.0, 0.0, 0.0);
+            }
         }
     }
 

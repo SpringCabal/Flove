@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "animation-trace", allow(dead_code, unused_imports))]
+
 extern crate alloc;
 
 mod attributes;
@@ -18,6 +20,7 @@ mod state;
 mod status;
 mod story;
 mod trees;
+pub mod unit_scripts;
 mod victory;
 mod waves;
 
@@ -26,3 +29,5 @@ spring_addons::export_rules_gadgets! {
     setup: gadgets::setup,
     scratch: 16384,
 }
+
+spring::export_core_cus!(unit_scripts::FloveCusModule);

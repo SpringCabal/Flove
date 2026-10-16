@@ -21,6 +21,9 @@ headless-integration = ["e2e"]
 # The visual scenario: its commands (`add_mana`, `upgrade`,
 # `field_of_flowers`, `flower`). Release builds reject them.
 e2e = []
+# Only the unit-script gadget, for the Lua/Rust pose comparison
+# (`verify flove animation-trace` in springcabal-games).
+animation-trace = []
 # Per-event gameplay trace lines ([upgrade] ..., unit deaths) in the infolog.
 diagnostics = []
 
