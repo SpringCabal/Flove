@@ -18,40 +18,7 @@ local x,y,h
 local purple = "\255\255\10\255"
 local white = "\255\255\255\255"
 
-function SetBindings()
-    local binds = { --real keybinds
-        
-        --"Alt+b  debug",
-        --"--Alt+v  debugcolvol",
-
-		"ctrl+q reloadforce",
-		
-		"Any+up moveforward ",
-		"Any+left moveleft ",
-		"Any+right moveright",
-		"Any+down moveback",
-		
-		"Any+w moveforward ",
-		"Any+a moveleft ",
-		"Any+d moveright",
-		"Any+s moveback",
-		
-		"Any+pageup moveup",
-		"Any+pagedown movedown",
-    }
-
-    for _,binding in pairs(binds) do
-        Spring.SendCommands("bind ".. binding)
-    end
-end
-
 function widget:Initialize()
-    local devMode = (tonumber(Spring.GetModOptions().play_mode) or 0) == 0
-    if not devMode then 
-    end
-    SetBindings()
-    
-    
     bindText = { -- keybinds told to player
         --purple .. "Q : " .. white .. "swap pull / push",
         --purple .. "A : " .. white .. "stop shooting",
