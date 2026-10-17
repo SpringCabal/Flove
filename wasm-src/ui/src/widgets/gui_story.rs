@@ -17,7 +17,8 @@ impl Widget<Global> for GuiStoryWidget {
         "GuiStory"
     }
 
-    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global>, dt: f32) {
-        story::update_typing(ctx.global(), dt);
+    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>, dt: f32) {
+        let spring = ctx.spring();
+        story::update_typing(spring, ctx.global(), dt);
     }
 }

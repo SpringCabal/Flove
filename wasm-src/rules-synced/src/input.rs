@@ -1,5 +1,5 @@
 use flove_shared::command;
-use spring::types::Float3;
+use spring::Float3;
 use spring_addons::AddonContext;
 use springcabal::message::{self, Fields};
 
@@ -9,15 +9,16 @@ use crate::story;
 const UPGRADE_PICK_RADIUS: f32 = 90.0;
 
 pub fn handle_command(ctx: &AddonContext<'_, Global>, msg: &str) {
+    let spring = ctx.spring();
     let global = ctx.global();
-    let frame = spring::game::current_frame();
+    let frame = spring.game().current_frame().unwrap_or(0);
     let Some((name, mut fields)) = message::command(msg) else {
         return;
     };
 
     match name {
         command::RESTART => {
-            crate::round::restart(fields.i32());
+            crate::round::restart(spring, fields.i32());
         }
         #[cfg(feature = "e2e")]
         "add_mana" => {
@@ -31,23 +32,26 @@ pub fn handle_command(ctx: &AddonContext<'_, Global>, msg: &str) {
                 let _ = global
                     .spire
                     .access_mut()
-                    .fire_zap(target, frame, total_power);
+                    .fire_zap(spring, target, frame, total_power);
             }
         }
         command::RMB => {
             let field_count = fields.clone().take(4).count();
-            let (tree, target) = spire_target(global, false, field_count, fields);
-            spire_right_click(global, frame, tree, target);
+            let (tree, target) = spire_target(spring, global, false, field_count, fields);
+            spire_right_click(spring, global, frame, tree, target);
         }
         #[cfg(feature = "e2e")]
         "upgrade" | "field_of_flowers" | "flower" => {
             let field_count = fields.clone().take(4).count();
-            let (tree, target) = spire_target(global, name == "upgrade", field_count, fields);
-            spire_right_click(global, frame, tree, target);
+            let (tree, target) =
+                spire_target(spring, global, name == "upgrade", field_count, fields);
+            spire_right_click(spring, global, frame, tree, target);
         }
-        command::STORY => story::next(global, frame),
+        command::STORY => story::next(spring, global, frame),
         command::SKIP_TUTORIAL => {
-            story::with_world(global, frame, |story, world| story.skip_tutorial(world));
+            story::with_world(global, frame, |story, world| {
+                story.skip_tutorial(spring, world)
+            });
         }
         command::DIFFICULTY => {
             if let Some(difficulty) = fields.i32() {
@@ -68,6 +72,7 @@ fn position(fields: &mut Fields<'_>) -> Option<Float3> {
 }
 
 fn spire_target(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
     global: &Global,
     upgrade_near_ground: bool,
     field_count: usize,
@@ -89,7 +94,7 @@ fn spire_target(
             };
             let tree = if upgrade_near_ground {
                 trees
-                    .find_tree_near(pos.x, pos.z, UPGRADE_PICK_RADIUS)
+                    .find_tree_near(spring, pos.x, pos.z, UPGRADE_PICK_RADIUS)
                     .and_then(upgradable)
             } else {
                 None
@@ -101,16 +106,18 @@ fn spire_target(
                 return (None, None);
             };
             let tree = upgradable(unit).or_else(|| {
-                let pos = spring::units_info::get_unit_position(
-                    unit,
-                    spring::units_info::GetUnitPositionOptions {
-                        mid_pos: true,
-                        aim_pos: false,
-                    },
-                )
-                .ok()?;
+                let pos = spring
+                    .units_info()
+                    .get_unit_position(
+                        unit,
+                        spring::units_info::GetUnitPositionOptions {
+                            mid_pos: true,
+                            aim_pos: false,
+                        },
+                    )
+                    .ok()?;
                 trees
-                    .find_tree_near(pos.x, pos.z, UPGRADE_PICK_RADIUS)
+                    .find_tree_near(spring, pos.x, pos.z, UPGRADE_PICK_RADIUS)
                     .and_then(upgradable)
             });
             (tree, None)
@@ -119,17 +126,26 @@ fn spire_target(
     }
 }
 
-fn spire_right_click(global: &Global, frame: i32, tree: Option<i32>, target: Option<Float3>) {
+fn spire_right_click(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    frame: i32,
+    tree: Option<i32>,
+    target: Option<Float3>,
+) {
     if let Some(tree_id) = tree {
         let _ = global.spire.access_mut().fire_upgrade_shot(
+            spring,
             tree_id,
             frame,
             &mut global.mana.access_mut(),
         );
     } else if let Some(target) = target {
-        global
-            .spire
-            .access_mut()
-            .fire_flower_shot(target, frame, &mut global.mana.access_mut());
+        global.spire.access_mut().fire_flower_shot(
+            spring,
+            target,
+            frame,
+            &mut global.mana.access_mut(),
+        );
     }
 }

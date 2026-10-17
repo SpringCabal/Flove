@@ -10,10 +10,10 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::cell::{Cell, RefCell};
 use core::fmt::Display;
-use spring::commands;
-use spring::generated::owned::rules_params::{self, RulesParamType, RulesParamValue};
+
+use spring::Float3;
 use spring::rules_params::los;
-use spring::types::Float3;
+use spring::rules_params::{RulesParamType, RulesParamValue};
 use spring_addons::AddonContext;
 use springcabal::check::Suite;
 
@@ -104,8 +104,13 @@ impl Default for TestTracker {
 }
 
 impl TestTracker {
-    fn check(&mut self, ok: bool, message: impl Display) -> bool {
-        self.checks.check(ok, message)
+    fn check(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        ok: bool,
+        message: impl Display,
+    ) -> bool {
+        self.checks.check(spring, ok, message)
     }
 
     fn elapsed(&self, frame: i32) -> i32 {
@@ -113,11 +118,11 @@ impl TestTracker {
     }
 }
 
-pub fn announce() {
-    set_running(true);
+pub fn announce(spring: &spring::Spring<'_, spring::RulesSynced>) {
+    set_running(spring, true);
 }
 
-type Waiting = Box<dyn FnOnce(&Checks)>;
+type Waiting = Box<dyn for<'call> FnOnce(&spring::Spring<'call, spring::RulesSynced>, &Checks)>;
 
 #[derive(Clone)]
 struct Checks {
@@ -135,14 +140,21 @@ impl Checks {
         }
     }
 
-    fn check(&self, ok: bool, message: impl Display) -> bool {
-        self.suite.borrow_mut().check(ok, message)
+    fn check(
+        &self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        ok: bool,
+        message: impl Display,
+    ) -> bool {
+        self.suite.borrow_mut().check(spring, ok, message)
     }
 
     fn after_commands(&self, f: impl FnOnce(&Checks, &AddonContext<'_, Global>) + 'static) {
-        self.waiting.borrow_mut().push_back(Box::new(move |checks| {
-            crate::with_addon_context(|ctx| f(checks, ctx));
-        }));
+        self.waiting
+            .borrow_mut()
+            .push_back(Box::new(move |_spring, checks| {
+                crate::with_addon_context(|ctx| f(checks, ctx));
+            }));
         if !self.draining.replace(true) {
             self.queue_drain();
         }
@@ -150,12 +162,12 @@ impl Checks {
 
     fn queue_drain(&self) {
         let checks = self.clone();
-        commands::run(move || checks.drain());
+        crate::with_addon_context(|ctx| ctx.commands().run(move |spring| checks.drain(spring)));
     }
 
-    fn drain(&self) {
+    fn drain(&self, spring: &spring::Spring<'_, spring::RulesSynced>) {
         loop {
-            if !commands::is_empty() {
+            if !crate::with_addon_context(|ctx| ctx.commands().is_empty()) {
                 return self.queue_drain();
             }
             let next = self.waiting.borrow_mut().pop_front();
@@ -163,22 +175,27 @@ impl Checks {
                 self.draining.set(false);
                 return;
             };
-            next(self);
+            next(spring, self);
         }
     }
 }
 
 pub fn update(ctx: &AddonContext<'_, Global>, t: &mut TestTracker, frame: i32) {
+    let spring = ctx.spring();
     if t.checks.suite.borrow().is_finished() {
         return;
     }
     if t.step_start < 0 {
-        spring::log_info!(SECTION, "Starting the Flove Rust integration suite...");
+        spring::log_info!(
+            spring,
+            SECTION,
+            "Starting the Flove Rust integration suite..."
+        );
         t.step_start = frame;
     }
     let Some(&(name, run, timeout)) = STEPS.get(t.step) else {
-        hand_over_to_ui(ctx.global());
-        t.checks.suite.borrow_mut().finish();
+        hand_over_to_ui(spring, ctx.global());
+        t.checks.suite.borrow_mut().finish(spring);
         return;
     };
     let timed_out = match run(t, ctx, frame) {
@@ -188,6 +205,7 @@ pub fn update(ctx: &AddonContext<'_, Global>, t: &mut TestTracker, frame: i32) {
     };
     if timed_out {
         t.check(
+            spring,
             false,
             format!("step '{name}' finished within {timeout} frames"),
         );
@@ -196,16 +214,16 @@ pub fn update(ctx: &AddonContext<'_, Global>, t: &mut TestTracker, frame: i32) {
     t.step_start = frame + 1;
 }
 
-pub fn ui_suite_done(t: &mut TestTracker) {
+pub fn ui_suite_done(spring: &spring::Spring<'_, spring::RulesSynced>, t: &mut TestTracker) {
     if !t.ui_done {
         t.ui_done = true;
-        set_running(false);
+        set_running(spring, false);
     }
 }
 
-fn hand_over_to_ui(global: &Global) {
+fn hand_over_to_ui(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) {
     let spire = global.spire.access().unit_id;
-    let _ = spring::rules_params::set_unit_rules_param_f32(
+    let _ = spring.rules_params().set_unit_rules_param_f32(
         spire,
         flove_shared::suites::UI_TURN_PARAM,
         1.0,
@@ -213,14 +231,16 @@ fn hand_over_to_ui(global: &Global) {
     );
 }
 
-fn set_running(running: bool) {
+fn set_running(spring: &spring::Spring<'_, spring::RulesSynced>, running: bool) {
     let value = RulesParamValue {
         type_: RulesParamType::RulesparamTypeFloat,
         bool_value: false,
         float_value: if running { 1.0 } else { 0.0 },
         string_value: String::new(),
     };
-    let _ = rules_params::set_game_rules_param(RUNNING_PARAM, &value, los::PUBLIC);
+    let _ = spring
+        .rules_params()
+        .set_game_rules_param(RUNNING_PARAM, &value, los::PUBLIC);
 }
 
 fn send(ctx: &AddonContext<'_, Global>, message: &str) {
@@ -239,15 +259,15 @@ struct SkipSnapshot {
 }
 
 impl SkipSnapshot {
-    fn take(global: &Global) -> Self {
+    fn take(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) -> Self {
         let story = global.story.access();
         Self {
             stage: story.stage,
             skipped: story.tutorial_skipped,
             trees_take_no_damage: story.trees_take_no_damage,
             mana: *global.mana.access(),
-            trees: living(|def| defs().is_tree(def)),
-            mushrooms: living(|def| defs().is_mushroom(def)),
+            trees: living(spring, |def| defs(spring).is_tree(def)),
+            mushrooms: living(spring, |def| defs(spring).is_mushroom(def)),
             first_wave_spawned: global
                 .mushrooms
                 .access()
@@ -258,13 +278,20 @@ impl SkipSnapshot {
     }
 }
 
-fn check_skip_refused(t: &TestTracker, where_: &'static str) {
+fn check_skip_refused(
+    _spring: &spring::Spring<'_, spring::RulesSynced>,
+    t: &TestTracker,
+    where_: &'static str,
+) {
     t.checks.after_commands(move |checks, ctx| {
-        let before = SkipSnapshot::take(ctx.global());
+        let spring = ctx.spring();
+        let before = SkipSnapshot::take(spring, ctx.global());
         send(ctx, flove_shared::command::SKIP_TUTORIAL);
         checks.after_commands(move |checks, ctx| {
-            let after = SkipSnapshot::take(ctx.global());
+            let spring = ctx.spring();
+            let after = SkipSnapshot::take(spring, ctx.global());
             checks.check(
+                spring,
                 after == before,
                 format!(
                     "Skip Tutorial changes nothing {where_} (stage {})",
@@ -275,20 +302,26 @@ fn check_skip_refused(t: &TestTracker, where_: &'static str) {
     });
 }
 
-fn spawn(def: i32, (x, z): (f32, f32)) -> i32 {
-    spring::create_unit(
-        spring::UnitDefRef { name: "", id: def },
-        Float3::new(x, 0.0, z),
-        ENEMY_TEAM_ID,
-        unit_create_options(),
-    )
-    .unwrap_or(-1)
+fn spawn(spring: &spring::Spring<'_, spring::RulesSynced>, def: i32, (x, z): (f32, f32)) -> i32 {
+    spring
+        .unit_control()
+        .create_unit(
+            &spring::unit_control::DefRef {
+                name: String::new(),
+                id: def,
+            },
+            Float3::new(x, 0.0, z),
+            0,
+            ENEMY_TEAM_ID,
+            unit_create_options(),
+        )
+        .unwrap_or(-1)
 }
 
-fn destroy(unit: i32) {
-    let _ = spring::destroy_unit(
+fn destroy(spring: &spring::Spring<'_, spring::RulesSynced>, unit: i32) {
+    let _ = spring.unit_control().destroy_unit(
         unit,
-        spring::rules_synced::unit_control::DestroyUnitOptions {
+        spring::unit_control::DestroyUnitOptions {
             selfd: false,
             reclaimed: false,
             attacker_id: -1,
@@ -297,33 +330,50 @@ fn destroy(unit: i32) {
     );
 }
 
-fn published(global: &Global, name: &str) -> i32 {
+fn published(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global, name: &str) -> i32 {
     let first_tree = global.trees.access().trees.first().map(|tree| tree.unit_id);
-    let carrier = crate::status::carrier(global.spire.access().unit_id, first_tree);
-    spring::rules_params::get_unit_rules_param_f32(carrier, name).map_or(-1, |value| value as i32)
+    let carrier = crate::status::carrier(spring, global.spire.access().unit_id, first_tree);
+    spring
+        .rules_params()
+        .get_unit_rules_param_f32(carrier, name)
+        .map_or(-1, |value| value as i32)
 }
 
-fn living_units(matches: impl Fn(i32) -> bool) -> Vec<i32> {
-    spring::get_all_units()
+fn living_units(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    matches: impl Fn(i32) -> bool,
+) -> Vec<i32> {
+    spring
+        .units()
+        .get_all_units()
         .unwrap_or_default()
         .into_iter()
         .filter(|&unit| {
-            spring::get_unit_def_id(unit).is_ok_and(|def| matches(def.0))
-                && !spring::units_info::get_unit_is_dead(unit).unwrap_or(true)
+            spring
+                .units_info()
+                .get_unit_def_id(unit)
+                .is_ok_and(&matches)
+                && !spring.units_info().get_unit_is_dead(unit).unwrap_or(true)
         })
         .collect()
 }
 
-fn living(matches: impl Fn(i32) -> bool) -> usize {
-    living_units(matches).len()
+fn living(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    matches: impl Fn(i32) -> bool,
+) -> usize {
+    living_units(spring, matches).len()
 }
 
-fn ground_position(unit: i32) -> Option<Float3> {
-    spring::get_unit_position(spring::UnitId(unit), false, false).ok()
+fn ground_position(spring: &spring::Spring<'_, spring::RulesSynced>, unit: i32) -> Option<Float3> {
+    spring
+        .units_info()
+        .get_unit_position(unit, Default::default())
+        .ok()
 }
 
-fn distance_2d(a: i32, b: i32) -> Option<f32> {
-    let (a, b) = (ground_position(a)?, ground_position(b)?);
+fn distance_2d(spring: &spring::Spring<'_, spring::RulesSynced>, a: i32, b: i32) -> Option<f32> {
+    let (a, b) = (ground_position(spring, a)?, ground_position(spring, b)?);
     let (dx, dz) = (a.x - b.x, a.z - b.z);
     Some(libm::sqrtf(dx * dx + dz * dz))
 }

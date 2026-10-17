@@ -28,7 +28,7 @@ impl Widget<Global> for SndMusicWidget {
         "SndMusic"
     }
 
-    fn update(&self, ctx: &AddonContext<'_, Global>, dt: f32) {
+    fn update(&self, ctx: &AddonContext<'_, Global, spring::Ui>, dt: f32) {
         let round = ctx.global().game.access().round;
         if round != self.round.replace(round) && round > 1 {
             self.music.restart();
@@ -36,7 +36,7 @@ impl Widget<Global> for SndMusicWidget {
         self.music.update(ctx, dt);
     }
 
-    fn shutdown(&self, ctx: &AddonContext<'_, Global>) {
+    fn shutdown(&self, ctx: &AddonContext<'_, Global, spring::Ui>) {
         self.music.shutdown(ctx);
     }
 }

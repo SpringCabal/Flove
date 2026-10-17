@@ -7,49 +7,70 @@ use spring::cus::{Axis, InitCtx, TaskDefinition, UnitCtx, WreckLevel};
 use super::common::{emit_ceg, unit_position};
 
 pub(super) fn flower_create(ctx: &UnitCtx) {
-    spring::set_unit_collision_volume_data(
-        ctx.unit().0,
-        spring::types::Float3::ZERO,
-        spring::types::Float3::ZERO,
-        -1,
-        0,
-        0,
-    )
-    .log_err_once("removing a flower's collision volume");
-    let position = unit_position(ctx.unit());
-    let _ = spring::spawn_ceg(
-        "dirtfling",
-        position,
-        spring::types::Float3::ZERO,
-        0.0,
-        0.0,
-        0.0,
-    );
+    ctx.with_spring(|spring| {
+        spring
+            .unit_control()
+            .set_unit_collision_volume_data(
+                ctx.unit().0,
+                spring::Float3::ZERO,
+                spring::Float3::ZERO,
+                -1,
+                0,
+                0,
+            )
+            .log_err_once(spring, "removing a flower's collision volume");
+        Ok(())
+    })
+    .expect("active unit-script scope");
+    let position = unit_position(ctx);
+    let _ = ctx.with_spring(|spring| {
+        spring.effects_control().spawn_ceg(
+            &spring::effects_control::DefRef {
+                name: ("dirtfling").to_owned(),
+                id: -1,
+            },
+            position,
+            spring::Float3::ZERO,
+            0.0,
+            0.0,
+            0.0,
+        )
+    });
 }
 
 pub(super) fn flower_killed(ctx: &UnitCtx) -> WreckLevel {
-    let position = unit_position(ctx.unit());
-    let _ = spring::spawn_ceg(
-        "dirtfling",
-        position,
-        spring::types::Float3::ZERO,
-        0.0,
-        0.0,
-        0.0,
-    );
+    let position = unit_position(ctx);
+    let _ = ctx.with_spring(|spring| {
+        spring.effects_control().spawn_ceg(
+            &spring::effects_control::DefRef {
+                name: ("dirtfling").to_owned(),
+                id: -1,
+            },
+            position,
+            spring::Float3::ZERO,
+            0.0,
+            0.0,
+            0.0,
+        )
+    });
     WreckLevel::None
 }
 
 pub(super) fn tree_killed(ctx: &UnitCtx, trunk: spring::cus::Piece) -> WreckLevel {
-    let position = unit_position(ctx.unit());
-    let _ = spring::spawn_ceg(
-        "blackpop",
-        position,
-        spring::types::Float3::new(0.0, 2.0, 0.0),
-        10.0,
-        10.0,
-        0.0,
-    );
+    let position = unit_position(ctx);
+    let _ = ctx.with_spring(|spring| {
+        spring.effects_control().spawn_ceg(
+            &spring::effects_control::DefRef {
+                name: ("blackpop").to_owned(),
+                id: -1,
+            },
+            position,
+            spring::Float3::new(0.0, 2.0, 0.0),
+            10.0,
+            10.0,
+            0.0,
+        )
+    });
     if trunk != spring::cus::Piece::INVALID {
         ctx.turn(
             trunk,
@@ -71,12 +92,14 @@ pub(super) fn spire_create(ctx: &UnitCtx, init: &SpirePieces) {
             ctx.hide(*piece);
         }
     }
-    let _ = spring::set_unit_rules_param_f32(
-        ctx.unit().0,
-        "branches",
-        0.0,
-        spring::rules_params::los::PRIVATE,
-    );
+    let _ = ctx.with_spring(|spring| {
+        spring.rules_params().set_unit_rules_param_f32(
+            ctx.unit().0,
+            "branches",
+            0.0,
+            spring::rules_params::los::PRIVATE,
+        )
+    });
     ctx.spawn(TaskDefinition::with_state(
         "flove-spire-branches",
         Rc::new(RefCell::new(BranchState {
@@ -88,15 +111,20 @@ pub(super) fn spire_create(ctx: &UnitCtx, init: &SpirePieces) {
 }
 
 pub(super) fn spire_killed(ctx: &UnitCtx, pieces: &SpirePieces) -> WreckLevel {
-    let position = unit_position(ctx.unit());
-    let _ = spring::spawn_ceg(
-        "blackpop",
-        position,
-        spring::types::Float3::new(0.0, 2.0, 0.0),
-        10.0,
-        10.0,
-        0.0,
-    );
+    let position = unit_position(ctx);
+    let _ = ctx.with_spring(|spring| {
+        spring.effects_control().spawn_ceg(
+            &spring::effects_control::DefRef {
+                name: ("blackpop").to_owned(),
+                id: -1,
+            },
+            position,
+            spring::Float3::new(0.0, 2.0, 0.0),
+            10.0,
+            10.0,
+            0.0,
+        )
+    });
     if pieces.stalk != spring::cus::Piece::INVALID {
         ctx.turn(
             pieces.stalk,
@@ -141,7 +169,12 @@ struct BranchState {
 
 async fn spire_branches(state: Rc<RefCell<BranchState>>, ctx: UnitCtx) {
     loop {
-        let desired = spring::get_unit_rules_param_f32(ctx.unit().0, "desiredBranches")
+        let desired = ctx
+            .with_spring(|spring| {
+                spring
+                    .rules_params()
+                    .get_unit_rules_param_f32(ctx.unit().0, "desiredBranches")
+            })
             .unwrap_or(0.0)
             .round()
             .clamp(0.0, 9.0) as i32;
@@ -151,18 +184,20 @@ async fn spire_branches(state: Rc<RefCell<BranchState>>, ctx: UnitCtx) {
             let next = current + 1;
             let pieces = state.borrow().pieces;
             state.borrow_mut().visible = next;
-            let _ = spring::set_unit_rules_param_f32(
-                ctx.unit().0,
-                "branches",
-                next as f32,
-                spring::rules_params::los::PRIVATE,
-            );
-            emit_ceg(ctx.unit(), pieces.branches[current as usize], "dirtfling");
+            let _ = ctx.with_spring(|spring| {
+                spring.rules_params().set_unit_rules_param_f32(
+                    ctx.unit().0,
+                    "branches",
+                    next as f32,
+                    spring::rules_params::los::PRIVATE,
+                )
+            });
+            emit_ceg(&ctx, pieces.branches[current as usize], "dirtfling");
             if pieces.branches[current as usize] != spring::cus::Piece::INVALID {
                 ctx.show(pieces.branches[current as usize]);
             }
             ctx.sleep(spring::cus::Duration::from_millis(500)).await;
-            emit_ceg(ctx.unit(), pieces.leaves[current as usize], "dirtfling");
+            emit_ceg(&ctx, pieces.leaves[current as usize], "dirtfling");
             if pieces.leaves[current as usize] != spring::cus::Piece::INVALID {
                 ctx.show(pieces.leaves[current as usize]);
             }
@@ -170,18 +205,20 @@ async fn spire_branches(state: Rc<RefCell<BranchState>>, ctx: UnitCtx) {
             let index = current - 1;
             let pieces = state.borrow().pieces;
             state.borrow_mut().visible = index;
-            let _ = spring::set_unit_rules_param_f32(
-                ctx.unit().0,
-                "branches",
-                index as f32,
-                spring::rules_params::los::PRIVATE,
-            );
-            emit_ceg(ctx.unit(), pieces.leaves[index as usize], "dirtfling");
+            let _ = ctx.with_spring(|spring| {
+                spring.rules_params().set_unit_rules_param_f32(
+                    ctx.unit().0,
+                    "branches",
+                    index as f32,
+                    spring::rules_params::los::PRIVATE,
+                )
+            });
+            emit_ceg(&ctx, pieces.leaves[index as usize], "dirtfling");
             if pieces.leaves[index as usize] != spring::cus::Piece::INVALID {
                 ctx.hide(pieces.leaves[index as usize]);
             }
             ctx.sleep(spring::cus::Duration::from_millis(500)).await;
-            emit_ceg(ctx.unit(), pieces.branches[index as usize], "dirtfling");
+            emit_ceg(&ctx, pieces.branches[index as usize], "dirtfling");
             if pieces.branches[index as usize] != spring::cus::Piece::INVALID {
                 ctx.hide(pieces.branches[index as usize]);
             }

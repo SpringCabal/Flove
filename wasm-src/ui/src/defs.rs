@@ -5,10 +5,15 @@ pub struct Defs {
     pub triggers: [i32; 5],
 }
 
-pub fn defs() -> &'static Defs {
+pub fn defs(spring: &spring::Spring<'_, spring::Ui>) -> &'static Defs {
     static DEFS: OnceLock<Defs> = OnceLock::new();
     DEFS.get_or_init(|| {
-        let id = |name| spring::get_unit_def_id_by_name(name).unwrap_or(-1);
+        let id = |name| {
+            spring
+                .unit_defs()
+                .get_unit_def_id_by_name(name)
+                .unwrap_or(-1)
+        };
         Defs {
             spire: id("spire"),
             triggers: [

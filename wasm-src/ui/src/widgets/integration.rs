@@ -21,7 +21,8 @@ impl Widget<Global> for IntegrationWidget {
         "Integration"
     }
 
-    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global>, _dt: f32) {
-        integration::update(ctx.global(), &mut self.tracker.borrow_mut());
+    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>, _dt: f32) {
+        let spring = ctx.spring();
+        integration::update(spring, ctx.global(), &mut self.tracker.borrow_mut());
     }
 }

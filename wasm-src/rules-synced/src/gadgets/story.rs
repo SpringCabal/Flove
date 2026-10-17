@@ -17,6 +17,9 @@ impl Gadget<Global> for StoryGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
-        crate::story::with_world(ctx.global(), frame, |story, world| story.update(world));
+        let spring = ctx.spring();
+        crate::story::with_world(ctx.global(), frame, |story, world| {
+            story.update(spring, world)
+        });
     }
 }

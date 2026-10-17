@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
-use spring::MoveTypeNumericField as Field;
 use spring::ResultExt;
+use spring::move_ctrl::MoveTypeNumericField as Field;
 
 const SPEED_FACTOR: f32 = 0.05;
 
@@ -15,22 +15,28 @@ struct Movement {
 }
 
 impl Movement {
-    fn base(unit_id: i32) -> Option<Self> {
-        let def = spring::units_info::get_unit_def_id(unit_id).ok()?;
+    fn base(spring: &spring::Spring<'_, spring::RulesSynced>, unit_id: i32) -> Option<Self> {
+        let def = spring.units_info().get_unit_def_id(unit_id).ok()?;
         let param = |key: &str| {
-            spring::unit_defs::get_unit_def_param_float(def, key)
-                .log_err_once("reading a unit def's movement")
+            spring
+                .unit_defs()
+                .get_unit_def_param_float(def, key)
+                .log_err_once(spring, "reading a unit def's movement")
         };
-        let reverse_speed = spring::owned::move_ctrl::get_unit_move_type_data(unit_id)
-            .log_err_once("reading a unit's move type")?
+        let reverse_speed = spring
+            .move_ctrl()
+            .get_unit_move_type_data(unit_id)
+            .log_err_once(spring, "reading a unit's move type")?
             .max_reverse_speed;
         let turn_rate = param("turnRate")?;
-        let turn_accel = spring::get_unit_def_custom_param(def, "turnaccel")
+        let turn_accel = spring
+            .unit_defs()
+            .get_unit_def_custom_param(def, "turnaccel")
             .ok()
             .and_then(|value| value.parse::<f32>().ok())
             .unwrap_or(turn_rate);
         Some(Self {
-            speed: spring::unit_defs::get_unit_def_speed(def).ok()? * SPEED_FACTOR,
+            speed: spring.unit_defs().get_unit_def_speed(def).ok()? * SPEED_FACTOR,
             reverse_speed,
             turn_rate,
             turn_accel,
@@ -54,7 +60,7 @@ impl Movement {
         }
     }
 
-    fn apply(&self, unit_id: i32) {
+    fn apply(&self, spring: &spring::Spring<'_, spring::RulesSynced>, unit_id: i32) {
         for (field, value) in [
             (Field::MoveTypeMaxSpeed, self.speed),
             (Field::MoveTypeMaxWantedSpeed, self.speed),
@@ -64,15 +70,17 @@ impl Movement {
             (Field::MoveTypeGroundAccRate, self.acc_rate),
             (Field::MoveTypeGroundDecRate, self.dec_rate),
         ] {
-            spring::set_move_type_numeric(unit_id, field, value)
-                .log_err_once("setting a unit's movement");
+            spring
+                .move_ctrl()
+                .set_move_type_numeric(unit_id, field, value)
+                .log_err_once(spring, "setting a unit's movement");
         }
     }
 }
 
-pub fn apply_base_movement(unit_id: i32) {
-    if let Some(movement) = Movement::base(unit_id) {
-        movement.apply(unit_id);
+pub fn apply_base_movement(spring: &spring::Spring<'_, spring::RulesSynced>, unit_id: i32) {
+    if let Some(movement) = Movement::base(spring, unit_id) {
+        movement.apply(spring, unit_id);
     }
 }
 
@@ -86,18 +94,23 @@ impl AttributeManager {
         Self::default()
     }
 
-    pub fn set_speed_multiplier(&mut self, unit_id: i32, factor: f32) {
+    pub fn set_speed_multiplier(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        unit_id: i32,
+        factor: f32,
+    ) {
         let base = match self.units.iter().find(|(unit, _)| *unit == unit_id) {
             Some((_, base)) => *base,
             None => {
-                let Some(base) = Movement::base(unit_id) else {
+                let Some(base) = Movement::base(spring, unit_id) else {
                     return;
                 };
                 self.units.push((unit_id, base));
                 base
             }
         };
-        base.scaled(factor).apply(unit_id);
+        base.scaled(factor).apply(spring, unit_id);
         if factor >= 1.0 {
             self.remove_unit(unit_id);
         }

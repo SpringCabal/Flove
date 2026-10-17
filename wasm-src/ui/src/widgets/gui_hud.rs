@@ -21,17 +21,21 @@ struct Hud {
 }
 
 impl Hud {
-    fn carrier(&self) -> Option<i32> {
-        let alive = |unit: i32| !spring::units_info::get_unit_is_dead(unit).unwrap_or(true);
+    fn carrier(&self, spring: &spring::Spring<'_, spring::Ui>) -> Option<i32> {
+        let alive = |unit: i32| !spring.units_info().get_unit_is_dead(unit).unwrap_or(true);
         if let Some(unit) = self.carrier.get()
             && alive(unit)
         {
             return Some(unit);
         }
-        let units = spring::units_query::get_team_units(PLAYER_TEAM_ID).ok()?;
-        let spire_def = crate::defs::defs().spire;
-        let is_spire =
-            |unit: i32| spring::units_info::get_unit_def_id(unit).is_ok_and(|d| d == spire_def);
+        let units = spring.units_query().get_team_units(PLAYER_TEAM_ID).ok()?;
+        let spire_def = crate::defs::defs(spring).spire;
+        let is_spire = |unit: i32| {
+            spring
+                .units_info()
+                .get_unit_def_id(unit)
+                .is_ok_and(|d| d == spire_def)
+        };
         let found = units
             .iter()
             .copied()
@@ -39,18 +43,21 @@ impl Hud {
             .or_else(|| {
                 units.iter().copied().find(|&unit| {
                     alive(unit)
-                        && spring::rules_params::get_unit_rules_param_f32(unit, "power").is_ok()
+                        && spring
+                            .rules_params()
+                            .get_unit_rules_param_f32(unit, "power")
+                            .is_ok()
                 })
             });
         self.carrier.set(found);
         found
     }
 
-    fn poll(&self, global: &Global) {
-        let Some(unit) = self.carrier() else {
+    fn poll(&self, spring: &spring::Spring<'_, spring::Ui>, global: &Global) {
+        let Some(unit) = self.carrier(spring) else {
             return;
         };
-        let status = read_status(unit);
+        let status = read_status(spring, unit);
         {
             let mut game = global.game.access_mut();
             game.rules_round = status.round;
@@ -73,12 +80,13 @@ impl Hud {
         };
 
         if reloaded || status.power != shown.power {
-            set_hud_int(global, |hud| hud.power, status.power);
+            set_hud_int(spring, global, |hud| hud.power, status.power);
         }
         if reloaded || status.mana != shown.mana {
-            set_hud_int(global, |hud| hud.mana, status.mana);
+            set_hud_int(spring, global, |hud| hud.mana, status.mana);
         }
         update_story(
+            spring,
             global,
             &status,
             prev_stage,
@@ -86,16 +94,22 @@ impl Hud {
             game_started,
         );
         if reloaded || status.game_over != prev_game_over {
-            update_endgame(global, &status);
+            update_endgame(spring, global, &status);
         }
     }
 }
 
-fn read_status(unit: i32) -> Status {
-    Status::read(|name| spring::rules_params::get_unit_rules_param_f32(unit, name).ok())
+fn read_status(spring: &spring::Spring<'_, spring::Ui>, unit: i32) -> Status {
+    Status::read(|name| {
+        spring
+            .rules_params()
+            .get_unit_rules_param_f32(unit, name)
+            .ok()
+    })
 }
 
 fn update_story(
+    spring: &spring::Spring<'_, spring::Ui>,
     global: &Global,
     status: &Status,
     prev_stage: i32,
@@ -105,8 +119,8 @@ fn update_story(
     let story = status.story;
     if story == STAGE_FREE_PLAY && !game_started {
         global.game.access_mut().game_started = true;
-        set_display(global, "start-screen", false);
-        story::set_modal(global, false);
+        set_display(spring, global, "start-screen", false);
+        story::set_modal(spring, global, false);
     }
 
     let tutorial_skipped = global.game.access().tutorial_skipped;
@@ -115,43 +129,44 @@ fn update_story(
         || (story == STAGE_ARMY_APPROACHES && prev_stage != STAGE_ARMY_APPROACHES);
 
     if story == STAGE_VICTORY && prev_stage != STAGE_VICTORY {
-        audio::play_narration(STAGE_VICTORY);
-        story::show(global, STAGE_VICTORY);
+        audio::play_narration(spring, STAGE_VICTORY);
+        story::show(spring, global, STAGE_VICTORY);
     } else if is_king_approach {
-        audio::play_narration(STAGE_ARMY_APPROACHES);
-        story::show(global, STAGE_ARMY_APPROACHES);
+        audio::play_narration(spring, STAGE_ARMY_APPROACHES);
+        story::show(spring, global, STAGE_ARMY_APPROACHES);
     } else if tutorial_skipped {
         if story < STAGE_ARMY_APPROACHES && status.shroom_event == SHROOM_EVENT_NONE {
-            story::set_modal(global, false);
+            story::set_modal(spring, global, false);
         }
     } else if game_started
         && story != prev_stage
         && !(story == STAGE_FREE_PLAY && prev_stage == STAGE_INTRO)
     {
         if story > STAGE_FREE_PLAY && story < STAGE_VICTORY {
-            audio::play_narration(story);
-            story::show(global, story);
+            audio::play_narration(spring, story);
+            story::show(spring, global, story);
         } else {
-            story::set_modal(global, false);
+            story::set_modal(spring, global, false);
         }
     }
 }
 
-fn update_endgame(global: &Global, status: &Status) {
+fn update_endgame(spring: &spring::Spring<'_, spring::Ui>, global: &Global, status: &Status) {
     if !status.game_over {
-        set_display(global, "endgame-modal", false);
+        set_display(spring, global, "endgame-modal", false);
         return;
     }
     if status.won {
         set_text(
+            spring,
             global,
             "endgame-title",
             "The mushroom king lies defeated. The day is saved!",
         );
     } else {
-        set_text(global, "endgame-title", "Game Over");
+        set_text(spring, global, "endgame-title", "Game Over");
     }
-    set_display(global, "endgame-modal", true);
+    set_display(spring, global, "endgame-modal", true);
 }
 
 #[derive(Default)]
@@ -170,7 +185,8 @@ impl Widget<Global> for GuiHudWidget {
         "GuiHud"
     }
 
-    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global>, _dt: f32) {
-        self.hud.poll(ctx.global());
+    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>, _dt: f32) {
+        let spring = ctx.spring();
+        self.hud.poll(spring, ctx.global());
     }
 }

@@ -23,6 +23,7 @@ impl Gadget<Global> for StatusGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, _frame: i32) {
+        let spring = ctx.spring();
         let global = ctx.global();
         let victory = global.victory.access();
         let shroom_event = global.mushrooms.access().shroom_event;
@@ -41,10 +42,10 @@ impl Gadget<Global> for StatusGadget {
             won: victory.won,
         };
         let first_tree = global.trees.access().trees.first().map(|tree| tree.unit_id);
-        let unit = status::carrier(global.spire.access().unit_id, first_tree);
+        let unit = status::carrier(spring, global.spire.access().unit_id, first_tree);
         self.published
             .send_if_changed((unit, status), |(unit, status)| {
-                status::publish(*unit, status);
+                status::publish(spring, *unit, status);
                 true
             });
     }

@@ -169,7 +169,7 @@ mod tests {
             }
             if branches == shown_from {
                 let mut i = branches;
-                while i >= desired + 1 {
+                while i > desired {
                     branches -= 1;
                     i -= 1;
                 }

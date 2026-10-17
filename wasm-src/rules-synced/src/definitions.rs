@@ -40,8 +40,8 @@ pub const UPGRADE_SHOT_WEAPON_NAME: &str = "upgradeshot";
 pub const POISON_WEAPON_NAME: &str = "poison";
 
 #[inline]
-pub fn unit_create_options() -> spring::CreateUnitOptions {
-    spring::CreateUnitOptions {
+pub fn unit_create_options() -> spring::unit_control::CreateUnitOptions {
+    spring::unit_control::CreateUnitOptions {
         build: false,
         flatten_ground: false,
         unit_id: -1,
@@ -49,9 +49,9 @@ pub fn unit_create_options() -> spring::CreateUnitOptions {
     }
 }
 
-pub fn defs() -> &'static DefRegistry {
+pub fn defs(spring: &spring::Spring<'_, spring::RulesSynced>) -> &'static DefRegistry {
     static DEFS: OnceLock<DefRegistry> = OnceLock::new();
-    DEFS.get_or_init(DefRegistry::resolve)
+    DEFS.get_or_init(|| DefRegistry::resolve(spring))
 }
 
 #[derive(Debug, Clone)]
@@ -83,34 +83,35 @@ pub struct DefRegistry {
 }
 
 impl DefRegistry {
-    fn resolve() -> Self {
+    fn resolve(spring: &spring::Spring<'_, spring::RulesSynced>) -> Self {
         let defs = Self {
-            spire: resolve_unit_def(SPIRE_NAME),
-            tree_level1: resolve_unit_def(TREE_LEVEL1_NAME),
-            tree_level2: resolve_unit_def(TREE_LEVEL2_NAME),
-            tree_level3: resolve_unit_def(TREE_LEVEL3_NAME),
-            flowers: FLOWER_NAMES.map(resolve_unit_def),
-            grass: GRASS_NAMES.map(resolve_unit_def),
-            tunnel_tubes: TUNNEL_TUBE_NAMES.map(resolve_unit_def),
-            normal_mushroom: resolve_unit_def(NORMAL_MUSHROOM_NAME),
-            small_mushroom: resolve_unit_def(SMALL_MUSHROOM_NAME),
-            big_mushroom: resolve_unit_def(BIG_MUSHROOM_NAME),
-            mushroom_cluster: resolve_unit_def(MUSHROOM_CLUSTER_NAME),
-            poison_mushroom: resolve_unit_def(POISON_MUSHROOM_NAME),
-            bomb_mushroom: resolve_unit_def(BOMB_MUSHROOM_NAME),
-            king_shroom: resolve_unit_def(KING_SHROOM_NAME),
-            mushroom_spawn: resolve_unit_def(MUSHROOM_SPAWN_NAME),
-            base: resolve_unit_def(BASE_NAME),
-            expansion1: resolve_unit_def(EXPANSION1_NAME),
-            expansion2: resolve_unit_def(EXPANSION2_NAME),
-            expansion3: resolve_unit_def(EXPANSION3_NAME),
-            zap_weapon: resolve_weapon_def(ZAP_WEAPON_NAME),
-            zap_echo_weapon: resolve_weapon_def(ZAP_ECHO_WEAPON_NAME),
-            flower_shot_weapon: resolve_weapon_def(FLOWER_SHOT_WEAPON_NAME),
-            upgrade_shot_weapon: resolve_weapon_def(UPGRADE_SHOT_WEAPON_NAME),
-            poison_weapon: resolve_weapon_def(POISON_WEAPON_NAME),
+            spire: resolve_unit_def(spring, SPIRE_NAME),
+            tree_level1: resolve_unit_def(spring, TREE_LEVEL1_NAME),
+            tree_level2: resolve_unit_def(spring, TREE_LEVEL2_NAME),
+            tree_level3: resolve_unit_def(spring, TREE_LEVEL3_NAME),
+            flowers: FLOWER_NAMES.map(|name| resolve_unit_def(spring, name)),
+            grass: GRASS_NAMES.map(|name| resolve_unit_def(spring, name)),
+            tunnel_tubes: TUNNEL_TUBE_NAMES.map(|name| resolve_unit_def(spring, name)),
+            normal_mushroom: resolve_unit_def(spring, NORMAL_MUSHROOM_NAME),
+            small_mushroom: resolve_unit_def(spring, SMALL_MUSHROOM_NAME),
+            big_mushroom: resolve_unit_def(spring, BIG_MUSHROOM_NAME),
+            mushroom_cluster: resolve_unit_def(spring, MUSHROOM_CLUSTER_NAME),
+            poison_mushroom: resolve_unit_def(spring, POISON_MUSHROOM_NAME),
+            bomb_mushroom: resolve_unit_def(spring, BOMB_MUSHROOM_NAME),
+            king_shroom: resolve_unit_def(spring, KING_SHROOM_NAME),
+            mushroom_spawn: resolve_unit_def(spring, MUSHROOM_SPAWN_NAME),
+            base: resolve_unit_def(spring, BASE_NAME),
+            expansion1: resolve_unit_def(spring, EXPANSION1_NAME),
+            expansion2: resolve_unit_def(spring, EXPANSION2_NAME),
+            expansion3: resolve_unit_def(spring, EXPANSION3_NAME),
+            zap_weapon: resolve_weapon_def(spring, ZAP_WEAPON_NAME),
+            zap_echo_weapon: resolve_weapon_def(spring, ZAP_ECHO_WEAPON_NAME),
+            flower_shot_weapon: resolve_weapon_def(spring, FLOWER_SHOT_WEAPON_NAME),
+            upgrade_shot_weapon: resolve_weapon_def(spring, UPGRADE_SHOT_WEAPON_NAME),
+            poison_weapon: resolve_weapon_def(spring, POISON_WEAPON_NAME),
         };
         spring::log_info!(
+            spring,
             crate::diagnostics::LOG_SECTION,
             "Weapons resolved: zap={}, flower={}, upgrade={}, poison={}",
             defs.zap_weapon,
@@ -168,10 +169,13 @@ impl DefRegistry {
     }
 }
 
-fn resolve_unit_def(name: &str) -> i32 {
-    spring::get_unit_def_id_by_name(name).unwrap_or(-1)
+fn resolve_unit_def(spring: &spring::Spring<'_, spring::RulesSynced>, name: &str) -> i32 {
+    spring
+        .unit_defs()
+        .get_unit_def_id_by_name(name)
+        .unwrap_or(-1)
 }
 
-fn resolve_weapon_def(name: &str) -> i32 {
-    spring::weapon_defs::get_weapon_def_id(name).unwrap_or(-1)
+fn resolve_weapon_def(spring: &spring::Spring<'_, spring::RulesSynced>, name: &str) -> i32 {
+    spring.weapon_defs().get_weapon_def_id(name).unwrap_or(-1)
 }

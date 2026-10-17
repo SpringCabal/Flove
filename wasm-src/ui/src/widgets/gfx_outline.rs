@@ -25,21 +25,29 @@ impl Widget<Global> for GfxOutlineWidget {
         "Outline"
     }
 
-    fn draw_world_pre_unit(&self, _ctx: &spring_addons::AddonContext<'_, Global>) {
-        outline::draw_world_pre_unit(&self.outline, &self.created_frames);
+    fn draw_world_pre_unit(&self, _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>) {
+        let spring = _ctx.spring();
+        outline::draw_world_pre_unit(spring, &self.outline, &self.created_frames);
     }
 
     fn unit_destroyed(
         &self,
-        _ctx: &spring_addons::AddonContext<'_, Global>,
+        _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         event: &UnitDestroyedEvent,
     ) {
         self.created_frames.borrow_mut().forget(event.unit_id);
     }
 
-    fn view_resize(&self, _ctx: &spring_addons::AddonContext<'_, Global>, geometry: &ViewGeometry) {
-        self.outline
-            .borrow_mut()
-            .on_view_resize(geometry.view_size.0, geometry.view_size.1);
+    fn view_resize(
+        &self,
+        _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
+        geometry: &ViewGeometry,
+    ) {
+        let spring = _ctx.spring();
+        self.outline.borrow_mut().on_view_resize(
+            spring,
+            geometry.view_size.0,
+            geometry.view_size.1,
+        );
     }
 }

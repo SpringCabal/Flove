@@ -37,9 +37,13 @@ use spring_addons::rules::GadgetHandler;
 
 use crate::state::Global;
 
-pub fn setup(handler: &mut GadgetHandler<Global>) {
+pub fn setup(
+    handler: &mut GadgetHandler<Global>,
+    _spring: &spring::Spring<'_, spring::RulesSynced>,
+) {
     #[cfg(feature = "e2e")]
     spring::log_info!(
+        _spring,
         "flove",
         "FLOVE E2E BUILD: add_mana, upgrade, field_of_flowers and flower accepted"
     );

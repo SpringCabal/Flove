@@ -28,6 +28,5 @@ spring_addons::export_rules_gadgets! {
     state: state::Global,
     setup: gadgets::setup,
     scratch: 16384,
+    cus: unit_scripts::FloveCusModule,
 }
-
-spring::export_core_cus!(unit_scripts::FloveCusModule);

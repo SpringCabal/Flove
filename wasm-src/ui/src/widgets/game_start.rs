@@ -16,9 +16,14 @@ impl Widget<Global> for StartForceWidget {
         "StartForce"
     }
 
-    fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global>) {
-        if let Err(error) = spring::send_command("forcestart") {
-            spring::log_warning!(crate::diagnostics::SECTION, "forcestart failed: {error:?}");
+    fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>) {
+        let spring = _ctx.spring();
+        if let Err(error) = spring.messages().send_commands("forcestart", "") {
+            spring::log_warning!(
+                spring,
+                crate::diagnostics::SECTION,
+                "forcestart failed: {error:?}"
+            );
         }
     }
 }

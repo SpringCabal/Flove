@@ -19,13 +19,17 @@ impl Gadget<Global> for MushroomsGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
+        let spring = ctx.spring();
         let global = ctx.global();
         let spire_id = global.spire.access().unit_id;
         let free_play = global.story.access().stage == STAGE_FREE_PLAY;
-        global
-            .mushrooms
-            .access_mut()
-            .update(frame, spire_id, &global.trees.access(), free_play);
+        global.mushrooms.access_mut().update(
+            spring,
+            frame,
+            spire_id,
+            &global.trees.access(),
+            free_play,
+        );
     }
 
     fn unit_created(
@@ -36,11 +40,12 @@ impl Gadget<Global> for MushroomsGadget {
         _team: i32,
         _builder: i32,
     ) {
-        let defs = crate::definitions::defs();
+        let spring = ctx.spring();
+        let defs = crate::definitions::defs(spring);
         if defs.is_mushroom(def) {
-            crate::attributes::apply_base_movement(unit);
+            crate::attributes::apply_base_movement(spring, unit);
             let mut mushrooms = ctx.global().mushrooms.access_mut();
-            mushrooms.register_mushroom(unit, def, spring::game::current_frame());
+            mushrooms.register_mushroom(unit, def, spring.game().current_frame().unwrap_or(0));
             if def == defs.king_shroom {
                 mushrooms.shroom_event = SHROOM_EVENT_KING_SPAWNED;
             }
@@ -52,7 +57,8 @@ impl Gadget<Global> for MushroomsGadget {
         ctx: &spring_addons::AddonContext<'_, Global>,
         event: &UnitDestroyedEvent,
     ) {
-        let defs = crate::definitions::defs();
+        let spring = ctx.spring();
+        let defs = crate::definitions::defs(spring);
         if !defs.is_mushroom(event.unit_def_id) {
             return;
         }

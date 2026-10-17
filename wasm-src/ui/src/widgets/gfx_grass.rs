@@ -18,9 +18,14 @@ impl Widget<Global> for GfxGrassWidget {
         "GfxGrass"
     }
 
-    fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global>) {
-        if let Err(error) = spring::config::set_config_int("GrassDetail", GRASS_DETAIL, true) {
+    fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>) {
+        let spring = _ctx.spring();
+        if let Err(error) = spring
+            .config()
+            .set_config_int("GrassDetail", GRASS_DETAIL, true)
+        {
             spring::log_warning!(
+                spring,
                 crate::diagnostics::SECTION,
                 "setting GrassDetail failed (error code {})",
                 error.code

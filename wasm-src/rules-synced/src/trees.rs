@@ -1,8 +1,7 @@
 use alloc::vec::Vec;
-use spring::commands;
-use spring::random::synced as random;
+
+use spring::Float3;
 use spring::rules_params::los;
-use spring::types::Float3;
 
 use crate::definitions::PLAYER_TEAM_ID;
 
@@ -31,12 +30,22 @@ impl TreeManager {
         Self { trees: Vec::new() }
     }
 
-    pub fn add_tree(&mut self, unit_id: i32, level: i32, frame: i32) {
+    pub fn add_tree(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        unit_id: i32,
+        level: i32,
+        frame: i32,
+    ) {
         if self.trees.iter().any(|t| t.unit_id == unit_id) {
             return;
         }
         let config = tree_config(level);
-        let next_wisp = frame + random::int(config.min_wisp_interval, config.max_wisp_interval);
+        let next_wisp = frame
+            + spring
+                .synced_random()
+                .next_int(config.min_wisp_interval, config.max_wisp_interval)
+                .expect("synced random int");
         self.trees.push(Tree {
             unit_id,
             level,
@@ -44,7 +53,12 @@ impl TreeManager {
             create_wisp_frame: next_wisp,
             wisps: Vec::new(),
         });
-        let _ = spring::set_unit_rules_param_f32(unit_id, "upgradeProgress", 0.0, los::PUBLIC);
+        let _ = spring.rules_params().set_unit_rules_param_f32(
+            unit_id,
+            "upgradeProgress",
+            0.0,
+            los::PUBLIC,
+        );
     }
 
     pub fn remove_tree(&mut self, unit_id: i32) -> bool {
@@ -56,10 +70,15 @@ impl TreeManager {
         }
     }
 
-    pub fn trees_near_sorted(&self, pos: spring::types::Float3, radius: f32) -> Vec<i32> {
+    pub fn trees_near_sorted(
+        &self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        pos: spring::Float3,
+        radius: f32,
+    ) -> Vec<i32> {
         let mut found: Vec<(f32, i32)> = Vec::new();
         for tree in &self.trees {
-            let Ok(tree_pos) = spring::units_info::get_unit_position(
+            let Ok(tree_pos) = spring.units_info().get_unit_position(
                 tree.unit_id,
                 spring::units_info::GetUnitPositionOptions {
                     mid_pos: false,
@@ -80,11 +99,17 @@ impl TreeManager {
         found.into_iter().map(|(_, id)| id).collect()
     }
 
-    pub fn find_tree_near(&self, x: f32, z: f32, max_radius: f32) -> Option<i32> {
+    pub fn find_tree_near(
+        &self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        x: f32,
+        z: f32,
+        max_radius: f32,
+    ) -> Option<i32> {
         let mut closest = None;
         let mut min_dist_sq = max_radius * max_radius;
         for tree in &self.trees {
-            if let Ok(pos) = spring::units_info::get_unit_position(
+            if let Ok(pos) = spring.units_info().get_unit_position(
                 tree.unit_id,
                 spring::units_info::GetUnitPositionOptions {
                     mid_pos: true,
@@ -113,7 +138,12 @@ impl TreeManager {
         self.trees.iter().map(|t| tree_config(t.level).power).sum()
     }
 
-    pub fn update_wisps(&mut self, frame: i32, mana: &mut i32) {
+    pub fn update_wisps(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        frame: i32,
+        mana: &mut i32,
+    ) {
         let mut mana_gained = 0;
         for tree in &mut self.trees {
             let config = tree_config(tree.level);
@@ -128,7 +158,7 @@ impl TreeManager {
                         wisp.stage += 1;
                     }
                     let key = alloc::format!("wispStage{}", i + 1);
-                    let _ = spring::set_unit_rules_param_f32(
+                    let _ = spring.rules_params().set_unit_rules_param_f32(
                         tree.unit_id,
                         &key,
                         wisp.stage as f32,
@@ -138,25 +168,36 @@ impl TreeManager {
             }
 
             if frame >= tree.create_wisp_frame && tree.wisps.len() < config.max_wisps as usize {
-                tree.create_wisp_frame =
-                    frame + random::int(config.min_wisp_interval, config.max_wisp_interval);
+                tree.create_wisp_frame = frame
+                    + spring
+                        .synced_random()
+                        .next_int(config.min_wisp_interval, config.max_wisp_interval)
+                        .expect("synced random int");
                 let wisp_idx = tree.wisps.len() + 1;
-                let offset = random::float() * 0.25;
+                let offset = spring
+                    .synced_random()
+                    .next_float()
+                    .expect("synced random float")
+                    * 0.25;
                 tree.wisps.push(Wisp {
                     stage: 1,
                     stage_frame: frame,
                 });
                 let stage_key = alloc::format!("wispStage{}", wisp_idx);
                 let offset_key = alloc::format!("wispOffset{}", wisp_idx);
-                let _ =
-                    spring::set_unit_rules_param_f32(tree.unit_id, &stage_key, 1.0, los::PUBLIC);
-                let _ = spring::set_unit_rules_param_f32(
+                let _ = spring.rules_params().set_unit_rules_param_f32(
+                    tree.unit_id,
+                    &stage_key,
+                    1.0,
+                    los::PUBLIC,
+                );
+                let _ = spring.rules_params().set_unit_rules_param_f32(
                     tree.unit_id,
                     &offset_key,
                     offset,
                     los::PUBLIC,
                 );
-                let _ = spring::set_unit_rules_param_f32(
+                let _ = spring.rules_params().set_unit_rules_param_f32(
                     tree.unit_id,
                     "wispCount",
                     tree.wisps.len() as f32,
@@ -170,15 +211,23 @@ impl TreeManager {
         }
     }
 
-    pub fn add_upgrade_progress(&mut self, unit_id: i32, frame: i32, pro_id: i32) -> bool {
+    pub fn add_upgrade_progress(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        unit_id: i32,
+        frame: i32,
+        pro_id: i32,
+    ) -> bool {
         let Some(pos) = self.trees.iter().position(|t| t.unit_id == unit_id) else {
             crate::diagnostics::trace!(
+                spring,
                 "[upgrade] ignored     f={frame} shot={pro_id} tree={unit_id} (not a tracked tree)"
             );
             return false;
         };
         if self.trees[pos].level >= MAX_TREE_LEVEL {
             crate::diagnostics::trace!(
+                spring,
                 "[upgrade] ignored     f={frame} shot={pro_id} tree={unit_id} (already max level)"
             );
             return false;
@@ -190,10 +239,15 @@ impl TreeManager {
         let required = UPGRADE_PROGRESS_PER_LEVEL * current_level;
 
         if progress >= required {
-            let _ = spring::set_unit_rules_param_f32(unit_id, "upgradeProgress", 0.0, los::PUBLIC);
-            self.promote_tree(pos, frame);
+            let _ = spring.rules_params().set_unit_rules_param_f32(
+                unit_id,
+                "upgradeProgress",
+                0.0,
+                los::PUBLIC,
+            );
+            self.promote_tree(spring, pos, frame);
         } else {
-            let _ = spring::set_unit_rules_param_f32(
+            let _ = spring.rules_params().set_unit_rules_param_f32(
                 unit_id,
                 "upgradeProgress",
                 progress as f32,
@@ -201,6 +255,7 @@ impl TreeManager {
             );
         }
         crate::diagnostics::trace!(
+            spring,
             "[upgrade] tree charged f={frame} shot={pro_id} tree={unit_id} level={current_level} charge={progress}/{required}"
         );
         true
@@ -243,12 +298,17 @@ pub fn tree_config(level: i32) -> TreeConfig {
 }
 
 impl TreeManager {
-    fn promote_tree(&mut self, index: usize, frame: i32) {
-        let defs = crate::definitions::defs();
+    fn promote_tree(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        index: usize,
+        frame: i32,
+    ) {
+        let defs = crate::definitions::defs(spring);
         let old_id = self.trees[index].unit_id;
         let next_level = self.trees[index].level + 1;
 
-        let Ok(pos) = spring::units_info::get_unit_position(
+        let Ok(pos) = spring.units_info().get_unit_position(
             old_id,
             spring::units_info::GetUnitPositionOptions {
                 mid_pos: false,
@@ -264,15 +324,24 @@ impl TreeManager {
             defs.tree_level3
         };
 
-        let team = spring::units_info::get_unit_team(old_id).unwrap_or(PLAYER_TEAM_ID);
-        let front = spring::units_info::get_unit_direction(old_id).ok();
+        let team = spring
+            .units_info()
+            .get_unit_team(old_id)
+            .unwrap_or(PLAYER_TEAM_ID);
+        let front = spring.units_info().get_unit_direction(old_id).ok();
 
-        let _ = spring::set_unit_rules_param_f32(old_id, "upgradeProgress", 0.0, los::PUBLIC);
-        commands::run(move || {
-            crate::diagnostics::check(
-                spring::destroy_unit(
+        let _ = spring.rules_params().set_unit_rules_param_f32(
+            old_id,
+            "upgradeProgress",
+            0.0,
+            los::PUBLIC,
+        );
+        crate::with_addon_context(|ctx| {
+            ctx.commands().run(move |spring| {
+            crate::diagnostics::check(spring,
+                spring.unit_control().destroy_unit(
                     old_id,
-                    spring::owned::unit_control::DestroyUnitOptions {
+                    spring::unit_control::DestroyUnitOptions {
                         selfd: false,
                         reclaimed: true,
                         attacker_id: -1,
@@ -283,30 +352,26 @@ impl TreeManager {
             );
 
             if target_def > 0
-                && let Some(new_unit_id) = crate::diagnostics::check(
-                    spring::create_unit(
-                        spring::UnitDefRef {
-                            name: "",
+                && let Some(new_unit_id) = crate::diagnostics::check(spring,
+                    spring.unit_control().create_unit(&spring::unit_control::DefRef {
+                            name: String::new(),
                             id: target_def,
-                        },
-                        pos,
-                        team,
-                        crate::definitions::unit_create_options(),
-                    ),
+                        }, pos, 0, team, crate::definitions::unit_create_options()),
                     || alloc::format!("growing tree {old_id} to level {next_level}"),
                 )
             {
                 if let Some(front) = front {
-                    let _ = spring::unit_control::set_unit_direction(
+                    let _ = spring.unit_control().set_unit_direction(
                         new_unit_id,
                         front,
                         right_from_front(front),
                     );
                 }
-                crate::diagnostics::trace!(
+                crate::diagnostics::trace!(spring,
                     "[upgrade] TREE UPGRADED f={frame} old={old_id} new={new_unit_id} level={next_level} team={team}"
                 );
             }
+        })
         });
     }
 }

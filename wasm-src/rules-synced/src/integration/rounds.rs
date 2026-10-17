@@ -23,25 +23,28 @@ pub(super) fn skip_round(
 }
 
 pub(super) fn skip(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame: i32) -> Step {
+    let spring = ctx.spring();
     if t.elapsed(frame) < ROUND_SETUP_FRAMES {
         return Step::Wait;
     }
     let global = ctx.global();
-    let trees_before = living_trees().len();
-    let mushrooms_before = living(|def| defs().is_mushroom(def));
+    let trees_before = living_trees(spring).len();
+    let mushrooms_before = living(spring, |def| defs(spring).is_mushroom(def));
     send(ctx, command::SKIP_TUTORIAL);
     {
         let story = global.story.access();
         t.check(
+            spring,
             story.stage == STAGE_FREE_PLAY && story.tutorial_skipped,
             "Tutorial skip sets story stage to 0 and marks tutorial skipped",
         );
     }
     t.checks.after_commands(move |checks, ctx| {
+let spring = ctx.spring();
         let global = ctx.global();
         let mana = *global.mana.access();
-        let grown = living_trees().len() - trees_before;
-        checks.check(
+        let grown = living_trees(spring, ).len() - trees_before;
+        checks.check(spring,
             mana == 30 && grown == 3,
             format!(
                 "Tutorial skip grants 30 mana and grows 3 trees (mana: {mana}, trees: +{grown})"
@@ -53,8 +56,8 @@ pub(super) fn skip(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame: i
             .waves
             .first()
             .is_some_and(|wave| wave.spawned);
-        let mushrooms = living(|def| defs().is_mushroom(def));
-        checks.check(
+        let mushrooms = living(spring, |def| defs(spring).is_mushroom(def));
+        checks.check(spring,
             first_wave_spawned && mushrooms == mushrooms_before,
             format!(
                 "Tutorial skip counts the first wave as spawned without spawning it ({mushrooms_before} -> {mushrooms} mushrooms)"
@@ -69,8 +72,9 @@ pub(super) fn king_arrives(
     ctx: &AddonContext<'_, Global>,
     frame: i32,
 ) -> Step {
+    let spring = ctx.spring();
     if t.elapsed(frame) == 0 {
-        t.king = spawn(defs().king_shroom, KING_SPOT);
+        t.king = spawn(spring, defs(spring).king_shroom, KING_SPOT);
     }
     if t.elapsed(frame) < 2 {
         return Step::Wait;
@@ -78,17 +82,20 @@ pub(super) fn king_arrives(
     let global = ctx.global();
     let event = global.mushrooms.access().shroom_event;
     t.check(
-        event == SHROOM_EVENT_KING_SPAWNED && published(global, "story") == STAGE_ARMY_APPROACHES,
+        spring,
+        event == SHROOM_EVENT_KING_SPAWNED
+            && published(spring, global, "story") == STAGE_ARMY_APPROACHES,
         format!("A king's UnitCreated raises the king event and its story (event: {event})"),
     );
     send(ctx, command::STORY);
     let stage = global.story.access().stage;
     let waves_scheduled = global.mushrooms.access().start_spawn_frame.is_some();
     t.check(
+        spring,
         stage == STAGE_FREE_PLAY && waves_scheduled,
         format!("Continue on the king's story keeps free play (stage: {stage})"),
     );
-    destroy(t.king);
+    destroy(spring, t.king);
     Step::Done
 }
 
@@ -97,6 +104,7 @@ pub(super) fn king_defeated(
     ctx: &AddonContext<'_, Global>,
     frame: i32,
 ) -> Step {
+    let spring = ctx.spring();
     if t.elapsed(frame) < 2 {
         return Step::Wait;
     }
@@ -104,14 +112,16 @@ pub(super) fn king_defeated(
     let event = global.mushrooms.access().shroom_event;
     let game_over = global.victory.access().game_over;
     t.check(
+        spring,
         event == SHROOM_EVENT_KING_DEFEATED
             && !game_over
-            && published(global, "story") == STAGE_VICTORY,
+            && published(spring, global, "story") == STAGE_VICTORY,
         format!("The king's death shows the victory story before the game ends (event: {event})"),
     );
     send(ctx, command::STORY);
     let victory = global.victory.access();
     t.check(
+        spring,
         victory.game_over && victory.won,
         "Continue on the victory story wins the game",
     );
@@ -123,12 +133,14 @@ pub(super) fn victory_published(
     ctx: &AddonContext<'_, Global>,
     frame: i32,
 ) -> Step {
+    let spring = ctx.spring();
     if t.elapsed(frame) < 2 {
         return Step::Wait;
     }
     let global = ctx.global();
     t.check(
-        published(global, "game_over") == 1 && published(global, "won") == 1,
+        spring,
+        published(spring, global, "game_over") == 1 && published(spring, global, "won") == 1,
         "The UI is told of the win",
     );
     send(ctx, "restart|2");
@@ -136,6 +148,7 @@ pub(super) fn victory_published(
 }
 
 pub(super) fn restart(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame: i32) -> Step {
+    let spring = ctx.spring();
     if t.elapsed(frame) < ROUND_SETUP_FRAMES {
         return Step::Wait;
     }
@@ -143,11 +156,13 @@ pub(super) fn restart(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame
     {
         let victory = global.victory.access();
         t.check(
+            spring,
             !victory.game_over && !victory.won,
             "In-game restart successfully clears game_over and won flags",
         );
     }
     t.check(
+        spring,
         global.story.access().stage == STAGE_INTRO,
         "In-game restart resets story stage to 1",
     );
@@ -155,14 +170,24 @@ pub(super) fn restart(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame
         let mushrooms = global.mushrooms.access();
         (mushrooms.shroom_event, mushrooms.difficulty)
     };
-    t.check(event == 0, "In-game restart resets shroom_event to 0");
-    t.check(difficulty == 2, "In-game restart applies chosen difficulty");
     t.check(
+        spring,
+        event == 0,
+        "In-game restart resets shroom_event to 0",
+    );
+    t.check(
+        spring,
+        difficulty == 2,
+        "In-game restart applies chosen difficulty",
+    );
+    t.check(
+        spring,
         global.spire.access().unit_id > 0,
         "In-game restart spawns a valid new spire",
     );
-    let mushrooms_left = living(|def| defs().is_mushroom(def));
+    let mushrooms_left = living(spring, |def| defs(spring).is_mushroom(def));
     t.check(
+        spring,
         mushrooms_left == 0,
         format!("In-game restart leaves no mushrooms behind (found: {mushrooms_left})"),
     );
@@ -174,12 +199,14 @@ pub(super) fn destroy_spire(
     ctx: &AddonContext<'_, Global>,
     _frame: i32,
 ) -> Step {
+    let spring = ctx.spring();
     let spire = ctx.global().spire.access().unit_id;
-    destroy(spire);
+    destroy(spring, spire);
     Step::Done
 }
 
 pub(super) fn defeat(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame: i32) -> Step {
+    let spring = ctx.spring();
     if t.elapsed(frame) < 2 {
         return Step::Wait;
     }
@@ -187,12 +214,14 @@ pub(super) fn defeat(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame:
     {
         let victory = global.victory.access();
         t.check(
+            spring,
             victory.game_over && !victory.won && global.spire.access().unit_id < 0,
             "Losing the spire loses the game",
         );
     }
     t.check(
-        published(global, "game_over") == 1 && published(global, "won") == 0,
+        spring,
+        published(spring, global, "game_over") == 1 && published(spring, global, "won") == 0,
         "The UI hears of the defeat from a surviving unit",
     );
     send(ctx, "restart|2");
@@ -200,11 +229,13 @@ pub(super) fn defeat(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame:
 }
 
 pub(super) fn fresh_round(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame: i32) -> Step {
+    let spring = ctx.spring();
     if t.elapsed(frame) < ROUND_SETUP_FRAMES {
         return Step::Wait;
     }
     let global = ctx.global();
     t.check(
+        spring,
         !global.victory.access().game_over
             && global.spire.access().unit_id > 0
             && global.round.get() == 4,

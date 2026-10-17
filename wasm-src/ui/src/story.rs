@@ -31,34 +31,37 @@ pub fn modal_visible(global: &Global) -> bool {
     global.story.access().visible
 }
 
-pub fn set_modal(global: &Global, visible: bool) {
+pub fn set_modal(spring: &spring::Spring<'_, spring::Ui>, global: &Global, visible: bool) {
     let resume = {
         let mut story = global.story.access_mut();
         story.visible = visible;
         !visible && core::mem::take(&mut story.paused_game)
     };
-    set_display(global, "story-modal", visible);
+    set_display(spring, global, "story-modal", visible);
     if resume {
-        set_paused(false);
+        set_paused(spring, false);
     }
 }
 
-fn pause_for(global: &Global, stage: i32) {
+fn pause_for(spring: &spring::Spring<'_, spring::Ui>, global: &Global, stage: i32) {
     if !flove_shared::story_pauses(stage) {
         return;
     }
     global.story.access_mut().paused_game = true;
-    set_paused(true);
+    set_paused(spring, true);
 }
 
-fn set_paused(paused: bool) {
+fn set_paused(spring: &spring::Spring<'_, spring::Ui>, paused: bool) {
     let command = if paused { "pause 1" } else { "pause 0" };
-    spring::send_command(command).log_err_once("pausing the game for the story");
+    spring
+        .messages()
+        .send_commands(command, "")
+        .log_err_once(spring, "pausing the game for the story");
 }
 
-pub fn reset(global: &Global) {
+pub fn reset(spring: &spring::Spring<'_, spring::Ui>, global: &Global) {
     *global.story.access_mut() = StoryModal::default();
-    set_paused(false);
+    set_paused(spring, false);
 }
 
 pub fn rewind(global: &Global) {
@@ -68,7 +71,7 @@ pub fn rewind(global: &Global) {
     story.char_timer = 0.0;
 }
 
-pub fn reveal_all(global: &Global) -> bool {
+pub fn reveal_all(spring: &spring::Spring<'_, spring::Ui>, global: &Global) -> bool {
     let text = {
         let mut story = global.story.access_mut();
         let total_chars = story.full_text.chars().count();
@@ -81,7 +84,7 @@ pub fn reveal_all(global: &Global) -> bool {
     };
     match text {
         Some(text) => {
-            set_text(global, "story-body", text);
+            set_text(spring, global, "story-body", text);
             true
         }
         None => false,
@@ -94,13 +97,13 @@ pub fn typing_progress(global: &Global) -> (usize, usize) {
     (story.char_index, story.full_text.chars().count())
 }
 
-pub fn show(global: &Global, stage: i32) {
+pub fn show(spring: &spring::Spring<'_, spring::Ui>, global: &Global, stage: i32) {
     if stage == STAGE_FREE_PLAY {
-        set_modal(global, false);
+        set_modal(spring, global, false);
         return;
     }
-    set_modal(global, true);
-    pause_for(global, stage);
+    set_modal(spring, global, true);
+    pause_for(spring, global, stage);
 
     let (body, next_label, duration) = match stage {
         1 => (
@@ -160,24 +163,29 @@ pub fn show(global: &Global, stage: i32) {
         story.char_interval = char_interval;
     }
 
-    set_text(global, "story-title", "Groves:  OPERATION MUSHROOM");
-    set_text(global, "story-body", "");
-    set_text(global, "btn-story-next", &format!("{next_label} [Space]"));
+    set_text(spring, global, "story-title", "Groves:  OPERATION MUSHROOM");
+    set_text(spring, global, "story-body", "");
+    set_text(
+        spring,
+        global,
+        "btn-story-next",
+        &format!("{next_label} [Space]"),
+    );
     let show_skip = flove_shared::skip_offered(stage) && global.game.access().skip_offered;
     if show_skip {
-        set_text(global, "btn-story-skip", "Skip Tutorial [S]");
+        set_text(spring, global, "btn-story-skip", "Skip Tutorial [S]");
     }
-    set_display(global, "btn-story-skip", show_skip);
+    set_display(spring, global, "btn-story-skip", show_skip);
 }
 
-pub fn update_typing(global: &Global, delta_seconds: f32) {
+pub fn update_typing(spring: &spring::Spring<'_, spring::Ui>, global: &Global, delta_seconds: f32) {
     let dt = delta_seconds.clamp(0.0, 0.1);
     let visible_text = {
         let mut story = global.story.access_mut();
         advance(&mut story, dt)
     };
     if let Some(text) = visible_text {
-        set_text(global, "story-body", text);
+        set_text(spring, global, "story-body", text);
     }
 }
 

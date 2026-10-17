@@ -24,17 +24,22 @@ impl Gadget<Global> for GrowthGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
+        let spring = ctx.spring();
         let global = ctx.global();
         let mut growth = self.growth.borrow_mut();
         let round = global.round.get();
         let growth = match &mut *growth {
             Some((scheduled, growth)) if *scheduled == round => growth,
-            slot => &mut slot.insert((round, GrowthManager::starting_at(frame))).1,
+            slot => {
+                &mut slot
+                    .insert((round, GrowthManager::starting_at(spring, frame)))
+                    .1
+            }
         };
         if global.story.access().stage != STAGE_FREE_PLAY {
             return;
         }
         let spire_id = global.spire.access().unit_id;
-        growth.update(frame, spire_id);
+        growth.update(spring, frame, spire_id);
     }
 }

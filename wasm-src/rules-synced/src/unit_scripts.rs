@@ -23,8 +23,11 @@ enum ScriptKind {
     Trigger,
 }
 
-fn script_kind_for_def(def: i32) -> Option<ScriptKind> {
-    let defs = crate::definitions::defs();
+fn script_kind_for_def(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    def: i32,
+) -> Option<ScriptKind> {
+    let defs = crate::definitions::defs(spring);
     let mushroom = [
         (defs.normal_mushroom, MushroomKind::Normal),
         (defs.small_mushroom, MushroomKind::Small),
@@ -89,12 +92,20 @@ pub struct FloveUnitScript {
 }
 
 impl UnitDefScript for FloveUnitScript {
-    fn capabilities(def: i32) -> Option<ScriptCapabilities> {
-        script_kind_for_def(def).map(capabilities)
+    fn capabilities(
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        def: i32,
+    ) -> Option<ScriptCapabilities> {
+        script_kind_for_def(spring, def).map(capabilities)
     }
 
-    fn for_def(def: i32, ctx: &mut InitCtx<'_>, _: &mut ()) -> Self {
-        let state = script_kind_for_def(def).map(|kind| match kind {
+    fn for_def(
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        def: i32,
+        ctx: &mut InitCtx<'_>,
+        _: &mut (),
+    ) -> Self {
+        let state = script_kind_for_def(spring, def).map(|kind| match kind {
             ScriptKind::Mushroom(kind) => {
                 let pieces = MushroomPieces::from_init(ctx);
                 ScriptState::Mushroom {
@@ -128,7 +139,7 @@ impl UnitScript for FloveUnitScript {
                 movement,
                 ..
             }) => {
-                mushroom::configure(movement, *kind, self.unit);
+                mushroom::configure(ctx, movement, *kind, self.unit);
                 mushroom::create(ctx, *pieces);
             }
             Some(ScriptState::Flower) => simple::flower_create(ctx),

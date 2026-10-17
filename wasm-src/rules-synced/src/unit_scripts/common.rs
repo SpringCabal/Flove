@@ -1,7 +1,6 @@
 #[cfg(feature = "animation-trace")]
 use alloc::format;
 
-use spring::UnitId;
 use spring::cus::{Angle, Axis, Piece, UnitCtx};
 
 pub(super) const SIG_MOVE: spring::cus::SignalMask = spring::cus::SignalMask::new(1);
@@ -34,7 +33,11 @@ pub(super) fn move_piece(ctx: &UnitCtx, piece: Piece, axis: Axis, target: f32, s
             ctx.unit().0,
             piece.0
         );
-        let _ = spring::echo("[FloveAnimTrace] CUS_MOVE_COMMAND", &details);
+        let _ = ctx.with_spring(|spring| {
+            spring
+                .messages()
+                .echo("[FloveAnimTrace] CUS_MOVE_COMMAND", &details)
+        });
     }
     if speed == 0.0 {
         ctx.move_now(piece, axis, target);
@@ -43,39 +46,74 @@ pub(super) fn move_piece(ctx: &UnitCtx, piece: Piece, axis: Axis, target: f32, s
     }
 }
 
-pub(super) fn emit_ceg(unit: UnitId, piece: Piece, effect: &str) {
-    if let Some((position, direction)) = piece_position_and_direction(unit, piece) {
-        let _ = spring::spawn_ceg(effect, position, direction, 0.0, 0.0, 0.0);
+pub(super) fn emit_ceg(ctx: &UnitCtx, piece: Piece, effect: &str) {
+    if let Some((position, direction)) = piece_position_and_direction(ctx, piece) {
+        let _ = ctx.with_spring(|spring| {
+            spring.effects_control().spawn_ceg(
+                &spring::effects_control::DefRef {
+                    name: (effect).to_owned(),
+                    id: -1,
+                },
+                position,
+                direction,
+                0.0,
+                0.0,
+                0.0,
+            )
+        });
     }
 }
 
 pub(super) fn emit_ceg_with_params(
-    unit: UnitId,
+    ctx: &UnitCtx,
     piece: Piece,
     effect: &str,
-    direction: spring::types::Float3,
+    direction: spring::Float3,
     radius: f32,
     damage: f32,
     damage_mod: f32,
 ) {
-    if let Some((position, _)) = piece_position_and_direction(unit, piece) {
-        let _ = spring::spawn_ceg(effect, position, direction, radius, damage, damage_mod);
+    if let Some((position, _)) = piece_position_and_direction(ctx, piece) {
+        let _ = ctx.with_spring(|spring| {
+            spring.effects_control().spawn_ceg(
+                &spring::effects_control::DefRef {
+                    name: (effect).to_owned(),
+                    id: -1,
+                },
+                position,
+                direction,
+                radius,
+                damage,
+                damage_mod,
+            )
+        });
     }
 }
 
 fn piece_position_and_direction(
-    unit: UnitId,
+    ctx: &UnitCtx,
     piece: Piece,
-) -> Option<(spring::types::Float3, spring::types::Float3)> {
+) -> Option<(spring::Float3, spring::Float3)> {
     if piece == Piece::INVALID {
         return None;
     }
-    let pos_dir = spring::get_unit_piece_pos_dir(unit.0, piece.0 + 1).ok()?;
+    let pos_dir = ctx
+        .with_spring(|spring| {
+            spring
+                .units_pieces()
+                .get_unit_piece_pos_dir(ctx.unit().0, piece.0 + 1)
+        })
+        .ok()?;
     Some((pos_dir.position, pos_dir.direction))
 }
 
-pub(super) fn unit_position(unit: UnitId) -> spring::types::Float3 {
-    spring::get_unit_position(unit, false, false).unwrap_or_default()
+pub(super) fn unit_position(ctx: &UnitCtx) -> spring::Float3 {
+    ctx.with_spring(|spring| {
+        spring
+            .units_info()
+            .get_unit_position(ctx.unit().0, Default::default())
+    })
+    .unwrap_or_default()
 }
 
 pub(super) fn sleep_millis(ctx: &UnitCtx, millis: f32) -> spring::cus::Sleep {

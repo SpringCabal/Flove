@@ -21,8 +21,9 @@ impl Gadget<Global> for RoundGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, _frame: i32) {
+        let spring = ctx.spring();
         if !self.started.replace(true) {
-            crate::round::populate(ctx.global());
+            crate::round::populate(spring, ctx.global());
         }
     }
 }

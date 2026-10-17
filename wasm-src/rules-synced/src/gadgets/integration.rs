@@ -22,7 +22,8 @@ impl Gadget<Global> for IntegrationGadget {
     }
 
     fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global>) {
-        integration::announce();
+        let spring = _ctx.spring();
+        integration::announce(spring);
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
@@ -37,8 +38,9 @@ impl Gadget<Global> for IntegrationGadget {
         _mode: i32,
         data: &[u8],
     ) {
+        let spring = _ctx.spring();
         if data == flove_shared::suites::UI_DONE.as_bytes() {
-            integration::ui_suite_done(&mut self.tracker.borrow_mut());
+            integration::ui_suite_done(spring, &mut self.tracker.borrow_mut());
         }
     }
 }

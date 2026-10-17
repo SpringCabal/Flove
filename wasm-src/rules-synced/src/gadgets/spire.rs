@@ -17,8 +17,12 @@ impl Gadget<Global> for SpireGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
+        let spring = ctx.spring();
         let total_power = ctx.global().trees.access().total_power();
-        ctx.global().spire.access_mut().update(frame, total_power);
+        ctx.global()
+            .spire
+            .access_mut()
+            .update(spring, frame, total_power);
     }
 
     fn unit_created(
@@ -29,7 +33,8 @@ impl Gadget<Global> for SpireGadget {
         _team: i32,
         _builder: i32,
     ) {
-        if crate::definitions::defs().is_spire(def) {
+        let spring = ctx.spring();
+        if crate::definitions::defs(spring).is_spire(def) {
             ctx.global().spire.access_mut().unit_id = unit;
         }
     }
@@ -39,7 +44,8 @@ impl Gadget<Global> for SpireGadget {
         ctx: &spring_addons::AddonContext<'_, Global>,
         event: &UnitDestroyedEvent,
     ) {
-        if !crate::definitions::defs().is_spire(event.unit_def_id) {
+        let spring = ctx.spring();
+        if !crate::definitions::defs(spring).is_spire(event.unit_def_id) {
             return;
         }
         let global = ctx.global();

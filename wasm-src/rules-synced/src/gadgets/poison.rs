@@ -23,7 +23,12 @@ impl Gadget<Global> for PoisonGadget {
     }
 
     fn game_frame(&self, _ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
-        crate::gadgets::poison::behavior::spray(&self.poison.borrow().poison_mushrooms, frame);
+        let spring = _ctx.spring();
+        crate::gadgets::poison::behavior::spray(
+            spring,
+            &self.poison.borrow().poison_mushrooms,
+            frame,
+        );
     }
 
     fn unit_created(
@@ -34,7 +39,8 @@ impl Gadget<Global> for PoisonGadget {
         _team: i32,
         _builder: i32,
     ) {
-        if def == crate::definitions::defs().poison_mushroom {
+        let spring = _ctx.spring();
+        if def == crate::definitions::defs(spring).poison_mushroom {
             self.poison.borrow_mut().register(unit);
         }
     }

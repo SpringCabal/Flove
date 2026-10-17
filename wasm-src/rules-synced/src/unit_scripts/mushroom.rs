@@ -1,9 +1,9 @@
 use alloc::rc::Rc;
 use core::cell::RefCell;
 
+use spring::Float3;
 use spring::UnitId;
 use spring::cus::{Axis, Piece, UnitCtx, WeaponId, WreckLevel};
-use spring::types::Float3;
 
 use super::common::{
     SIG_MOVE, emit_ceg, emit_ceg_with_params, move_piece, sleep_millis, turn, unit_position,
@@ -80,14 +80,24 @@ impl MovementState {
     }
 }
 
-pub(super) fn configure(state: &Rc<RefCell<MovementState>>, kind: MushroomKind, unit: UnitId) {
-    let speed = spring::move_ctrl::get_unit_move_type_data(unit.0)
+pub(super) fn configure(
+    ctx: &UnitCtx,
+    state: &Rc<RefCell<MovementState>>,
+    kind: MushroomKind,
+    unit: UnitId,
+) {
+    let speed = ctx
+        .with_spring(|spring| spring.move_ctrl().get_unit_move_type_data(unit.0))
         .map(|data| (data.max_speed / spring::consts::GAME_SPEED as f32).max(0.1))
         .unwrap_or(1.0);
     #[cfg(feature = "animation-trace")]
     {
         let details = alloc::format!("unit={} kind={kind:?} speed={speed:.6}", unit.0);
-        let _ = spring::echo("[FloveAnimTrace] CUS_MOVEMENT_CONFIG", &details);
+        let _ = ctx.with_spring(|spring| {
+            spring
+                .messages()
+                .echo("[FloveAnimTrace] CUS_MOVEMENT_CONFIG", &details)
+        });
     }
     let mut state = state.borrow_mut();
     state.kind = kind;
@@ -115,7 +125,11 @@ pub(super) fn create(ctx: &UnitCtx, pieces: MushroomPieces) {
 
 pub(super) fn start_moving(ctx: &UnitCtx, state: Rc<RefCell<MovementState>>) {
     #[cfg(feature = "animation-trace")]
-    let _ = spring::echo("[FloveAnimTrace] CUS_START_MOVING", "");
+    let _ = ctx.with_spring(|spring| {
+        spring
+            .messages()
+            .echo("[FloveAnimTrace] CUS_START_MOVING", "")
+    });
     state.borrow_mut().moving = true;
     ctx.signal(SIG_MOVE);
     ctx.spawn(spring::cus::TaskDefinition::with_state(
@@ -127,7 +141,11 @@ pub(super) fn start_moving(ctx: &UnitCtx, state: Rc<RefCell<MovementState>>) {
 
 pub(super) fn stop_moving(_ctx: &UnitCtx, state: Rc<RefCell<MovementState>>) {
     #[cfg(feature = "animation-trace")]
-    let _ = spring::echo("[FloveAnimTrace] CUS_STOP_MOVING", "");
+    let _ = _ctx.with_spring(|spring| {
+        spring
+            .messages()
+            .echo("[FloveAnimTrace] CUS_STOP_MOVING", "")
+    });
     state.borrow_mut().moving = false;
 }
 
@@ -142,7 +160,8 @@ async fn movement(state: Rc<RefCell<MovementState>>, ctx: UnitCtx) {
             return;
         }
         #[cfg(feature = "animation-trace")]
-        let _ = spring::echo("[FloveAnimTrace] CUS_MOVE_STEP", "");
+        let _ =
+            ctx.with_spring(|spring| spring.messages().echo("[FloveAnimTrace] CUS_MOVE_STEP", ""));
         match kind {
             MushroomKind::King => king_step(&ctx, pieces, speed).await,
             MushroomKind::Big | MushroomKind::Cluster => {
@@ -166,12 +185,12 @@ async fn biped_step(ctx: &UnitCtx, pieces: MushroomPieces, speed: f32, heavy: bo
     let plant = |ctx: &UnitCtx| {
         move_piece(ctx, pieces.trunk, Axis::Y, planted_height, 0.0);
         if heavy {
-            emit_ceg(ctx.unit(), pieces.left_foot, GAIT_DIRT);
-            emit_ceg(ctx.unit(), pieces.right_foot, GAIT_DIRT);
+            emit_ceg(ctx, pieces.left_foot, GAIT_DIRT);
+            emit_ceg(ctx, pieces.right_foot, GAIT_DIRT);
         }
     };
 
-    emit_ceg(ctx.unit(), pieces.right_foot, GAIT_DIRT);
+    emit_ceg(ctx, pieces.right_foot, GAIT_DIRT);
     turn(
         ctx,
         pieces.right_foot,
@@ -230,8 +249,8 @@ async fn king_step(ctx: &UnitCtx, pieces: MushroomPieces, speed: f32) {
     let nod = deg(5.0) * speed;
     let head_sway = deg(12.0) * speed;
 
-    emit_ceg(ctx.unit(), pieces.king_rr, GAIT_DIRT);
-    emit_ceg(ctx.unit(), pieces.king_rl, GAIT_DIRT);
+    emit_ceg(ctx, pieces.king_rr, GAIT_DIRT);
+    emit_ceg(ctx, pieces.king_rl, GAIT_DIRT);
     turn(ctx, pieces.king_rl, Axis::X, deg(-40.0), slow_leg);
     turn(ctx, pieces.king_fr, Axis::X, deg(-40.0), slow_leg);
     turn(ctx, pieces.king_fl, Axis::X, deg(20.0), fast_leg);
@@ -251,8 +270,8 @@ async fn king_step(ctx: &UnitCtx, pieces: MushroomPieces, speed: f32) {
     turn(ctx, pieces.king_head, Axis::Z, deg(-7.0), head_sway);
     turn(ctx, pieces.king, Axis::Z, deg(6.0), sway);
     turn(ctx, pieces.king, Axis::X, deg(-2.0), sway);
-    emit_ceg(ctx.unit(), pieces.king_fr, GAIT_DIRT);
-    emit_ceg(ctx.unit(), pieces.king_fl, GAIT_DIRT);
+    emit_ceg(ctx, pieces.king_fr, GAIT_DIRT);
+    emit_ceg(ctx, pieces.king_fl, GAIT_DIRT);
     turn(ctx, pieces.king_rr, Axis::X, deg(-40.0), fast_leg);
     turn(ctx, pieces.king_fl, Axis::X, deg(-40.0), fast_leg);
     turn(ctx, pieces.king_rl, Axis::X, deg(20.0), slow_leg);
@@ -284,7 +303,7 @@ async fn stop(state: Rc<RefCell<MovementState>>, ctx: UnitCtx) {
                 pieces.king_fl,
                 pieces.king_fr,
             ] {
-                emit_ceg(ctx.unit(), foot, GAIT_DIRT);
+                emit_ceg(&ctx, foot, GAIT_DIRT);
             }
         }
         _ => {
@@ -332,7 +351,11 @@ pub(super) fn aim_weapon(
     #[cfg(feature = "animation-trace")]
     {
         let aim_debug = alloc::format!("heading={heading:.6} pitch={pitch:.6}");
-        let _ = spring::echo("[FloveAnimTrace] CUS_AIM_REQUEST", &aim_debug);
+        let _ = ctx.with_spring(|spring| {
+            spring
+                .messages()
+                .echo("[FloveAnimTrace] CUS_AIM_REQUEST", &aim_debug)
+        });
     }
     {
         *state.borrow_mut() = AimState { pieces, weapon };
@@ -351,35 +374,59 @@ pub(super) fn aim_weapon(
 async fn aim_task(state: Rc<RefCell<AimState>>, ctx: UnitCtx) {
     ctx.set_signal_mask(SIG_AIM);
     #[cfg(feature = "animation-trace")]
-    let _ = spring::echo("[FloveAnimTrace] CUS_AIM_TASK_START", "");
+    let _ = ctx.with_spring(|spring| {
+        spring
+            .messages()
+            .echo("[FloveAnimTrace] CUS_AIM_TASK_START", "")
+    });
     let request = *state.borrow();
     ctx.wait_for_turn(request.pieces.muzzle, Axis::X).await;
     #[cfg(feature = "animation-trace")]
-    let _ = spring::echo("[FloveAnimTrace] CUS_AIM_X_DONE", "");
+    let _ = ctx.with_spring(|spring| {
+        spring
+            .messages()
+            .echo("[FloveAnimTrace] CUS_AIM_X_DONE", "")
+    });
     ctx.wait_for_turn(request.pieces.muzzle, Axis::Y).await;
     #[cfg(feature = "animation-trace")]
-    let _ = spring::echo("[FloveAnimTrace] CUS_AIM_Y_DONE", "");
+    let _ = ctx.with_spring(|spring| {
+        spring
+            .messages()
+            .echo("[FloveAnimTrace] CUS_AIM_Y_DONE", "")
+    });
     ctx.set_aim_ready(request.weapon, true);
     #[cfg(feature = "animation-trace")]
-    let _ = spring::echo("[FloveAnimTrace] CUS_AIM_READY", "");
+    let _ = ctx.with_spring(|spring| spring.messages().echo("[FloveAnimTrace] CUS_AIM_READY", ""));
 }
 
 pub(super) fn shot(ctx: &UnitCtx, pieces: MushroomPieces, kind: MushroomKind) {
     if kind == MushroomKind::King {
-        emit_ceg(ctx.unit(), pieces.king_head, "greymuzzle");
+        emit_ceg(ctx, pieces.king_head, "greymuzzle");
     } else {
-        emit_ceg(ctx.unit(), pieces.muzzle, "greymuzzle");
+        emit_ceg(ctx, pieces.muzzle, "greymuzzle");
     }
 }
 
 pub(super) fn killed(ctx: &UnitCtx, pieces: MushroomPieces, kind: MushroomKind) -> WreckLevel {
     let unit = ctx.unit();
-    let position = unit_position(unit);
-    let _ = spring::spawn_ceg("red_pop", position, Float3::ZERO, 0.0, 0.0, 0.0);
+    let position = unit_position(ctx);
+    let _ = ctx.with_spring(|spring| {
+        spring.effects_control().spawn_ceg(
+            &spring::effects_control::DefRef {
+                name: ("red_pop").to_owned(),
+                id: -1,
+            },
+            position,
+            Float3::ZERO,
+            0.0,
+            0.0,
+            0.0,
+        )
+    });
     match kind {
         MushroomKind::Bomb => {
             emit_ceg_with_params(
-                unit,
+                ctx,
                 pieces.trunk,
                 "red_pop",
                 Float3::new(0.0, 2.0, 0.0),
@@ -391,7 +438,7 @@ pub(super) fn killed(ctx: &UnitCtx, pieces: MushroomPieces, kind: MushroomKind) 
         }
         MushroomKind::Cluster => {
             emit_ceg_with_params(
-                unit,
+                ctx,
                 pieces.cap,
                 "red_pop",
                 Float3::new(0.0, 2.0, 0.0),
@@ -399,42 +446,62 @@ pub(super) fn killed(ctx: &UnitCtx, pieces: MushroomPieces, kind: MushroomKind) 
                 10.0,
                 0.0,
             );
-            let _ = spring::sound::play_sound_file(
-                "sounds/clusterexplosion.wav",
-                10.0,
-                position,
-                Float3::ZERO,
-                0,
-            );
-            spawn_cluster_children(unit, position);
+            let _ = ctx.with_spring(|spring| {
+                spring.sound().play_sound_file(
+                    "sounds/clusterexplosion.wav",
+                    10.0,
+                    position,
+                    Float3::ZERO,
+                    0,
+                )
+            });
+            spawn_cluster_children(ctx, unit, position);
             WreckLevel::None
         }
         _ => WreckLevel::Three,
     }
 }
 
-fn spawn_cluster_children(unit: UnitId, position: Float3) {
-    let def_id = crate::definitions::defs().small_mushroom;
-    let Ok(team) = spring::get_unit_team(unit) else {
+fn spawn_cluster_children(ctx: &UnitCtx, unit: UnitId, position: Float3) {
+    let def_id = ctx
+        .with_spring(|spring| Ok(crate::definitions::defs(spring).small_mushroom))
+        .expect("unit-script engine scope");
+    let Ok(team) = ctx.with_spring(|spring| spring.units_info().get_unit_team(unit.0)) else {
         return;
     };
     const SCATTER: f32 = 300.0;
-    spring::commands::run(move || {
-        for _ in 0..10 {
-            let x = position.x + spring::random::synced::float() * SCATTER - SCATTER / 2.0;
-            let z = position.z + spring::random::synced::float() * SCATTER - SCATTER / 2.0;
-            crate::diagnostics::check(
-                spring::create_unit(
-                    spring::UnitDefRef {
-                        name: "",
-                        id: def_id,
-                    },
-                    Float3::new(x, position.y + 20.0, z),
-                    team.0,
-                    crate::definitions::unit_create_options(),
-                ),
-                || alloc::format!("spawning a cluster child of unit {}", unit.0),
-            );
-        }
+    crate::with_addon_context(|ctx| {
+        ctx.commands().run(move |spring| {
+            for _ in 0..10 {
+                let x = position.x
+                    + spring
+                        .synced_random()
+                        .next_float()
+                        .expect("synced random float")
+                        * SCATTER
+                    - SCATTER / 2.0;
+                let z = position.z
+                    + spring
+                        .synced_random()
+                        .next_float()
+                        .expect("synced random float")
+                        * SCATTER
+                    - SCATTER / 2.0;
+                crate::diagnostics::check(
+                    spring,
+                    spring.unit_control().create_unit(
+                        &spring::unit_control::DefRef {
+                            name: String::new(),
+                            id: def_id,
+                        },
+                        Float3::new(x, position.y + 20.0, z),
+                        0,
+                        team,
+                        crate::definitions::unit_create_options(),
+                    ),
+                    || alloc::format!("spawning a cluster child of unit {}", unit.0),
+                );
+            }
+        })
     });
 }

@@ -1,7 +1,6 @@
 use alloc::vec::Vec;
-use spring::commands;
-use spring::random::synced as random;
-use spring::types::Float3;
+
+use spring::Float3;
 
 use crate::attributes::AttributeManager;
 use crate::definitions::ALL_UNITS;
@@ -38,8 +37,14 @@ impl FlowerFieldManager {
         }
     }
 
-    pub fn trigger_field_at(&mut self, x: f32, z: f32, frame: i32) {
-        let _ = spring::sound::play_sound_file(
+    pub fn trigger_field_at(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        x: f32,
+        z: f32,
+        frame: i32,
+    ) {
+        let _ = spring.sound().play_sound_file(
             "sounds/wind+leaves.wav",
             20.0,
             Float3::new(x, 0.0, z),
@@ -52,41 +57,60 @@ impl FlowerFieldManager {
             start_frame: frame,
         });
 
-        commands::run(move || {
-            let spawned = spawn_flowers(x, z, 75.0, FLOWER_FIELD_RADIUS);
-            let wilting: Vec<TempFlower> = spawned
-                .into_iter()
-                .map(|unit_id| {
-                    let offset = random::int(1, 30) - 15;
-                    TempFlower {
-                        unit_id,
-                        expiry_frame: frame + FLOWER_FIELD_DURATION + offset,
-                    }
-                })
-                .collect();
-            crate::with_global(|global| global.flowers.access_mut().temp_flowers.extend(wilting));
+        crate::with_addon_context(|ctx| {
+            ctx.commands().run(move |spring| {
+                let spawned = spawn_flowers(spring, x, z, 75.0, FLOWER_FIELD_RADIUS);
+                let wilting: Vec<TempFlower> = spawned
+                    .into_iter()
+                    .map(|unit_id| {
+                        let offset = spring
+                            .synced_random()
+                            .next_int(1, 30)
+                            .expect("synced random int")
+                            - 15;
+                        TempFlower {
+                            unit_id,
+                            expiry_frame: frame + FLOWER_FIELD_DURATION + offset,
+                        }
+                    })
+                    .collect();
+                crate::with_global(|global| {
+                    global.flowers.access_mut().temp_flowers.extend(wilting)
+                });
+            })
         });
     }
 
-    pub fn shot_landed(&mut self, pos: Float3, frame: i32) {
-        self.trigger_field_at(pos.x, pos.z, frame);
+    pub fn shot_landed(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        pos: Float3,
+        frame: i32,
+    ) {
+        self.trigger_field_at(spring, pos.x, pos.z, frame);
     }
 
-    pub fn update(&mut self, frame: i32) {
-        self.slow_mushrooms(frame);
-        self.wilt(frame);
+    pub fn update(&mut self, spring: &spring::Spring<'_, spring::RulesSynced>, frame: i32) {
+        self.slow_mushrooms(spring, frame);
+        self.wilt(spring, frame);
     }
 
-    fn slow_mushrooms(&mut self, frame: i32) {
+    fn slow_mushrooms(&mut self, spring: &spring::Spring<'_, spring::RulesSynced>, frame: i32) {
         let attributes = &mut self.attributes;
-        let defs = crate::definitions::defs();
+        let defs = crate::definitions::defs(spring);
         let mut currently_covered = Vec::new();
 
         for center in &self.centers {
             if (frame - center.start_frame) % 30 == 0 {
-                let y = spring::get_ground_height(center.x, center.z).unwrap_or(0.0);
-                let _ = spring::spawn_ceg(
-                    "grassfield_aura",
+                let y = spring
+                    .terrain()
+                    .get_ground_height(center.x, center.z)
+                    .unwrap_or(0.0);
+                let _ = spring.effects_control().spawn_ceg(
+                    &spring::effects_control::DefRef {
+                        name: ("grassfield_aura").to_owned(),
+                        id: -1,
+                    },
                     Float3::new(center.x, y, center.z),
                     Float3::ZERO,
                     0.0,
@@ -95,19 +119,16 @@ impl FlowerFieldManager {
                 );
             }
 
-            let units_in_area = spring::units_query::get_units_in_cylinder(
-                center.x,
-                center.z,
-                FLOWER_FIELD_RADIUS,
-                ALL_UNITS,
-            )
-            .unwrap_or_default();
+            let units_in_area = spring
+                .units_query()
+                .get_units_in_cylinder(center.x, center.z, FLOWER_FIELD_RADIUS, ALL_UNITS)
+                .unwrap_or_default();
 
             for unit_id in units_in_area {
-                let Ok(def_id) = spring::units_info::get_unit_def_id(unit_id) else {
+                let Ok(def_id) = spring.units_info().get_unit_def_id(unit_id) else {
                     continue;
                 };
-                if defs.is_mushroom(def_id) && is_alive(unit_id) {
+                if defs.is_mushroom(def_id) && is_alive(spring, unit_id) {
                     currently_covered.push(unit_id);
                 }
             }
@@ -117,7 +138,7 @@ impl FlowerFieldManager {
         for &unit_id in &currently_covered {
             if !self.slowed_units.contains(&unit_id) {
                 self.slowed_units.push(unit_id);
-                attributes.set_speed_multiplier(unit_id, SLOW_SPEED_FACTOR);
+                attributes.set_speed_multiplier(spring, unit_id, SLOW_SPEED_FACTOR);
             }
         }
 
@@ -125,8 +146,8 @@ impl FlowerFieldManager {
             if currently_covered.binary_search(&unit_id).is_ok() {
                 true
             } else {
-                if is_alive(unit_id) {
-                    attributes.set_speed_multiplier(unit_id, 1.0);
+                if is_alive(spring, unit_id) {
+                    attributes.set_speed_multiplier(spring, unit_id, 1.0);
                 }
                 attributes.remove_unit(unit_id);
                 false
@@ -137,21 +158,23 @@ impl FlowerFieldManager {
             .retain(|c| frame - c.start_frame < FLOWER_FIELD_DURATION);
     }
 
-    fn wilt(&mut self, frame: i32) {
+    fn wilt(&mut self, _spring: &spring::Spring<'_, spring::RulesSynced>, frame: i32) {
         self.temp_flowers.retain(|flower| {
             if frame >= flower.expiry_frame {
                 let unit_id = flower.unit_id;
-                commands::destroy_unit(
-                    unit_id,
-                    spring::owned::unit_control::DestroyUnitOptions {
-                        selfd: false,
-                        reclaimed: false,
-                        attacker_id: -1,
-                        recycle_id: false,
-                    },
-                )
-                .then(move |wilted| {
-                    crate::diagnostics::check(wilted, || {
+                crate::with_addon_context(|ctx| {
+                    ctx.commands().destroy_unit(
+                        unit_id,
+                        spring::unit_control::DestroyUnitOptions {
+                            selfd: false,
+                            reclaimed: false,
+                            attacker_id: -1,
+                            recycle_id: false,
+                        },
+                    )
+                })
+                .then(move |spring, wilted| {
+                    crate::diagnostics::check(spring, wilted, || {
                         alloc::format!("wilting flower {unit_id}")
                     });
                 });
@@ -173,8 +196,11 @@ impl FlowerFieldManager {
     }
 }
 
-fn is_alive(unit_id: i32) -> bool {
-    !spring::units_info::get_unit_is_dead(unit_id).unwrap_or(true)
+fn is_alive(spring: &spring::Spring<'_, spring::RulesSynced>, unit_id: i32) -> bool {
+    !spring
+        .units_info()
+        .get_unit_is_dead(unit_id)
+        .unwrap_or(true)
 }
 
 pub const FLOWER_FIELD_RADIUS: f32 = 300.0;

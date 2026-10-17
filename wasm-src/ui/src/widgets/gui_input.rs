@@ -40,9 +40,10 @@ impl GuiInputWidget {
         self.mouse.set(mouse);
     }
 
-    fn hold(&self, command: Option<String>) {
-        self.held
-            .send_if_changed(command, |command| input::send_hold(command.as_deref()));
+    fn hold(&self, spring: &spring::Spring<'_, spring::Ui>, command: Option<String>) {
+        self.held.send_if_changed(command, |command| {
+            input::send_hold(spring, command.as_deref())
+        });
     }
 }
 
@@ -51,15 +52,16 @@ impl Widget<Global> for GuiInputWidget {
         "GuiInput"
     }
 
-    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global>, _dt: f32) {
-        if spring::selection::get_selected_units_count(0).unwrap_or(0) > 0 {
-            let _ = spring::selection::select_unit_array(&[], false);
+    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>, _dt: f32) {
+        let spring = ctx.spring();
+        if spring.selection().get_selected_units_count().unwrap_or(0) > 0 {
+            let _ = spring.selection().select_unit_array(&[], false);
         }
         if !input::gameplay_active(ctx.global()) {
-            self.hold(None);
+            self.hold(spring, None);
             return;
         }
-        let mouse = match spring::input::get_mouse_state(0) {
+        let mouse = match spring.input().get_mouse_state() {
             Ok(state) => Mouse {
                 x: state.x as i32,
                 y: state.y as i32,
@@ -68,17 +70,15 @@ impl Widget<Global> for GuiInputWidget {
             },
             Err(_) => self.mouse.get(),
         };
-        self.hold(input::spire_command(
-            mouse.x,
-            mouse.y,
-            mouse.left_down,
-            mouse.right_down,
-        ));
+        self.hold(
+            spring,
+            input::spire_command(spring, mouse.x, mouse.y, mouse.left_down, mouse.right_down),
+        );
     }
 
     fn mouse_move(
         &self,
-        _ctx: &spring_addons::AddonContext<'_, Global>,
+        _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         x: i32,
         y: i32,
         _dx: i32,
@@ -91,18 +91,20 @@ impl Widget<Global> for GuiInputWidget {
 
     fn mouse_press(
         &self,
-        ctx: &spring_addons::AddonContext<'_, Global>,
+        ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         x: i32,
         y: i32,
         button: i32,
     ) -> EventResult {
+        let spring = ctx.spring();
         self.track(x, y, Some((button, true)));
         if !input::gameplay_active(ctx.global()) {
             return EventResult::Handled;
         }
-        let command = input::spire_command(x, y, button == BUTTON_LEFT, button == BUTTON_RIGHT);
+        let command =
+            input::spire_command(spring, x, y, button == BUTTON_LEFT, button == BUTTON_RIGHT);
         if command.is_some() {
-            self.hold(command);
+            self.hold(spring, command);
         }
         if matches!(button, BUTTON_LEFT | BUTTON_RIGHT) {
             EventResult::Handled
@@ -113,7 +115,7 @@ impl Widget<Global> for GuiInputWidget {
 
     fn mouse_release(
         &self,
-        _ctx: &spring_addons::AddonContext<'_, Global>,
+        _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         x: i32,
         y: i32,
         button: i32,
@@ -124,9 +126,10 @@ impl Widget<Global> for GuiInputWidget {
 
     fn key_press(
         &self,
-        ctx: &spring_addons::AddonContext<'_, Global>,
+        ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         event: &KeyEvent<'_>,
     ) -> EventResult {
-        input::key_press(ctx.global(), event).into()
+        let spring = ctx.spring();
+        input::key_press(spring, ctx.global(), event).into()
     }
 }

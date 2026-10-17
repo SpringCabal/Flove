@@ -32,23 +32,23 @@ impl Document {
     }
 }
 
-pub fn is_live(global: &Global) -> Option<bool> {
+pub fn is_live(spring: &spring::Spring<'_, spring::Ui>, global: &Global) -> Option<bool> {
     let (context, document) = {
         let loaded = global.document.access();
         (loaded.context, loaded.document)
     };
-    let found = spring::get_context(CONTEXT_NAME).ok()?;
+    let found = spring.rml_ui().get_context(CONTEXT_NAME).ok()?;
     if !found.exists || found.context_handle != context || document == 0 {
         return Some(false);
     }
-    match spring::document_get_context(document) {
+    match spring.rml_ui().document_get_context(document) {
         Ok(owner) => Some(owner.exists && owner.context_handle == context),
         Err(error) if error.code == spring::ErrorCode::InvalidArgument as i32 => Some(false),
         Err(_) => None,
     }
 }
 
-pub fn forget(global: &Global) {
+pub fn forget(spring: &spring::Spring<'_, spring::Ui>, global: &Global) {
     let context = {
         let mut loaded = global.document.access_mut();
         let context = loaded.context;
@@ -59,16 +59,17 @@ pub fn forget(global: &Global) {
         context
     };
     if context != 0 {
-        let _ = spring::remove_context(context);
+        let _ = spring.rml_ui().remove_context(context);
     }
 }
 
-pub fn load(global: &Global) -> bool {
-    match spring::is_ready(0) {
+pub fn load(spring: &spring::Spring<'_, spring::Ui>, global: &Global) -> bool {
+    match spring.rml_ui().is_ready() {
         Ok(true) => {}
         Ok(false) => return false,
         Err(error) => {
             spring::log_warning!(
+                spring,
                 crate::diagnostics::SECTION,
                 "RmlUi readiness query failed (error code {})",
                 error.code
@@ -77,10 +78,11 @@ pub fn load(global: &Global) -> bool {
         }
     }
 
-    let context = match spring::create_rml_context(CONTEXT_NAME) {
+    let context = match spring.rml_ui().create_context(CONTEXT_NAME) {
         Ok(result) if result.success && result.context_handle != 0 => result.context_handle,
         Ok(_) => {
             spring::log_warning!(
+                spring,
                 crate::diagnostics::SECTION,
                 "RmlUi context creation returned no context"
             );
@@ -88,6 +90,7 @@ pub fn load(global: &Global) -> bool {
         }
         Err(error) => {
             spring::log_warning!(
+                spring,
                 crate::diagnostics::SECTION,
                 "RmlUi context creation failed (error code {})",
                 error.code
@@ -95,8 +98,8 @@ pub fn load(global: &Global) -> bool {
             return false;
         }
     };
-    let Some((hud, document)) = load_document(context) else {
-        let _ = spring::remove_context(context);
+    let Some((hud, document)) = load_document(spring, context) else {
+        let _ = spring.rml_ui().remove_context(context);
         return false;
     };
     let mut loaded = global.document.access_mut();
@@ -109,23 +112,31 @@ pub fn load(global: &Global) -> bool {
     true
 }
 
-fn load_document(context: u64) -> Option<(HudBindings, u64)> {
-    let _ = spring::context_unload_all_documents(context);
-    let _ = spring::context_remove_data_model(context, "flove");
-    let _ = spring::context_enable_mouse_cursor(context, true);
+fn load_document(
+    spring: &spring::Spring<'_, spring::Ui>,
+    context: u64,
+) -> Option<(HudBindings, u64)> {
+    let _ = spring.rml_ui().context_unload_all_documents(context);
+    let _ = spring.rml_ui().context_remove_data_model(context, "flove");
+    let _ = spring.rml_ui().context_enable_mouse_cursor(context, true);
 
-    let Some(hud) = create_hud_model(context) else {
+    let Some(hud) = create_hud_model(spring, context) else {
         spring::log_warning!(
+            spring,
             crate::diagnostics::SECTION,
             "RmlUi Flove data-model creation failed"
         );
         return None;
     };
 
-    let document = match spring::load_rml_document(context, DOCUMENT_PATH) {
+    let document = match spring
+        .rml_ui()
+        .context_load_document(context, DOCUMENT_PATH)
+    {
         Ok(result) if result.success && result.document_handle != 0 => result.document_handle,
         Ok(_) => {
             spring::log_warning!(
+                spring,
                 crate::diagnostics::SECTION,
                 "RmlUi Flove document load returned no document"
             );
@@ -133,6 +144,7 @@ fn load_document(context: u64) -> Option<(HudBindings, u64)> {
         }
         Err(error) => {
             spring::log_warning!(
+                spring,
                 crate::diagnostics::SECTION,
                 "RmlUi Flove document load failed (error code {})",
                 error.code
@@ -140,10 +152,11 @@ fn load_document(context: u64) -> Option<(HudBindings, u64)> {
             return None;
         }
     };
-    match spring::show_rml_document(document) {
+    match spring.rml_ui().document_show(document, Default::default()) {
         Ok(true) => {}
         Ok(false) => {
             spring::log_warning!(
+                spring,
                 crate::diagnostics::SECTION,
                 "RmlUi Flove document show returned false"
             );
@@ -151,6 +164,7 @@ fn load_document(context: u64) -> Option<(HudBindings, u64)> {
         }
         Err(error) => {
             spring::log_warning!(
+                spring,
                 crate::diagnostics::SECTION,
                 "RmlUi Flove document show failed (error code {})",
                 error.code
@@ -162,13 +176,22 @@ fn load_document(context: u64) -> Option<(HudBindings, u64)> {
     Some((hud, document))
 }
 
-fn bind_event(model: u64, name: &str, handler: impl FnMut(&Global) + 'static) -> Option<()> {
-    let callback = crate::register_callback(handler);
-    let bound = spring::data_model_bind_event(model, name, callback, &[])
-        .is_ok_and(|registration| registration.success && registration.handle != 0);
+fn bind_event(
+    spring: &spring::Spring<'_, spring::Ui>,
+    model: u64,
+    name: &str,
+    handler: impl Fn(&spring::Spring<'_, spring::Ui>, &Global) + spring::RetainedCapture + 'static,
+) -> Option<()> {
+    let bound = spring
+        .rml_ui()
+        .data_model_bind_event(model, name, &[], move |spring, _| {
+            crate::with_global(|global| handler(spring, global));
+            Ok(())
+        })
+        .is_ok_and(|registration| registration.success && registration.event_handle != 0);
     if !bound {
-        crate::unregister_callback(callback);
         spring::log_warning!(
+            spring,
             crate::diagnostics::SECTION,
             "RmlUi event {name} could not be bound"
         );
@@ -177,33 +200,43 @@ fn bind_event(model: u64, name: &str, handler: impl FnMut(&Global) + 'static) ->
     Some(())
 }
 
-fn create_hud_model(context: u64) -> Option<HudBindings> {
-    let model = spring::context_create_data_model(context, "flove").ok()?;
+fn create_hud_model(spring: &spring::Spring<'_, spring::Ui>, context: u64) -> Option<HudBindings> {
+    let model = spring
+        .rml_ui()
+        .context_create_data_model(context, "flove")
+        .ok()?;
     if !model.success || model.data_model_handle == 0 {
         return None;
     }
     let model = model.data_model_handle;
-    bind_event(model, "start_normal", |global| {
-        input::action_start_difficulty(global, 1)
+    bind_event(spring, model, "start_normal", |spring, global| {
+        input::action_start_difficulty(spring, global, 1)
     })?;
-    bind_event(model, "start_hard", |global| {
-        input::action_start_difficulty(global, 2)
+    bind_event(spring, model, "start_hard", |spring, global| {
+        input::action_start_difficulty(spring, global, 2)
     })?;
-    bind_event(model, "start_extreme", |global| {
-        input::action_start_difficulty(global, 3)
+    bind_event(spring, model, "start_extreme", |spring, global| {
+        input::action_start_difficulty(spring, global, 3)
     })?;
-    bind_event(model, "leave_game", |_| springcabal::menu::quit_to_menu())?;
-    bind_event(model, "story_next", |global| {
-        input::action_story_next(global);
+    bind_event(spring, model, "leave_game", |spring, _| {
+        springcabal::menu::quit_to_menu(spring)
     })?;
-    bind_event(model, "story_skip", |global| {
-        input::action_story_skip(global);
+    bind_event(spring, model, "story_next", |spring, global| {
+        input::action_story_next(spring, global);
     })?;
-    bind_event(model, "endgame_restart", input::action_restart)?;
-    bind_event(model, "endgame_quit", |_| springcabal::menu::quit_to_menu())?;
+    bind_event(spring, model, "story_skip", |spring, global| {
+        input::action_story_skip(spring, global);
+    })?;
+    bind_event(spring, model, "endgame_restart", input::action_restart)?;
+    bind_event(spring, model, "endgame_quit", |spring, _| {
+        springcabal::menu::quit_to_menu(spring)
+    })?;
 
     let bind_int = |name: &str, initial: i32| {
-        let binding = spring::data_model_bind_int(model, name, initial).ok()?;
+        let binding = spring
+            .rml_ui()
+            .data_model_bind_int(model, name, initial)
+            .ok()?;
         (binding.success && binding.variable_handle != 0).then_some(binding.variable_handle)
     };
     Some(HudBindings {
@@ -212,30 +245,45 @@ fn create_hud_model(context: u64) -> Option<HudBindings> {
     })
 }
 
-pub fn set_hud_int(global: &Global, variable: impl FnOnce(&HudBindings) -> u64, value: i32) {
+pub fn set_hud_int(
+    spring: &spring::Spring<'_, spring::Ui>,
+    global: &Global,
+    variable: impl FnOnce(&HudBindings) -> u64,
+    value: i32,
+) {
     let handle = global.document.access().hud.as_ref().map(variable);
     if let Some(handle) = handle.filter(|h| *h != 0) {
-        let _ = spring::data_model_set_int(handle, value);
+        let _ = spring.rml_ui().data_model_set_int(handle, value);
     }
 }
 
-fn element(global: &Global, id: &str) -> Option<u64> {
+fn element(spring: &spring::Spring<'_, spring::Ui>, global: &Global, id: &str) -> Option<u64> {
     let document = global.document.access().document;
     if document == 0 {
         return None;
     }
-    let element = spring::element_get_element_by_id(document, id).ok()?;
+    let element = spring
+        .rml_ui()
+        .element_get_element_by_id(document, id)
+        .ok()?;
     element.exists.then_some(element.element_handle)
 }
 
-pub fn set_text(global: &Global, id: &str, value: &str) {
-    if let Some(handle) = element(global, id) {
-        let _ = spring::element_set_inner_rml(handle, value);
+pub fn set_text(spring: &spring::Spring<'_, spring::Ui>, global: &Global, id: &str, value: &str) {
+    if let Some(handle) = element(spring, global, id) {
+        let _ = spring.rml_ui().element_set_inner_rml(handle, value);
     }
 }
 
-pub fn set_display(global: &Global, id: &str, visible: bool) {
-    if let Some(handle) = element(global, id) {
-        let _ = spring::element_set_class(handle, "hidden", !visible);
+pub fn set_display(
+    spring: &spring::Spring<'_, spring::Ui>,
+    global: &Global,
+    id: &str,
+    visible: bool,
+) {
+    if let Some(handle) = element(spring, global, id) {
+        let _ = spring
+            .rml_ui()
+            .element_set_class(handle, "hidden", !visible);
     }
 }

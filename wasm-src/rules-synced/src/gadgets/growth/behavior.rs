@@ -1,8 +1,7 @@
 use alloc::vec::Vec;
 use core::f32::consts::TAU;
-use spring::commands;
-use spring::random::synced as random;
-use spring::types::Float3;
+
+use spring::Float3;
 
 use crate::definitions::{ALL_UNITS, PLAYER_TEAM_ID};
 use crate::spawn::create_with_random_yaw;
@@ -13,9 +12,9 @@ pub struct GrowthManager {
 }
 
 impl GrowthManager {
-    pub fn starting_at(frame: i32) -> Self {
+    pub fn starting_at(spring: &spring::Spring<'_, spring::RulesSynced>, frame: i32) -> Self {
         Self {
-            next_spawn_frame: next_spawn_frame(frame),
+            next_spawn_frame: next_spawn_frame(spring, frame),
         }
     }
 
@@ -24,40 +23,47 @@ impl GrowthManager {
         self.next_spawn_frame
     }
 
-    pub fn update(&mut self, frame: i32, spire_id: i32) {
+    pub fn update(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        frame: i32,
+        spire_id: i32,
+    ) {
         if frame < self.next_spawn_frame {
             return;
         }
-        self.next_spawn_frame = next_spawn_frame(frame);
-        spawn_tree(spire_id);
+        self.next_spawn_frame = next_spawn_frame(spring, frame);
+        spawn_tree(spring, spire_id);
     }
 }
 
-fn next_spawn_frame(frame: i32) -> i32 {
-    let delay = (TREE_SPAWN_INTERVAL + TREE_SPAWN_SPREAD * signed_random()).max(1.0);
+fn next_spawn_frame(spring: &spring::Spring<'_, spring::RulesSynced>, frame: i32) -> i32 {
+    let delay = (TREE_SPAWN_INTERVAL + TREE_SPAWN_SPREAD * signed_random(spring)).max(1.0);
     frame + libm::ceilf(delay) as i32
 }
 
-pub fn spawn_trees(spire_id: i32, count: u32) {
-    commands::run(move || {
-        for _ in 0..count {
-            spawn_tree(spire_id);
-        }
+pub fn spawn_trees(_spring: &spring::Spring<'_, spring::RulesSynced>, spire_id: i32, count: u32) {
+    crate::with_addon_context(|ctx| {
+        ctx.commands().run(move |spring| {
+            for _ in 0..count {
+                spawn_tree(spring, spire_id);
+            }
+        })
     });
 }
 
-pub fn spawn_tree(spire_id: i32) {
-    let mut order = living_trees();
-    shuffle(&mut order);
+pub fn spawn_tree(spring: &spring::Spring<'_, spring::RulesSynced>, spire_id: i32) {
+    let mut order = living_trees(spring);
+    shuffle(spring, &mut order);
     let spots: Vec<(f32, f32)> = order
         .into_iter()
-        .filter_map(|tree| spot_near(tree, spire_id))
+        .filter_map(|tree| spot_near(spring, tree, spire_id))
         .collect();
 
     let (x, z) = if spots.is_empty() {
         FALLBACK_TREE_SPOT
     } else {
-        let Some(spire) = ground_position(spire_id) else {
+        let Some(spire) = ground_position(spring, spire_id) else {
             return;
         };
         let weights: Vec<f64> = spots
@@ -76,7 +82,12 @@ pub fn spawn_tree(spire_id: i32) {
         if total <= 0.0 {
             return;
         }
-        let pick = f64::from(random::float()) * total;
+        let pick = f64::from(
+            spring
+                .synced_random()
+                .next_float()
+                .expect("synced random float"),
+        ) * total;
         let mut sum = 0.0;
         let Some(index) = weights.iter().position(|weight| {
             sum += weight;
@@ -86,88 +97,151 @@ pub fn spawn_tree(spire_id: i32) {
         };
         spots[index]
     };
-    let defs = crate::definitions::defs();
-    if create_with_random_yaw(defs.tree_level1, x, z, PLAYER_TEAM_ID).is_some() {
-        spawn_grass(x, z, 3, 5, MIN_TREE_DISTANCE);
+    let defs = crate::definitions::defs(spring);
+    if create_with_random_yaw(spring, defs.tree_level1, x, z, PLAYER_TEAM_ID).is_some() {
+        spawn_grass(spring, x, z, 3, 5, MIN_TREE_DISTANCE);
     }
 }
 
-fn living_trees() -> Vec<i32> {
-    let defs = crate::definitions::defs();
-    spring::units_query::get_all_units()
+fn living_trees(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<i32> {
+    let defs = crate::definitions::defs(spring);
+    spring
+        .units_query()
+        .get_all_units()
         .unwrap_or_default()
         .into_iter()
         .filter(|&unit| {
-            spring::units_info::get_unit_def_id(unit).is_ok_and(|def| defs.is_tree(def))
-                && !spring::units_info::get_unit_is_dead(unit).unwrap_or(true)
+            spring
+                .units_info()
+                .get_unit_def_id(unit)
+                .is_ok_and(|def| defs.is_tree(def))
+                && !spring.units_info().get_unit_is_dead(unit).unwrap_or(true)
         })
         .collect()
 }
 
-fn spot_near(tree: i32, spire_id: i32) -> Option<(f32, f32)> {
-    let pos = ground_position(tree)?;
+fn spot_near(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    tree: i32,
+    spire_id: i32,
+) -> Option<(f32, f32)> {
+    let pos = ground_position(spring, tree)?;
     let step = TAU / SPOT_DIRECTIONS as f32;
-    let mut theta = random::float() * step;
+    let mut theta = spring
+        .synced_random()
+        .next_float()
+        .expect("synced random float")
+        * step;
     for _ in 0..SPOT_DIRECTIONS {
         theta += step;
-        let r = MIN_TREE_DISTANCE + random::float() * (MAX_TREE_DISTANCE - MIN_TREE_DISTANCE);
+        let r = MIN_TREE_DISTANCE
+            + spring
+                .synced_random()
+                .next_float()
+                .expect("synced random float")
+                * (MAX_TREE_DISTANCE - MIN_TREE_DISTANCE);
         let x = pos.x + r * libm::cosf(theta);
         let z = pos.z + r * libm::sinf(theta);
-        if is_steep(x, z) || is_too_high(x, z) {
+        if is_steep(spring, x, z) || is_too_high(spring, x, z) {
             return None;
         }
-        if !is_crowded(x, z, spire_id) {
+        if !is_crowded(spring, x, z, spire_id) {
             return Some((x, z));
         }
     }
     None
 }
 
-fn is_crowded(x: f32, z: f32, spire_id: i32) -> bool {
-    let defs = crate::definitions::defs();
-    spring::units_query::get_units_in_cylinder(x, z, MIN_TREE_DISTANCE, ALL_UNITS)
+fn is_crowded(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    x: f32,
+    z: f32,
+    spire_id: i32,
+) -> bool {
+    let defs = crate::definitions::defs(spring);
+    spring
+        .units_query()
+        .get_units_in_cylinder(x, z, MIN_TREE_DISTANCE, ALL_UNITS)
         .unwrap_or_default()
         .into_iter()
         .any(|unit| {
             unit == spire_id
-                || spring::units_info::get_unit_def_id(unit).is_ok_and(|def| defs.is_tree(def))
+                || spring
+                    .units_info()
+                    .get_unit_def_id(unit)
+                    .is_ok_and(|def| defs.is_tree(def))
         })
 }
 
-fn shuffle(items: &mut [i32]) {
+fn shuffle(spring: &spring::Spring<'_, spring::RulesSynced>, items: &mut [i32]) {
     let len = items.len() as i32;
     for i in 0..len - 1 {
-        let j = random::int(i, len - 1);
+        let j = spring
+            .synced_random()
+            .next_int(i, len - 1)
+            .expect("synced random int");
         items.swap(i as usize, j as usize);
     }
 }
 
-fn ground_position(unit: i32) -> Option<Float3> {
-    spring::units_info::get_unit_position(
-        unit,
-        spring::units_info::GetUnitPositionOptions {
-            mid_pos: false,
-            aim_pos: false,
-        },
-    )
-    .ok()
+fn ground_position(spring: &spring::Spring<'_, spring::RulesSynced>, unit: i32) -> Option<Float3> {
+    spring
+        .units_info()
+        .get_unit_position(
+            unit,
+            spring::units_info::GetUnitPositionOptions {
+                mid_pos: false,
+                aim_pos: false,
+            },
+        )
+        .ok()
 }
 
-pub fn spawn_grass(x: f32, z: f32, min_count: i32, max_count: i32, side: f32) {
-    let defs = crate::definitions::defs();
-    for _ in 0..random::int(min_count, max_count) {
-        let gx = x + random::float() * side - side / 2.0;
-        let gz = z + random::float() * side - side / 2.0;
-        if is_steep(gx, gz) {
+pub fn spawn_grass(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    x: f32,
+    z: f32,
+    min_count: i32,
+    max_count: i32,
+    side: f32,
+) {
+    let defs = crate::definitions::defs(spring);
+    for _ in 0..spring
+        .synced_random()
+        .next_int(min_count, max_count)
+        .expect("synced random int")
+    {
+        let gx = x + spring
+            .synced_random()
+            .next_float()
+            .expect("synced random float")
+            * side
+            - side / 2.0;
+        let gz = z + spring
+            .synced_random()
+            .next_float()
+            .expect("synced random float")
+            * side
+            - side / 2.0;
+        if is_steep(spring, gx, gz) {
             continue;
         }
-        let grass = defs.grass[random::int(0, defs.grass.len() as i32 - 1) as usize];
-        create_with_random_yaw(grass, gx, gz, PLAYER_TEAM_ID);
+        let grass = defs.grass[spring
+            .synced_random()
+            .next_int(0, defs.grass.len() as i32 - 1)
+            .expect("synced random int") as usize];
+        create_with_random_yaw(spring, grass, gx, gz, PLAYER_TEAM_ID);
     }
 }
 
-pub fn spawn_flowers(x: f32, z: f32, spacing: f32, radius: f32) -> Vec<i32> {
-    let defs = crate::definitions::defs();
+pub fn spawn_flowers(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    x: f32,
+    z: f32,
+    spacing: f32,
+    radius: f32,
+) -> Vec<i32> {
+    let defs = crate::definitions::defs(spring);
     let nudge = spacing / 3.0;
     let (origin_x, origin_z) = (x - radius, z - radius);
     let mut spawned = Vec::new();
@@ -176,14 +250,17 @@ pub fn spawn_flowers(x: f32, z: f32, spacing: f32, radius: f32) -> Vec<i32> {
         let mut cz = origin_z;
         while cz < origin_z + 2.0 * radius {
             cz += spacing;
-            let fx = cx + nudge * signed_random();
-            let fz = cz + nudge * signed_random();
+            let fx = cx + nudge * signed_random(spring);
+            let fz = cz + nudge * signed_random(spring);
             let (dx, dz) = (cx - x, cz - z);
-            if is_steep(fx, fz) || dx * dx + dz * dz > radius * radius {
+            if is_steep(spring, fx, fz) || dx * dx + dz * dz > radius * radius {
                 continue;
             }
-            let flower = defs.flowers[random::int(0, defs.flowers.len() as i32 - 1) as usize];
-            if let Some(unit_id) = create_with_random_yaw(flower, fx, fz, PLAYER_TEAM_ID) {
+            let flower = defs.flowers[spring
+                .synced_random()
+                .next_int(0, defs.flowers.len() as i32 - 1)
+                .expect("synced random int") as usize];
+            if let Some(unit_id) = create_with_random_yaw(spring, flower, fx, fz, PLAYER_TEAM_ID) {
                 spawned.push(unit_id);
             }
         }
@@ -192,13 +269,18 @@ pub fn spawn_flowers(x: f32, z: f32, spacing: f32, radius: f32) -> Vec<i32> {
     spawned
 }
 
-fn signed_random() -> f32 {
-    random::float() * 2.0 - 1.0
+fn signed_random(spring: &spring::Spring<'_, spring::RulesSynced>) -> f32 {
+    spring
+        .synced_random()
+        .next_float()
+        .expect("synced random float")
+        * 2.0
+        - 1.0
 }
 
-fn is_steep(x: f32, z: f32) -> bool {
+fn is_steep(spring: &spring::Spring<'_, spring::RulesSynced>, x: f32, z: f32) -> bool {
     let max_angle = libm::acosf(1.0 - 0.05) - 0.02;
-    let height = |x: f32, z: f32| spring::get_ground_height(x, z).unwrap_or(0.0);
+    let height = |x: f32, z: f32| spring.terrain().get_ground_height(x, z).unwrap_or(0.0);
     let y = height(x, z);
     [(STEEP_PROBE, 0.0), (0.0, STEEP_PROBE), (-STEEP_PROBE, 0.0)]
         .into_iter()
@@ -208,8 +290,11 @@ fn is_steep(x: f32, z: f32) -> bool {
         })
 }
 
-fn is_too_high(x: f32, z: f32) -> bool {
-    !spring::get_ground_height(x, z).is_ok_and(|y| y <= MAX_TREE_HEIGHT)
+fn is_too_high(spring: &spring::Spring<'_, spring::RulesSynced>, x: f32, z: f32) -> bool {
+    !spring
+        .terrain()
+        .get_ground_height(x, z)
+        .is_ok_and(|y| y <= MAX_TREE_HEIGHT)
 }
 
 const TREE_SPAWN_INTERVAL: f32 = 5.0 * spring::consts::GAME_SPEED as f32;

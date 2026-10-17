@@ -1,4 +1,4 @@
-use spring::UnitId;
+use spring::{ResultExt, UnitId};
 use spring_addons::rules::Gadget;
 
 use crate::state::Global;
@@ -18,13 +18,16 @@ impl Gadget<Global> for UnitScriptsGadget {
     }
 
     fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global>) {
-        with_scripts("attaching the existing units' scripts", |host| {
-            host.attach_existing();
-        });
+        crate::with_cus_module(|host, spring| host.attach_existing(spring))
+            .log_err_once(_ctx.spring(), "attaching existing unit scripts");
     }
 
     fn game_frame(&self, _ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
-        with_scripts("waking the unit scripts", |host| host.game_frame(frame));
+        crate::with_cus_module(|host, _| {
+            host.game_frame(frame);
+            Ok(())
+        })
+        .log_err_once(_ctx.spring(), "waking unit scripts");
     }
 
     fn unit_created(
@@ -35,23 +38,14 @@ impl Gadget<Global> for UnitScriptsGadget {
         _team: i32,
         _builder: i32,
     ) {
-        with_scripts("attaching a unit script", |host| {
-            host.unit_created(UnitId(unit), def);
-        });
-        let _ = spring::rules_params::set_unit_rules_param_f32(
+        crate::with_cus_module(|host, spring| host.unit_created(spring, UnitId(unit), def))
+            .log_err_once(_ctx.spring(), "attaching a unit script");
+        let spring = _ctx.spring();
+        let _ = spring.rules_params().set_unit_rules_param_f32(
             unit,
             "createdFrame",
-            spring::game::current_frame() as f32,
+            spring.game().current_frame().unwrap_or(0) as f32,
             spring::rules_params::los::PUBLIC,
-        );
-    }
-}
-
-fn with_scripts(what: &str, f: impl FnOnce(&mut crate::unit_scripts::FloveCusModule)) {
-    if crate::with_cus_module(f).is_none() {
-        spring::log_warning!(
-            crate::diagnostics::LOG_SECTION,
-            "{what}: the unit scripts are busy or not initialized"
         );
     }
 }

@@ -21,10 +21,11 @@ impl Widget<Global> for GuiCameraWidget {
         "GuiCamera"
     }
 
-    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global>, _dt: f32) {
+    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>, _dt: f32) {
+        let spring = ctx.spring();
         let round = ctx.global().game.access().round;
         if self.round.replace(Some(round)) != Some(round) {
-            camera::reset_camera();
+            camera::reset_camera(spring);
         }
     }
 }

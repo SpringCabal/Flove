@@ -24,10 +24,10 @@ use crate::state::Global;
 const HIDDEN_INTERFACE: u32 =
     CONSOLE | RESOURCE_BAR | TOOLTIP | CLOCK | PLAYER_INFO | MINIMAP | UNIT_ICONS;
 
-pub fn setup(handler: &mut WidgetHandler<Global>) {
+pub fn setup(handler: &mut WidgetHandler<Global>, spring: &spring::Spring<'_, spring::Ui>) {
     register_widgets!(handler, [springcabal::controls::GameControls::new()]);
-    if springcabal::verification::world_only() {
-        gallery::setup(handler);
+    if springcabal::verification::world_only(spring) {
+        gallery::setup(spring, handler);
         return;
     }
     #[cfg(feature = "headless-integration")]

@@ -1,4 +1,4 @@
-use spring::types::Float3;
+use spring::Float3;
 use spring_addons::rules::Gadget;
 
 use crate::projectiles::RoundProjectiles;
@@ -29,7 +29,8 @@ impl Gadget<Global> for UpgradeShotsGadget {
         _owner_id: i32,
         weapon_def_id: i32,
     ) {
-        if weapon_def_id == crate::definitions::defs().upgrade_shot_weapon {
+        let spring = ctx.spring();
+        if weapon_def_id == crate::definitions::defs(spring).upgrade_shot_weapon {
             self.shots.created(ctx.global().round.get(), projectile_id);
         }
     }
@@ -41,21 +42,24 @@ impl Gadget<Global> for UpgradeShotsGadget {
         _owner_id: i32,
         weapon_def_id: i32,
     ) {
+        let spring = ctx.spring();
         let global = ctx.global();
-        if weapon_def_id != crate::definitions::defs().upgrade_shot_weapon
+        if weapon_def_id != crate::definitions::defs(spring).upgrade_shot_weapon
             || !self.shots.destroyed(global.round.get(), projectile_id)
         {
             return;
         }
-        let Ok(position) = spring::projectiles::get_projectile_position(projectile_id) else {
+        let Ok(position) = spring.projectiles().get_projectile_position(projectile_id) else {
             return;
         };
-        let frame = spring::game::current_frame();
-        let candidates = global
-            .trees
-            .access()
-            .trees_near_sorted(position, UPGRADE_IMPACT_RADIUS);
+        let frame = spring.game().current_frame().unwrap_or(0);
+        let candidates =
+            global
+                .trees
+                .access()
+                .trees_near_sorted(spring, position, UPGRADE_IMPACT_RADIUS);
         crate::diagnostics::trace!(
+            spring,
             "[upgrade] shot landed  f={frame} shot={projectile_id} at=({:.0},{:.0},{:.0}) trees_in_range={candidates:?}",
             position.x,
             position.y,
@@ -65,9 +69,9 @@ impl Gadget<Global> for UpgradeShotsGadget {
             if global
                 .trees
                 .access_mut()
-                .add_upgrade_progress(tree_id, frame, projectile_id)
+                .add_upgrade_progress(spring, tree_id, frame, projectile_id)
             {
-                let _ = spring::sound::play_sound_file(
+                let _ = spring.sound().play_sound_file(
                     "sounds/wind+leaves.wav",
                     10.0,
                     position,
@@ -77,6 +81,6 @@ impl Gadget<Global> for UpgradeShotsGadget {
                 return;
             }
         }
-        crate::diagnostics::trace!("[upgrade] NO-TREE f={frame} pro={projectile_id}");
+        crate::diagnostics::trace!(spring, "[upgrade] NO-TREE f={frame} pro={projectile_id}");
     }
 }

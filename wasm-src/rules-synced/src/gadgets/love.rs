@@ -24,8 +24,9 @@ impl Gadget<Global> for LoveGadget {
         _owner_id: i32,
         weapon_def_id: i32,
     ) {
-        if weapon_def_id == crate::definitions::defs().zap_weapon {
-            behavior::zap_landed(projectile_id);
+        let spring = _ctx.spring();
+        if weapon_def_id == crate::definitions::defs(spring).zap_weapon {
+            behavior::zap_landed(spring, projectile_id);
         }
     }
 
@@ -34,9 +35,11 @@ impl Gadget<Global> for LoveGadget {
         ctx: &spring_addons::AddonContext<'_, Global>,
         event: &UnitPreDamagedEvent,
     ) -> Option<spring::DamageResult> {
+        let spring = ctx.spring();
         let global = ctx.global();
         let trees_take_no_damage = global.story.access().trees_take_no_damage;
         Some(behavior::handle_pre_damage(
+            spring,
             event.unit_id,
             event.unit_def_id,
             event.damage,
