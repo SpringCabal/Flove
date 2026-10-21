@@ -46,7 +46,7 @@ function widget:Initialize()
 end
 
 function widget:GameFrame()
-    local nManaNew = Spring.GetGameRulesParam("mana")
+    local nManaNew = Spring.GetGameRulesParam("mana") or 0
     if nMana ~= nManaNew then
         textBox:SetText("Mana: " .. manaColour .. nManaNew)
         nMana = nManaNew
