@@ -1,6 +1,5 @@
 pub mod gallery;
 pub mod game_start;
-pub mod gfx_grass;
 pub mod gfx_hide_triggers;
 pub mod gfx_outline;
 pub mod gui_camera;
@@ -38,7 +37,6 @@ pub fn setup(handler: &mut WidgetHandler<Global>, spring: &spring::Spring<'_, sp
         [
             HideDefaultInterface::new(HIDDEN_INTERFACE & !CONSOLE),
             game_start::StartForceWidget::new(),
-            gfx_grass::GfxGrassWidget::new(),
             gfx_outline::GfxOutlineWidget::new(),
             gui_rml::GuiRmlWidget::new(),
             gui_hud::GuiHudWidget::new(),

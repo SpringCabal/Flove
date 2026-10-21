@@ -14,6 +14,8 @@ operation, so sleeping tasks do not retain a callin reference.
 
 This remains a Wasm game. Native game binaries are not built by this port.
 The outline shader, tree deformation and mouse-over highlight are retained.
+Grass respects the engine's configured `GrassDetail`, including zero to disable
+it. The game no longer overrides this with 2000 at startup.
 
 Verification on the SDK test engine:
 
@@ -27,10 +29,8 @@ Verification on the SDK test engine:
   its counted graphics arrays: scalar/vec2/vec3 uniforms were rejected. That
   is fixed in the SDK, and outlines are visible again. Compared with the
   pre-port code on the same renderer, image differences are 0–2.08%.
-- The visual suite is still red: recorded goldens use Mesa package revision
-  `.2`, while this machine has `.4`. Four late images also exceed the old 5%
-  limit in both the port and the pre-port baseline. No goldens, tolerances or
-  renderer checks have been changed.
+- After removing the forced grass detail, the nine visual goldens were reviewed
+  and refreshed using the current GPU renderer in the development repository.
 
 Run verification through the parent development repository's `just verify
 flove` commands, selecting an independently built engine via

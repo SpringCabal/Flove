@@ -8,7 +8,6 @@ use crate::state::Global;
 pub fn setup(spring: &spring::Spring<'_, spring::Ui>, handler: &mut WidgetHandler<Global>) {
     WorldWidgets::new(handler)
         .widget(HideDefaultInterface::new(HIDDEN_INTERFACE))
-        .widget(super::gfx_grass::GfxGrassWidget::new())
         .widget(super::gfx_outline::GfxOutlineWidget::new())
         .widget(super::gfx_hide_triggers::GfxHideTriggersWidget::new())
         .announce(spring, crate::diagnostics::SECTION);
