@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::f32::consts::TAU;
 
-use spring::Float3;
+use spring::{Float3, ResultExt};
 
 use crate::definitions::{ENEMY_TEAM_ID, FRAMES_PER_SECOND};
 use crate::spawn::create_with_random_yaw;
@@ -27,6 +27,7 @@ pub struct MushroomAiUnit {
 
 #[derive(Debug, Default)]
 pub struct MushroomManager {
+    target_weights: Vec<f32>,
     pub waves: Vec<WaveEntry>,
     pub spawn_point_units: Vec<i32>,
     pub ai_units: Vec<MushroomAiUnit>,
@@ -39,6 +40,7 @@ pub struct MushroomManager {
 impl MushroomManager {
     pub fn new() -> Self {
         Self {
+            target_weights: Vec::new(),
             waves: Vec::new(),
             spawn_point_units: Vec::new(),
             ai_units: Vec::new(),
@@ -201,9 +203,13 @@ impl MushroomManager {
             if ai.def_id == defs.small_mushroom {
                 if frame - ai.last_order_frame >= 30 {
                     ai.last_order_frame = frame;
-                    if let Some((_target_id, target_pos)) =
-                        select_random_target(spring, targets, ai.unit_id, spire_id)
-                    {
+                    if let Some((_target_id, target_pos)) = select_random_target(
+                        spring,
+                        targets,
+                        ai.unit_id,
+                        spire_id,
+                        &mut self.target_weights,
+                    ) {
                         let d = 500.0f32;
                         let dx = target_pos.x
                             + spring
@@ -226,14 +232,19 @@ impl MushroomManager {
             } else {
                 let has_commands = spring
                     .units_commands()
-                    .get_unit_commands(ai.unit_id, 2)
-                    .map(|cmds| !cmds.is_empty())
+                    .get_unit_command_count(ai.unit_id)
+                    .log_err_once(spring, "querying mushroom orders")
+                    .map(|count| count != 0)
                     .unwrap_or(false);
 
                 if !has_commands {
-                    if let Some((_target_id, target_pos)) =
-                        select_random_target(spring, targets, ai.unit_id, spire_id)
-                    {
+                    if let Some((_target_id, target_pos)) = select_random_target(
+                        spring,
+                        targets,
+                        ai.unit_id,
+                        spire_id,
+                        &mut self.target_weights,
+                    ) {
                         order(
                             spring,
                             ai.unit_id,
@@ -431,6 +442,7 @@ fn select_random_target(
     targets: &[(i32, Float3)],
     mushroom_id: i32,
     spire_id: i32,
+    weights: &mut Vec<f32>,
 ) -> Option<(i32, Float3)> {
     let Ok(u_pos) = spring.units_info().get_unit_position(
         mushroom_id,
@@ -474,7 +486,9 @@ fn select_random_target(
         let dist_sq = dx * dx + dy * dy + dz * dz;
         if dist_sq > 100.0 { 1.0 / dist_sq } else { 0.0 }
     };
-    let total_weight: f32 = targets.iter().map(|(_, pos)| weight(pos)).sum();
+    weights.clear();
+    weights.extend(targets.iter().map(|(_, pos)| weight(pos)));
+    let total_weight: f32 = weights.iter().copied().sum();
     if total_weight <= 0.0 {
         return None;
     }
@@ -485,8 +499,8 @@ fn select_random_target(
         .expect("synced random float")
         * total_weight;
     let mut q = 0.0f32;
-    for target in targets {
-        q += weight(&target.1);
+    for (target, weight) in targets.iter().zip(weights) {
+        q += *weight;
         if q >= p {
             return Some(*target);
         }

@@ -16,3 +16,7 @@ spring-addons = { package = "spring-addons", git = "https://github.com/gajop/spr
 libm = "0.2"
 springcabal = { path = "../../../../springcabal-rs/crates/springcabal" }
 springcabal-control = { path = "../../../../springcabal-rs/crates/springcabal-control" }
+
+[profile.release]
+lto = "fat"
+codegen-units = 1

@@ -58,10 +58,12 @@ assert(type(TEXTURE) == "string")
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+local cachedDrawFrame
 local treeUnits = {}
 local treePositions = {}
 
 function gadget:UnitCreated(unitID, unitDefID)
+  cachedDrawFrame = nil
   local ud = UnitDefs[unitDefID]
   if ud and ud.customParams and ud.customParams.tree then
     treeUnits[unitID] = true
@@ -73,6 +75,7 @@ function gadget:UnitCreated(unitID, unitDefID)
 end
 
 function gadget:UnitDestroyed(unitID)
+  cachedDrawFrame = nil
   treeUnits[unitID] = nil
   treePositions[unitID] = nil
 end
@@ -172,43 +175,66 @@ function ChatAction(cmd, line, words, player)
 end
 
 
-local wispStageKeys = {}
-local wispOffsetKeys = {}
-for i = 1, 32 do
-	wispStageKeys[i] = "wispStage" .. tostring(i)
-	wispOffsetKeys[i] = "wispOffset" .. tostring(i)
+-- Gather once for the three stage passes (and reflection passes) of a draw
+-- frame. Keep each stage's original unit/wisp ordering and reuse flat buffers.
+local function keyCache(prefix)
+  return setmetatable({}, {__index = function(keys, index)
+    local key = prefix .. tostring(index)
+    rawset(keys, index, key)
+    return key
+  end})
+end
+local wispStageKeys = keyCache("wispStage")
+local wispOffsetKeys = keyCache("wispOffset")
+local vertices = {{}, {}, {}}
+local vertexCounts = {0, 0, 0}
+
+local function appendWisp(stage, x, y, z, offset)
+  local buffer = vertices[stage]
+  local at = vertexCounts[stage] + 1
+  buffer[at], buffer[at + 1], buffer[at + 2], buffer[at + 3] =
+    x, y, z, 0.05 + offset
+  vertexCounts[stage] = at + 3
 end
 
 function DrawParticles(stage)
-    gl.BeginEnd(GL.POINTS, function()
-		for unitID in pairs(treeUnits) do
-			local wispCount = Spring.GetUnitRulesParam(unitID, "wispCount") or 0
-			if wispCount > 0 then
-				local pos = treePositions[unitID]
-				if not pos then
-					local ux, uy, uz = Spring.GetUnitPosition(unitID)
-					if ux then
-						pos = { ux = ux, uy = uy, uz = uz }
-						treePositions[unitID] = pos
-					end
-				end
-				if pos then
-					local x = pos.ux / 4096
-					local y = pos.uy / 4096
-					local z = pos.uz / 4096
-					for i = 1, math.min(wispCount, 32) do
-						local wispStage = Spring.GetUnitRulesParam(unitID, wispStageKeys[i])
-						if wispStage == stage then
-							local wispOffset = Spring.GetUnitRulesParam(unitID, wispOffsetKeys[i]) or 0
-							local w = 0.05 + wispOffset
-							gl.Vertex(x, y, z, w)
-						end
-					end
-				end
-			end
-		end
-    end)
+  if not stage then return end
+  local frame = Spring.GetDrawFrame()
+  if cachedDrawFrame ~= frame then
+    cachedDrawFrame = frame
+    vertexCounts[1], vertexCounts[2], vertexCounts[3] = 0, 0, 0
+    for unitID in pairs(treeUnits) do
+      local count = Spring.GetUnitRulesParam(unitID, "wispCount") or 0
+      if count > 0 then
+        local pos = treePositions[unitID]
+        if not pos then
+          local x, y, z = Spring.GetUnitPosition(unitID)
+          if x then
+            pos = {ux = x, uy = y, uz = z}
+            treePositions[unitID] = pos
+          end
+        end
+        if pos then
+          local px, py, pz = pos.ux / 4096, pos.uy / 4096, pos.uz / 4096
+          for i = 1, math.min(count, 32) do
+            local stage = Spring.GetUnitRulesParam(unitID, wispStageKeys[i])
+            if stage == 1 or stage == 2 or stage == 3 then
+              appendWisp(stage, px, py, pz,
+                Spring.GetUnitRulesParam(unitID, wispOffsetKeys[i]) or 0)
+            end
+          end
+        end
+      end
+    end
+  end
+  local buffer, count = vertices[stage], vertexCounts[stage]
+  gl.BeginEnd(GL.POINTS, function()
+    for at = 1, count, 4 do
+      gl.Vertex(buffer[at], buffer[at + 1], buffer[at + 2], buffer[at + 3])
+    end
+  end)
 end
+
 
 function CreateParticleList()
    particleList = gl.CreateList(function()

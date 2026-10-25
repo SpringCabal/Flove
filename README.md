@@ -40,3 +40,12 @@ Verification on the SDK test engine:
 Run verification through the parent development repository's `just verify
 flove` commands, selecting an independently built engine via
 `SPRING_ENGINE_DIR`. Local engine builds here are only test builds.
+
+Wisp drawing gathers the existing tree rules parameters once per draw frame
+and reuses stage vertex buffers across the three stage and reflection passes.
+Creation and destruction invalidate that frame's snapshot. Mushroom AI reads
+command counts directly and reuses weighted-target scratch storage; its target
+ordering, random draws and attack behavior are unchanged.
+
+Release builds use whole-program LTO and one code generation unit. The
+workspace profile applies to both installed modules and verification builds.
