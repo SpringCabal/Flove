@@ -24,6 +24,9 @@ animations = {
 		
 		weaponData["flare"]	= weaponDefCustom.effect1
 		pieceList["e"]		= piece 'KingHead'
+		pieceList["emitters"][1] = pieceList["e"]
+		pieceList["weaponBarrel"] = pieceList["e"]
+		pieceList["centeraim"] = piece 'KingHead'
 		
 		return pieceList, weaponData
 	end,

@@ -232,7 +232,6 @@ function script.Create()
 		if moveAnimations.stopAnim then			
 			stopAnimation = {}
 			stopAnimation = moveAnimations.stopAnim
-			stopAnimation(moveAnimationPieces, moveData)
 		end	
 		
 		moveData["movspeed"] = (Spring.GetUnitMoveTypeData(unitID)).maxSpeed/30
@@ -257,6 +256,11 @@ function script.Create()
 			
 	getWeaponData()
 	--Spring.Echo("got weapon data")
+	-- Stop animations can sleep. Finish initializing movement and weapon data
+	-- before yielding to StartMoving, AimWeapon or Shot on a newly spawned unit.
+	if stopAnimation then
+		stopAnimation(moveAnimationPieces, moveData)
+	end
 end
 		
 -----------------------------------------------------------------------
