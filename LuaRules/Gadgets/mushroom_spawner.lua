@@ -331,40 +331,56 @@ function gadget:UnitDestroyed(unitID, unitDefID)
 	aiMushrooms[unitID] = nil
 end
 
-function SelectEnemy(uID, allUnits)
-    local nID = Spring.GetUnitNearestEnemy(uID, 10240, true)
-    local x,y,z = Spring.GetUnitPosition(uID)
-    if math.random()<0.5 and nID~=spireID then
-        return nID
-    else    
-        -- sample a random enemy with probability proportional to 1 / square distance from self
-        local tID = Spring.GetUnitTeam(uID)
-        local weights = {}
-        local totalWeight = 0
-        for i=1,#allUnits do
-            local eID = allUnits[i]
-            local eTeamID = Spring.GetUnitTeam(eID)
-            local eDID = Spring.GetUnitDefID(eID)
-            if (UnitDefs[eDID].customParams.tree or spireDefID == eDID) and not Spring.AreTeamsAllied(tID, eTeamID) then
-                local ex,ey,ez = Spring.GetUnitPosition(eID)
-                local sqrDist = (x-ex)*(x-ex) + (y-ey)*(y-ey) + (z-ez)*(z-ez) 
-                weights[i] = (sqrDist>10*10) and 1/(sqrDist) or 0
-                totalWeight = totalWeight + weights[i]
-            else
-                weights[i] = 0
+-- Snapshot static target data once per AI tick, only if a mushroom needs the
+-- weighted choice. Preserve GetAllUnits ordering so RNG and floating sums stay
+-- identical to the original per-mushroom scan.
+local function CollectTargets()
+    local targets = {}
+    for _, id in ipairs(Spring.GetAllUnits()) do
+        local def = Spring.GetUnitDefID(id)
+        if def and (UnitDefs[def].customParams.tree or def == spireDefID) then
+            local x, y, z = Spring.GetUnitPosition(id)
+            if x then
+                targets[#targets + 1] = {id = id, team = Spring.GetUnitTeam(id), x = x, y = y, z = z}
             end
         end
-        if totalWeight<=0 then
-            return nil
-        end
-        local p = math.random()*totalWeight
-        local q = 0
-        for i=1,#weights do
-            q = q + weights[i]
-            if q>p then
-                return allUnits[i]
+    end
+    return targets
+end
+
+function SelectEnemy(uID, snapshot)
+    if math.random() < 0.5 then
+        local nearest = Spring.GetUnitNearestEnemy(uID, 10240, true)
+        if nearest ~= spireID then return nearest end
+    end
+    local x, y, z = Spring.GetUnitPosition(uID)
+    if not snapshot.targets then snapshot.targets = CollectTargets() end
+    local team = Spring.GetUnitTeam(uID)
+    local targets = snapshot[team]
+    if not targets then
+        targets = {}
+        local allied = {}
+        for _, target in ipairs(snapshot.targets) do
+            if allied[target.team] == nil then
+                allied[target.team] = Spring.AreTeamsAllied(team, target.team)
             end
+            if not allied[target.team] then targets[#targets + 1] = target end
         end
+        snapshot[team] = targets
+    end
+    local weights, totalWeight = snapshot.weights or {}, 0
+    snapshot.weights = weights
+    for i, target in ipairs(targets) do
+        local distance = (x-target.x)*(x-target.x) + (y-target.y)*(y-target.y) + (z-target.z)*(z-target.z)
+        local weight = distance > 100 and 1/distance or 0
+        weights[i] = weight
+        totalWeight = totalWeight + weight
+    end
+    if totalWeight <= 0 then return nil end
+    local p, q = math.random()*totalWeight, 0
+    for i = 1, #targets do
+        q = q + weights[i]
+        if q > p then return targets[i].id end
     end
     return nil
 end
@@ -372,7 +388,7 @@ end
 local SMALL_MUSHROOM_ORDER_CHANGE = 30
 function CheckForIdleMushrooms()
 	local frame = Spring.GetGameFrame()
-    local allUnits = Spring.GetAllUnits()
+    local snapshot = {}
     for uID, _ in pairs(aiMushrooms) do
 		local unitDefID = Spring.GetUnitDefID(uID)
 		if unitDefID == smallMushroomDefID then
@@ -381,7 +397,7 @@ function CheckForIdleMushrooms()
 				lastOrderFrame = frame
 				Spring.SetUnitRulesParam(uID, "lastOrderFrame", lastOrderFrame)
 				
-				local eID = SelectEnemy(uID, allUnits)
+				local eID = SelectEnemy(uID, snapshot)
 				if eID then
 					local x,y,z = Spring.GetUnitPosition(eID)
 					local d = 500
@@ -391,8 +407,8 @@ function CheckForIdleMushrooms()
 					Spring.GiveOrderToUnit(uID, CMD.MOVE, {dx, dy, dz}, {}) 
 				end
 			end
-		elseif Spring.GetUnitCommands(uID,2) ~= nil and #Spring.GetUnitCommands(uID,2)==0 then
-            local eID = SelectEnemy(uID, allUnits)
+		elseif Spring.GetUnitCommandCount(uID) == 0 then
+            local eID = SelectEnemy(uID, snapshot)
             if eID then
                 local x,y,z = Spring.GetUnitPosition(eID)
                 local cx,cy,cz = Spring.GetUnitPosition(uID)

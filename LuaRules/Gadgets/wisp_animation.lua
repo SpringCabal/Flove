@@ -58,7 +58,10 @@ assert(type(TEXTURE) == "string")
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-local trees ={}
+local cachedDrawFrame
+
+function gadget:UnitCreated() cachedDrawFrame = nil end
+function gadget:UnitDestroyed() cachedDrawFrame = nil end
 
 function gadget:Initialize()
   if (not ReloadResources()) then
@@ -150,28 +153,59 @@ function ChatAction(cmd, line, words, player)
 end
 
 
-function DrawParticles(stage)
-    gl.BeginEnd(GL.POINTS, function()
-		for _, unitID in ipairs(Spring.GetAllUnits()) do
-			local ux, uy, uz = Spring.GetUnitPosition(unitID)
--- 			Spring.Echo(unitID)
-			for i = 1, 1000 do
-				local wispStage = Spring.GetUnitRulesParam(unitID, "wispStage" .. tostring(i))
-				local wispOffset = Spring.GetUnitRulesParam(unitID, "wispOffset" .. tostring(i))
-				if wispStage == nil then
-					break
-				end
-				if wispStage == stage then
-					local x = ux/4096
-					local y = Spring.GetGroundHeight(ux,uz)/4096
-					local z = uz/4096
-					local w =  0.05 + wispOffset
-					gl.Vertex(x, y, z, w)
-				end
-			end
-		end
-    end)
+-- Gather once for the three stage passes (and reflection passes) of a draw
+-- frame. Keep each stage's original unit/wisp ordering and reuse flat buffers.
+local function keyCache(prefix)
+  return setmetatable({}, {__index = function(keys, index)
+    local key = prefix .. tostring(index)
+    rawset(keys, index, key)
+    return key
+  end})
 end
+local wispStageKeys = keyCache("wispStage")
+local wispOffsetKeys = keyCache("wispOffset")
+local vertices = {{}, {}, {}}
+local vertexCounts = {0, 0, 0}
+
+local function appendWisp(stage, x, y, z, offset)
+  local buffer = vertices[stage]
+  local at = vertexCounts[stage] + 1
+  buffer[at], buffer[at + 1], buffer[at + 2], buffer[at + 3] =
+    x, y, z, 0.05 + offset
+  vertexCounts[stage] = at + 3
+end
+
+function DrawParticles(stage)
+  if not stage then return end
+  local frame = Spring.GetDrawFrame()
+  if cachedDrawFrame ~= frame then
+    cachedDrawFrame = frame
+    vertexCounts[1], vertexCounts[2], vertexCounts[3] = 0, 0, 0
+    for _, unitID in ipairs(Spring.GetAllUnits()) do
+      local px, py, pz
+      for i = 1, 1000 do
+        local stage = Spring.GetUnitRulesParam(unitID, wispStageKeys[i])
+        if stage == nil then break end
+        if stage == 1 or stage == 2 or stage == 3 then
+          if not px then
+            local x, _, z = Spring.GetUnitPosition(unitID)
+            if not x then break end
+            px, py, pz = x / 4096, Spring.GetGroundHeight(x, z) / 4096, z / 4096
+          end
+          appendWisp(stage, px, py, pz,
+            Spring.GetUnitRulesParam(unitID, wispOffsetKeys[i]) or 0)
+        end
+      end
+    end
+  end
+  local buffer, count = vertices[stage], vertexCounts[stage]
+  gl.BeginEnd(GL.POINTS, function()
+    for at = 1, count, 4 do
+      gl.Vertex(buffer[at], buffer[at + 1], buffer[at + 2], buffer[at + 3])
+    end
+  end)
+end
+
 
 function CreateParticleList()
    particleList = gl.CreateList(function()
