@@ -30,3 +30,7 @@ spring_addons::export_rules_gadgets! {
     scratch: 16384,
     cus: unit_scripts::FloveCusModule,
 }
+
+pub const MUSHROOM_TARGETS: spring::jobs::Worker =
+    spring::jobs::Worker::new("mushroom-targets", mushrooms::jobs::worker)
+        .in_wasm_module("flove-jobs");

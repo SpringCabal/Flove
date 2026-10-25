@@ -1,3 +1,4 @@
+pub(crate) mod jobs;
 use alloc::vec::Vec;
 use core::f32::consts::TAU;
 
@@ -28,6 +29,7 @@ pub struct MushroomAiUnit {
 #[derive(Debug, Default)]
 pub struct MushroomManager {
     target_weights: Vec<f32>,
+    jobs: springcabal::jobs::Options,
     pub waves: Vec<WaveEntry>,
     pub spawn_point_units: Vec<i32>,
     pub ai_units: Vec<MushroomAiUnit>,
@@ -41,6 +43,7 @@ impl MushroomManager {
     pub fn new() -> Self {
         Self {
             target_weights: Vec::new(),
+            jobs: Default::default(),
             waves: Vec::new(),
             spawn_point_units: Vec::new(),
             ai_units: Vec::new(),
@@ -196,7 +199,19 @@ impl MushroomManager {
         targets: &[(i32, Float3)],
     ) {
         let defs = crate::definitions::defs(spring);
-        for ai in &mut self.ai_units {
+        let prepared = if self.jobs.enabled(spring) {
+            jobs::prepare(
+                &mut self.jobs,
+                spring,
+                &self.ai_units,
+                frame,
+                defs.small_mushroom,
+                targets,
+            )
+        } else {
+            None
+        };
+        for (index, ai) in self.ai_units.iter_mut().enumerate() {
             if ai.created_frame == frame {
                 continue;
             }
@@ -209,6 +224,7 @@ impl MushroomManager {
                         ai.unit_id,
                         spire_id,
                         &mut self.target_weights,
+                        prepared.as_ref().map(|all| &all[index].stats),
                     ) {
                         let d = 500.0f32;
                         let dx = target_pos.x
@@ -230,12 +246,17 @@ impl MushroomManager {
                     }
                 }
             } else {
-                let has_commands = spring
-                    .units_commands()
-                    .get_unit_command_count(ai.unit_id)
-                    .log_err_once(spring, "querying mushroom orders")
-                    .map(|count| count != 0)
-                    .unwrap_or(false);
+                let has_commands = prepared.as_ref().map_or_else(
+                    || {
+                        spring
+                            .units_commands()
+                            .get_unit_command_count(ai.unit_id)
+                            .log_err_once(spring, "querying mushroom orders")
+                            .map(|count| count != 0)
+                            .unwrap_or(false)
+                    },
+                    |all| !all[index].eligible,
+                );
 
                 if !has_commands {
                     if let Some((_target_id, target_pos)) = select_random_target(
@@ -244,6 +265,7 @@ impl MushroomManager {
                         ai.unit_id,
                         spire_id,
                         &mut self.target_weights,
+                        prepared.as_ref().map(|all| &all[index].stats),
                     ) {
                         order(
                             spring,
@@ -443,7 +465,37 @@ fn select_random_target(
     mushroom_id: i32,
     spire_id: i32,
     weights: &mut Vec<f32>,
+    prepared: Option<&Option<jobs::Stats>>,
 ) -> Option<(i32, Float3)> {
+    if let Some(stats) = prepared {
+        let stats = stats.as_ref()?;
+        if spring
+            .synced_random()
+            .next_float()
+            .expect("synced random float")
+            < 0.5
+            && let Some(index) = stats.nearest
+            && targets[index].0 != spire_id
+        {
+            return Some(targets[index]);
+        }
+        if stats.total <= 0.0 {
+            return None;
+        }
+        let p = spring
+            .synced_random()
+            .next_float()
+            .expect("synced random float")
+            * stats.total;
+        let mut q = 0.0;
+        for (target, weight) in targets.iter().zip(&stats.weights) {
+            q += *weight;
+            if q >= p {
+                return Some(*target);
+            }
+        }
+        return None;
+    }
     let Ok(u_pos) = spring.units_info().get_unit_position(
         mushroom_id,
         spring::units_info::GetUnitPositionOptions {

@@ -1,1 +1,2 @@
 module(flove-rules, LuaRules/wasm/flove-rules.wasm, rules-synced, 0, 1.0.0)
+module(flove-jobs, LuaRules/wasm/flove-jobs.wasm, rules-synced, 0, 1.0.0)
