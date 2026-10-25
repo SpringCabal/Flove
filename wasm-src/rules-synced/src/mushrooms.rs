@@ -488,8 +488,8 @@ fn select_random_target(
             .expect("synced random float")
             * stats.total;
         let mut q = 0.0;
-        for (target, weight) in targets.iter().zip(&stats.weights) {
-            q += *weight;
+        for (target, weight) in targets.iter().zip(stats.weights()) {
+            q += weight;
             if q >= p {
                 return Some(*target);
             }

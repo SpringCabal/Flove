@@ -10,8 +10,8 @@ build: fmt clippy
     cargo build --workspace --target wasm32-unknown-unknown --release
 
 copy: build
-    cp target/wasm32-unknown-unknown/release/flove_jobs_wasm.wasm ../LuaRules/wasm/flove-jobs.wasm
     mkdir -p ../LuaRules/wasm ../LuaUI/wasm
+    cp target/wasm32-unknown-unknown/release/flove_jobs_wasm.wasm ../LuaRules/wasm/flove-jobs.wasm
     cp target/wasm32-unknown-unknown/release/flove_rules_wasm.wasm ../LuaRules/wasm/flove-rules.wasm
     cp target/wasm32-unknown-unknown/release/flove_ui_wasm.wasm ../LuaUI/wasm/flove-ui.wasm
 

@@ -9,32 +9,30 @@ pub(crate) fn worker(bytes: &[u8]) -> Vec<u8> {
         .collect();
     let count = reader.u32() as usize;
     let mut output = Vec::with_capacity(count * (8 + 4 * n));
+    let mut weights = Vec::with_capacity(n);
     for _ in 0..count {
         let p = Float3::new(reader.f32(), reader.f32(), reader.f32());
         let mut nearest = u32::MAX;
         let mut minimum = f32::MAX;
-        let weights: Vec<_> = targets
-            .iter()
-            .enumerate()
-            .map(|(index, t)| {
-                let dx = t.x - p.x;
-                let dy = t.y - p.y;
-                let dz = t.z - p.z;
-                let distance = dx * dx + dy * dy + dz * dz;
-                if distance < minimum {
-                    minimum = distance;
-                    nearest = index as u32;
-                }
-                if distance > 100.0 {
-                    1.0 / distance
-                } else {
-                    0.0
-                }
-            })
-            .collect();
+        weights.clear();
+        weights.extend(targets.iter().enumerate().map(|(index, t)| {
+            let dx = t.x - p.x;
+            let dy = t.y - p.y;
+            let dz = t.z - p.z;
+            let distance = dx * dx + dy * dy + dz * dz;
+            if distance < minimum {
+                minimum = distance;
+                nearest = index as u32;
+            }
+            if distance > 100.0 {
+                1.0 / distance
+            } else {
+                0.0
+            }
+        }));
         put_u32(&mut output, nearest);
         put_f32(&mut output, weights.iter().copied().sum());
-        for weight in weights {
+        for &weight in &weights {
             put_f32(&mut output, weight);
         }
     }

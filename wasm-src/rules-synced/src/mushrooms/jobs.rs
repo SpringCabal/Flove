@@ -1,5 +1,5 @@
 mod worker;
-use alloc::vec::Vec;
+use alloc::{rc::Rc, vec::Vec};
 use spring::Float3;
 use springcabal::jobs::{self, Reader, put_f32, put_u32};
 pub(crate) use worker::worker;
@@ -7,7 +7,16 @@ pub(crate) use worker::worker;
 pub(super) struct Stats {
     pub nearest: Option<usize>,
     pub total: f32,
-    pub weights: Vec<f32>,
+    packet: Rc<Vec<u8>>,
+    weights_start: usize,
+    weights_len: usize,
+}
+impl Stats {
+    pub fn weights(&self) -> impl Iterator<Item = f32> + '_ {
+        self.packet[self.weights_start..self.weights_start + self.weights_len * 4]
+            .chunks_exact(4)
+            .map(|word| f32::from_le_bytes(word.try_into().expect("four-byte weight")))
+    }
 }
 pub(super) struct Prepared {
     pub eligible: bool,
@@ -85,20 +94,26 @@ pub(super) fn prepare(
     )?;
     let mut offset = 0;
     for bytes in output {
-        let mut reader = Reader::new(&bytes);
-        for _ in 0..chunk_size.min(positions.len() - offset) {
+        let count = chunk_size.min(positions.len() - offset);
+        let stride = 8 + 4 * targets.len();
+        assert_eq!(bytes.len(), count * stride, "mushroom job output length");
+        let packet = Rc::new(bytes);
+        for row in 0..count {
+            let start = row * stride;
+            let mut reader = Reader::new(&packet[start..start + 8]);
             let nearest = reader.u32() as usize;
             let total = reader.f32();
-            let weights = (0..targets.len()).map(|_| reader.f32()).collect();
+            reader.finish();
             let index = positions[offset].0;
             result[index].stats = Some(Stats {
                 nearest: (nearest < targets.len()).then_some(nearest),
                 total,
-                weights,
+                packet: Rc::clone(&packet),
+                weights_start: start + 8,
+                weights_len: targets.len(),
             });
             offset += 1;
         }
-        reader.finish();
     }
     assert_eq!(offset, positions.len());
     Some(result)
