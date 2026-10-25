@@ -53,7 +53,7 @@ pub fn spray(
                             speed: Float3::ZERO,
                             owner: unit_id,
                             team: -1,
-                            weapon_num: -1,
+                            weapon_num: 0,
                             ttl: 1.0,
                             max_range: 2.0,
                             up_time: -1.0,
