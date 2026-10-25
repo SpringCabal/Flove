@@ -17,6 +17,11 @@ The outline shader, tree deformation and mouse-over highlight are retained.
 Grass respects the engine's configured `GrassDetail`, including zero to disable
 it. The game no longer overrides this with 2000 at startup.
 
+From the development repository root, run
+`spring-linux/games/Flove-wasm.sdd/verification/mushroom-firing.sh` to check
+all six shooting mushroom types in both Lua and Rust. It stages private game
+copies and checks actual projectiles and damage; bomb mushrooms are kamikazes.
+
 Verification on the SDK test engine:
 
 - Linux and Wine: all 84 existing integration assertions pass (66 rules,

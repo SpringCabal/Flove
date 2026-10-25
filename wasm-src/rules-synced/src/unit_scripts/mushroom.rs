@@ -322,9 +322,9 @@ async fn stop(state: Rc<RefCell<MovementState>>, ctx: UnitCtx) {
 
 pub(super) fn query_weapon(pieces: MushroomPieces, kind: MushroomKind) -> Piece {
     if kind == MushroomKind::King {
-        pieces.king
+        pieces.king_head
     } else {
-        pieces.trunk
+        pieces.muzzle
     }
 }
 
