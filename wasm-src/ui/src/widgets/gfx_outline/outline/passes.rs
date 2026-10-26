@@ -66,24 +66,73 @@ fn hovered_unit(spring: &spring::Spring<'_, spring::Ui>) -> Option<i32> {
 }
 
 #[derive(Default)]
-pub struct CreatedFrames(BTreeMap<i32, f32>);
+pub struct CreatedFrames {
+    frames: BTreeMap<i32, f32>,
+    units: BTreeMap<i32, CachedUnit>,
+}
+
+#[derive(Clone, Copy)]
+struct CachedUnit {
+    kind: OutlineKind,
+    built: bool,
+    height: f32,
+}
 
 impl CreatedFrames {
     fn get(&mut self, spring: &spring::Spring<'_, spring::Ui>, unit_id: i32) -> f32 {
-        if let Some(&frame) = self.0.get(&unit_id) {
+        if let Some(&frame) = self.frames.get(&unit_id) {
             return frame;
         }
         match spring
             .rules_params()
             .get_unit_rules_param_f32(unit_id, "createdFrame")
         {
-            Ok(frame) => *self.0.entry(unit_id).or_insert(frame),
+            Ok(frame) => *self.frames.entry(unit_id).or_insert(frame),
             Err(_) => 0.0,
         }
     }
 
+    fn unit(
+        &mut self,
+        spring: &spring::Spring<'_, spring::Ui>,
+        unit_id: i32,
+        frame: u32,
+    ) -> Option<CachedUnit> {
+        if let alloc::collections::btree_map::Entry::Vacant(entry) = self.units.entry(unit_id) {
+            let def = spring.units_info().get_unit_def_id(unit_id).ok()?;
+            let kind = outline_kind(spring, def);
+            let built = spring
+                .units_info()
+                .get_unit_health(unit_id)
+                .ok()?
+                .build_progress
+                >= 1.0;
+            let height = if matches!(kind, OutlineKind::Tree(_)) {
+                spring.units_info().get_unit_height(unit_id).ok()?
+            } else {
+                0.0
+            };
+            entry.insert(CachedUnit {
+                kind,
+                built,
+                height,
+            });
+        }
+        let unit = self.units.get_mut(&unit_id)?;
+        if !unit.built && frame.is_multiple_of(15) {
+            unit.built = spring
+                .units_info()
+                .get_unit_health(unit_id)
+                .ok()?
+                .build_progress
+                >= 1.0;
+        }
+        Some(*unit)
+    }
+
     pub fn forget(&mut self, unit_id: i32) {
-        self.0.remove(&unit_id);
+        self.frames.remove(&unit_id);
+        self.units.remove(&unit_id);
     }
 }
 
@@ -127,41 +176,47 @@ pub(super) fn draw_visible_units(
     let current_frame = spring.game().current_frame().unwrap_or(0) as u32;
     let hovered = hovered_unit(spring);
 
+    let mut last_deformation = None;
+    let mut last_highlight = false;
     for &unit_id in &unit_ids {
-        let unit_def_id = match spring
-            .units_info()
-            .get_unit_def_id(unit_id)
-            .log_err_once(spring, "reading outline unit definition")
-        {
-            Some(id) if id > 0 => id,
-            _ => continue,
+        let Some(unit) = created_frames
+            .borrow_mut()
+            .unit(spring, unit_id, current_frame)
+        else {
+            continue;
         };
-
-        if let Ok(health) = spring.units_info().get_unit_health(unit_id)
-            && health.build_progress < 1.0
-        {
+        let kind = unit.kind;
+        if !unit.built || matches!(kind, OutlineKind::Hidden) {
             continue;
         }
-
-        let kind = outline_kind(spring, unit_def_id);
-        if matches!(kind, OutlineKind::Hidden) {
-            continue;
+        let deformation = tree_deformation(
+            spring,
+            unit_id,
+            kind,
+            unit.height,
+            current_frame,
+            created_frames,
+        );
+        if last_deformation != Some(deformation) {
+            spring
+                .gfx()
+                .uniform(deformation_location, &deformation, 3)
+                .log_err_once(spring, "setting outline deformation");
+            last_deformation = Some(deformation);
         }
-        let deformation = tree_deformation(spring, unit_id, kind, current_frame, created_frames);
-        spring
-            .gfx()
-            .uniform(deformation_location, &deformation, 3)
-            .log_err_once(spring, "setting outline deformation");
         let highlight = hovered == Some(unit_id)
             && matches!(kind, OutlineKind::Tree(1 | 2))
             && !spring
                 .units_info()
                 .get_unit_is_dead(unit_id)
                 .unwrap_or(true);
-        if highlight {
-            let _ = spring.gfx().color(0.1, 1.0, 0.65, OUTLINE_THICKNESS);
-        } else {
-            let _ = spring.gfx().color(0.0, 0.0, 0.0, OUTLINE_THICKNESS);
+        if highlight != last_highlight {
+            if highlight {
+                let _ = spring.gfx().color(0.1, 1.0, 0.65, OUTLINE_THICKNESS);
+            } else {
+                let _ = spring.gfx().color(0.0, 0.0, 0.0, OUTLINE_THICKNESS);
+            }
+            last_highlight = highlight;
         }
 
         spring
@@ -187,6 +242,7 @@ fn tree_deformation(
     spring: &spring::Spring<'_, spring::Ui>,
     unit_id: i32,
     kind: OutlineKind,
+    height: f32,
     current_frame: u32,
     created_frames: &RefCell<CreatedFrames>,
 ) -> [f32; 3] {
@@ -201,7 +257,7 @@ fn tree_deformation(
     if matches!(kind, OutlineKind::Tree(_)) {
         let created_frame = created_frames.borrow_mut().get(spring, unit_id);
         deformation[1] = ((current_frame as f32 - created_frame) / GROW_FRAMES).min(1.0);
-        deformation[2] = spring.units_info().get_unit_height(unit_id).unwrap_or(40.0);
+        deformation[2] = height;
     }
     deformation
 }
