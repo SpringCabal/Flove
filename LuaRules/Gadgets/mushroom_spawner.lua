@@ -173,7 +173,7 @@ local waveConfig = {
 local function SpawnUnit(unitDefID, x, z, noRotate)
     x = x+10*(2*math.random()-1)
     z = z+10*(2*math.random()-1)
-	local unitID = Spring.CreateUnit(unitDefID, x, 0, z, 0, 0, false, false)
+	local unitID = Spring.CreateUnit(unitDefID, x, Spring.GetGroundHeight(x,z), z, 0, 0, false, false)
 	if not noRotate then
 		Spring.SetUnitRotation(unitID, 0, math.random()*2*math.pi, 0)
 	end
@@ -223,6 +223,10 @@ function gadget:GameFrame(frame)
         CheckForIdleMushrooms()
     end
 	
+    if frame == 4 and tonumber((Spring.GetModOptions() or {}).skip_tutorial) == 1 then
+        HandleLuaMessage('skip_tutorial')
+        Spring.Echo('[FloveStartup] tutorial skipped frame=4')
+    end
 	local story = Spring.GetGameRulesParam("story")
 	if story ~= 0 then
 		if CheckTreeHP() then
@@ -268,18 +272,21 @@ end
 
 function SpawnWave(spawnUnits, spawnKing)
     if AI_TESTING_MODE then return end
+    local types = {}
+    for def in pairs(spawnUnits) do types[#types+1] = def end
+    table.sort(types)
 -- 	local config = waveConfig[currentWave]
 -- 	if config == nil then
 -- 		return
 -- 	end
 	
-	for indx, spawnPointID in pairs(spawnPoints) do
+	for indx, spawnPointID in ipairs(spawnPoints) do
 		local x, _, z = Spring.GetUnitPosition(spawnPointID)
 		if spawnKing and indx == 2 then
 			SpawnUnit(kingshroomDefID, x, z)
 		end
-		for unitDefID, count in pairs(spawnUnits) do
-			for i = 1, count do
+		for _, unitDefID in ipairs(types) do
+			for i = 1, spawnUnits[unitDefID] do
 				SpawnUnit(unitDefID, x, z)
 			end
 		end
@@ -292,7 +299,17 @@ end
 -- Mushroom AI
 --------------------------------------------------------------------------------
 
-local aiMushrooms = {} 
+local aiMushrooms = {}
+local aiOrder, aiOrderDirty = {}, true
+local function OrderedMushrooms()
+    if aiOrderDirty then
+        aiOrder = {}
+        for id in pairs(aiMushrooms) do aiOrder[#aiOrder+1] = id end
+        table.sort(aiOrder)
+        aiOrderDirty = false
+    end
+    return aiOrder
+end
 
 function CheckForSpire(unitID, unitDefID)
 	if unitDefID == spireDefID then
@@ -308,6 +325,7 @@ function gadget:UnitCreated(unitID, unitDefID)
 	end
     if UnitDefs[unitDefID].customParams.mushroom and not (Spring.GetUnitRulesParam(unitID, "aiDisabled")==1) then
 		aiMushrooms[unitID] = true
+        aiOrderDirty = true
     end
 end
 
@@ -329,22 +347,23 @@ function gadget:UnitDestroyed(unitID, unitDefID)
 	end
 	
 	aiMushrooms[unitID] = nil
+    aiOrderDirty = true
 end
 
 -- Snapshot static target data once per AI tick, only if a mushroom needs the
 -- weighted choice. Preserve GetAllUnits ordering so RNG and floating sums stay
 -- identical to the original per-mushroom scan.
+local targetDefs = {UnitDefNames.treelevel1.id, UnitDefNames.treelevel2.id, UnitDefNames.treelevel3.id, spireDefID}
+local targetTeams = Spring.GetTeamList()
 local function CollectTargets()
     local targets = {}
-    for _, id in ipairs(Spring.GetAllUnits()) do
-        local def = Spring.GetUnitDefID(id)
-        if def and (UnitDefs[def].customParams.tree or def == spireDefID) then
-            local x, y, z = Spring.GetUnitPosition(id)
-            if x then
-                targets[#targets + 1] = {id = id, team = Spring.GetUnitTeam(id), x = x, y = y, z = z}
-            end
+    for _,team in ipairs(targetTeams) do
+        for _,id in ipairs(Spring.GetTeamUnitsByDefs(team,targetDefs)) do
+            local x,y,z = Spring.GetUnitPosition(id)
+            if x then targets[#targets+1] = {id=id,team=team,x=x,y=y,z=z} end
         end
     end
+    table.sort(targets, function(a,b) return a.id < b.id end)
     return targets
 end
 
@@ -389,7 +408,7 @@ local SMALL_MUSHROOM_ORDER_CHANGE = 30
 function CheckForIdleMushrooms()
 	local frame = Spring.GetGameFrame()
     local snapshot = {}
-    for uID, _ in pairs(aiMushrooms) do
+    for _, uID in ipairs(OrderedMushrooms()) do
 		local unitDefID = Spring.GetUnitDefID(uID)
 		if unitDefID == smallMushroomDefID then
 			local lastOrderFrame = Spring.GetUnitRulesParam(uID, "lastOrderFrame") or 0
@@ -454,6 +473,7 @@ end
 function DamageTrees(damageTreeP)
     -- set all trees to have health approximately p of their full health (plus a bit of randomness)
     local units = Spring.GetAllUnits()
+    table.sort(units)
     for _,uID in ipairs(units) do
         local unitDefID = Spring.GetUnitDefID(uID)
         if UnitDefs[unitDefID].customParams.tree then

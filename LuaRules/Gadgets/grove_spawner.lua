@@ -229,7 +229,7 @@ function SpawnGrass(x, z, minGrass, maxGrass, radius, minRadius)
 	for i = 1, grassCount do
 		local ux = x + math.random() * radius - radius/2
         local uz = z + math.random() * radius - radius/2
-        local r = (minRadius>0) and math.sqrt((x-ux)*(x-ux)+(z-ux)*(z-ux)) or 1
+        local r = (minRadius>0) and math.sqrt((x-ux)*(x-ux)+(z-uz)*(z-uz)) or 1
 		if not IsSteep(ux,uz) and r>minRadius then
             local indx = math.random(1, #grass)
             local grassDefID = grass[indx]

@@ -47,17 +47,31 @@ local wispConfiguration = {
 local UPGRADE_PROGRESS = 3
 
 local trees = {}
+local configByDef = {}
+for name,config in pairs(treeConfiguration) do configByDef[UnitDefNames[name].id] = config end
+local treeOrder, treeOrderDirty = {}, true
+local function OrderedTrees()
+    if treeOrderDirty then
+        treeOrder = {}
+        for id in pairs(trees) do treeOrder[#treeOrder+1] = id end
+        table.sort(treeOrder)
+        treeOrderDirty = false
+    end
+    return treeOrder
+end
 
 local function GetTreeConfig(unitID)
+    if trees[unitID] then return trees[unitID].config end
 	local unitDefID = Spring.GetUnitDefID(unitID)
 	local unitDefName = UnitDefs[unitDefID].name
 	return treeConfiguration[unitDefName]
 end
 
-local function TreeCreated(unitID)
-	local config = GetTreeConfig(unitID)
+local function TreeCreated(unitID, config)
 	local tree = {}
 	trees[unitID] = tree
+    tree.config = config
+    treeOrderDirty = true
 	
 	tree.wisps = {}
 	tree.createWispFrame = math.random(config.minWispCreationSpeed, config.maxWispCreationSpeed) + Spring.GetGameFrame()
@@ -77,6 +91,7 @@ local function TreeDestroyed(unitID)
 	Spring.SetGameRulesParam("power", power)
 	
 	trees[unitID] = nil
+    treeOrderDirty = true
 end
 
 local function UpgradeTree(unitID)
@@ -120,9 +135,10 @@ local function UpdateWisps()
 	local stageDur = wispConfiguration.stageFrameDuration
 	local totalStages = wispConfiguration.totalStages
 	local mana = Spring.GetGameRulesParam("mana") or 0
-	for unitID, tree in pairs(trees) do
+	for _,unitID in ipairs(OrderedTrees()) do
+        local tree = trees[unitID]
 		local wisps = tree.wisps
-		for i, wisp in pairs(wisps) do
+		for i, wisp in ipairs(wisps) do
 			if frame - wisp.stageFrame >= stageDur then
 				if wisp.stage >= totalStages then
 					mana = mana + 1
@@ -150,14 +166,14 @@ local function UpdateWisps()
 end
 
 function gadget:UnitCreated(unitID, unitDefID, ...)
-	local config = GetTreeConfig(unitID)
+	local config = configByDef[unitDefID]
 	if config ~= nil then
-		TreeCreated(unitID)
+		TreeCreated(unitID, config)
 	end
 end
 
 function gadget:UnitDestroyed(unitID, unitDefID, ...)
-	local config = GetTreeConfig(unitID)
+	local config = configByDef[unitDefID]
 	if config ~= nil then
 		TreeDestroyed(unitID)
 	end
