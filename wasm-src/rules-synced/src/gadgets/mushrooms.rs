@@ -21,6 +21,17 @@ impl Gadget<Global> for MushroomsGadget {
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
         let spring = ctx.spring();
         let global = ctx.global();
+        if frame == 4
+            && spring
+                .game()
+                .get_mod_option("skip_tutorial")
+                .is_ok_and(|v| v.value == "1")
+        {
+            crate::story::with_world(global, frame, |story, world| {
+                story.skip_tutorial(spring, world)
+            });
+            spring::log_notice!(spring, "FloveStartup", "tutorial skipped frame=4");
+        }
         let spire_id = global.spire.access().unit_id;
         let free_play = global.story.access().stage == STAGE_FREE_PLAY;
         global.mushrooms.access_mut().update(

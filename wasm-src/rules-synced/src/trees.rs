@@ -37,16 +37,19 @@ impl TreeManager {
         level: i32,
         next_wisp: i32,
     ) {
-        if self.trees.iter().any(|t| t.unit_id == unit_id) {
+        let Err(index) = self.trees.binary_search_by_key(&unit_id, |t| t.unit_id) else {
             return;
-        }
-        self.trees.push(Tree {
-            unit_id,
-            level,
-            upgrade_progress: 0,
-            create_wisp_frame: next_wisp,
-            wisps: Vec::new(),
-        });
+        };
+        self.trees.insert(
+            index,
+            Tree {
+                unit_id,
+                level,
+                upgrade_progress: 0,
+                create_wisp_frame: next_wisp,
+                wisps: Vec::new(),
+            },
+        );
         let _ = spring.rules_params().set_unit_rules_param_f32(
             unit_id,
             "upgradeProgress",
@@ -57,7 +60,7 @@ impl TreeManager {
 
     pub fn remove_tree(&mut self, unit_id: i32) -> bool {
         if let Some(pos) = self.trees.iter().position(|t| t.unit_id == unit_id) {
-            self.trees.swap_remove(pos);
+            self.trees.remove(pos);
             true
         } else {
             false
@@ -106,7 +109,7 @@ impl TreeManager {
             if let Ok(pos) = spring.units_info().get_unit_position(
                 tree.unit_id,
                 spring::units_info::GetUnitPositionOptions {
-                    mid_pos: true,
+                    mid_pos: false,
                     aim_pos: false,
                 },
             ) {
@@ -350,7 +353,7 @@ impl TreeManager {
                     spring.unit_control().create_unit(&spring::unit_control::DefRef {
                             name: String::new(),
                             id: target_def,
-                        }, pos, 0, team, crate::definitions::unit_create_options()),
+                        }, pos, 0, team, spring::unit_control::CreateUnitOptions { flatten_ground: true, ..crate::definitions::unit_create_options() }),
                     || alloc::format!("growing tree {old_id} to level {next_level}"),
                 )
             {

@@ -63,7 +63,6 @@ impl Movement {
     fn apply(&self, spring: &spring::Spring<'_, spring::RulesSynced>, unit_id: i32) {
         for (field, value) in [
             (Field::MoveTypeMaxSpeed, self.speed),
-            (Field::MoveTypeMaxWantedSpeed, self.speed),
             (Field::MoveTypeGroundMaxReverseSpeed, self.reverse_speed),
             (Field::MoveTypeGroundTurnRate, self.turn_rate),
             (Field::MoveTypeGroundTurnAccel, self.turn_accel),

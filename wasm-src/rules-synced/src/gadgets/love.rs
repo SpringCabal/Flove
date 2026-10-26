@@ -38,13 +38,20 @@ impl Gadget<Global> for LoveGadget {
         let spring = ctx.spring();
         let global = ctx.global();
         let trees_take_no_damage = global.story.access().trees_take_no_damage;
-        Some(behavior::handle_pre_damage(
+        let mut result = behavior::handle_pre_damage(
             spring,
             event.unit_id,
             event.unit_def_id,
             event.damage,
             event.weapon_def_id,
             trees_take_no_damage,
-        ))
+        );
+        // Lua's later MushroomSpawner damage handler supplies the final
+        // protection and impulse result after SendLove/Poisoner effects.
+        if trees_take_no_damage && crate::definitions::defs(spring).is_tree(event.unit_def_id) {
+            result.new_damage = 0.0;
+        }
+        result.impulse_mult = 0.0;
+        Some(result)
     }
 }

@@ -111,7 +111,7 @@ fn spire_target(
                     .get_unit_position(
                         unit,
                         spring::units_info::GetUnitPositionOptions {
-                            mid_pos: true,
+                            mid_pos: false,
                             aim_pos: false,
                         },
                     )

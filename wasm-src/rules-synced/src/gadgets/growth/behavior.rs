@@ -157,18 +157,43 @@ fn is_crowded(
     z: f32,
     spire_id: i32,
 ) -> bool {
+    // Lua GetUnitsInCylinder uses a base-position rectangle broad phase,
+    // then a midpoint circle. The native cylinder API uses a base circle,
+    // which differs for offset models. Match Lua's exact two-stage query.
     let defs = crate::definitions::defs(spring);
     spring
         .units_query()
-        .get_units_in_cylinder(x, z, MIN_TREE_DISTANCE, ALL_UNITS)
+        .get_units_in_rectangle(
+            x - MIN_TREE_DISTANCE,
+            z - MIN_TREE_DISTANCE,
+            x + MIN_TREE_DISTANCE,
+            z + MIN_TREE_DISTANCE,
+            ALL_UNITS,
+        )
         .unwrap_or_default()
         .into_iter()
         .any(|unit| {
-            unit == spire_id
+            let relevant = unit == spire_id
                 || spring
                     .units_info()
                     .get_unit_def_id(unit)
-                    .is_ok_and(|def| defs.is_tree(def))
+                    .is_ok_and(|d| defs.is_tree(d));
+            relevant
+                && spring
+                    .units_info()
+                    .get_unit_position(
+                        unit,
+                        spring::units_info::GetUnitPositionOptions {
+                            mid_pos: true,
+                            aim_pos: false,
+                        },
+                    )
+                    .ok()
+                    .is_some_and(|p| {
+                        let dx = p.x - x;
+                        let dz = p.z - z;
+                        dx * dx + dz * dz <= MIN_TREE_DISTANCE * MIN_TREE_DISTANCE
+                    })
         })
 }
 

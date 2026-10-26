@@ -5,7 +5,6 @@ use springcabal::jobs::{self, Reader, put_f32, put_u32};
 pub(crate) use worker::worker;
 
 pub(super) struct Stats {
-    pub nearest: Option<usize>,
     pub total: f32,
     packet: Rc<Vec<u8>>,
     weights_start: usize,
@@ -35,16 +34,15 @@ pub(super) fn prepare(
     let mut result = Vec::with_capacity(units.len());
     let mut positions = Vec::new();
     for (index, ai) in units.iter().enumerate() {
-        let eligible = ai.created_frame != frame
-            && if ai.def_id == small {
-                frame - ai.last_order_frame >= 30
-            } else {
-                !spring
-                    .units_commands()
-                    .get_unit_command_count(ai.unit_id)
-                    .log_err_once(spring, "querying mushroom orders")
-                    .is_some_and(|n| n != 0)
-            };
+        let eligible = if ai.def_id == small {
+            frame - ai.last_order_frame >= 30
+        } else {
+            !spring
+                .units_commands()
+                .get_unit_command_count(ai.unit_id)
+                .log_err_once(spring, "querying mushroom orders")
+                .is_some_and(|n| n != 0)
+        };
         result.push(Prepared {
             eligible,
             stats: None,
@@ -53,7 +51,7 @@ pub(super) fn prepare(
             && let Ok(position) = spring.units_info().get_unit_position(
                 ai.unit_id,
                 spring::units_info::GetUnitPositionOptions {
-                    mid_pos: true,
+                    mid_pos: false,
                     aim_pos: false,
                 },
             )
@@ -81,7 +79,7 @@ pub(super) fn prepare(
                 put_f32(&mut bytes, v);
             }
         }
-        limits.push(chunk.len() * (8 + 4 * targets.len()));
+        limits.push(chunk.len() * (4 + 4 * targets.len()));
         inputs.push(bytes);
     }
     let output = options.run(
@@ -95,21 +93,19 @@ pub(super) fn prepare(
     let mut offset = 0;
     for bytes in output {
         let count = chunk_size.min(positions.len() - offset);
-        let stride = 8 + 4 * targets.len();
+        let stride = 4 + 4 * targets.len();
         assert_eq!(bytes.len(), count * stride, "mushroom job output length");
         let packet = Rc::new(bytes);
         for row in 0..count {
             let start = row * stride;
-            let mut reader = Reader::new(&packet[start..start + 8]);
-            let nearest = reader.u32() as usize;
+            let mut reader = Reader::new(&packet[start..start + 4]);
             let total = reader.f32();
             reader.finish();
             let index = positions[offset].0;
             result[index].stats = Some(Stats {
-                nearest: (nearest < targets.len()).then_some(nearest),
                 total,
                 packet: Rc::clone(&packet),
-                weights_start: start + 8,
+                weights_start: start + 4,
                 weights_len: targets.len(),
             });
             offset += 1;

@@ -34,7 +34,8 @@ impl Gadget<Global> for TreesGadget {
         _builder: i32,
     ) {
         let spring = _ctx.spring();
-        let Some(level) = crate::definitions::defs(spring).tree_level(def) else {
+        let defs = crate::definitions::defs(spring);
+        let Some(level) = defs.tree_level(def) else {
             return;
         };
         // Consume this draw during UnitCreated, before the caller sets yaw

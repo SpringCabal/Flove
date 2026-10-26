@@ -34,7 +34,7 @@ pub fn spray(
         let Ok(pos) = spring.units_info().get_unit_position(
             unit_id,
             spring::units_info::GetUnitPositionOptions {
-                mid_pos: true,
+                mid_pos: false,
                 aim_pos: false,
             },
         ) else {

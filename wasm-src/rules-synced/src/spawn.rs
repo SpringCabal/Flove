@@ -7,8 +7,6 @@ use crate::definitions::{ENEMY_TEAM_ID, PLAYER_TEAM_ID};
 use crate::gadgets::growth::behavior::spawn_grass;
 use crate::spawn_data::{INITIAL_UNITS, Marker};
 
-const SPIRE_AIM_HEIGHT: f32 = 200.0;
-
 pub fn populate_world(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<i32> {
     let defs = crate::definitions::defs(spring);
     reveal_map(spring);
@@ -40,21 +38,27 @@ pub fn populate_world(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<i
                 Float3::new(point.x, point.y, point.z),
                 0,
                 team,
-                crate::definitions::unit_create_options(),
+                spring::unit_control::CreateUnitOptions {
+                    flatten_ground: true,
+                    ..crate::definitions::unit_create_options()
+                },
             ),
             || alloc::format!("spawning the {:?} marker", point.marker),
         ) {
-            if point.marker == Marker::Spire {
-                let aim = Float3::new(0.0, SPIRE_AIM_HEIGHT, 0.0);
-                crate::diagnostics::check(
-                    spring,
-                    spring
-                        .unit_control()
-                        .set_unit_mid_and_aim_pos(unit_id, aim, aim, true),
-                    || alloc::format!("moving the aim point of spire {unit_id}"),
-                );
-            } else {
-                let _ = spring.unit_control().set_unit_neutral(unit_id, true);
+            // The exported scene uses degrees and restores each marker's pose.
+            let radians = point.angle * (PI / 180.0);
+            let (sin, cos) = (libm::sinf(radians), libm::cosf(radians));
+            use spring::ResultExt;
+            spring
+                .unit_control()
+                .set_unit_direction(
+                    unit_id,
+                    Float3::new(sin, 0.0, cos),
+                    Float3::new(-cos, 0.0, sin),
+                )
+                .log_err_once(spring, "setting a scenario marker's direction");
+            if point.marker != Marker::Spire {
+                let _ = spring.unit_control().set_unit_neutral(unit_id, false);
                 let _ = spring.unit_control().set_unit_blocking(
                     unit_id,
                     spring::unit_control::SetUnitBlockingOptions {

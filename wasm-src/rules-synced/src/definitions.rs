@@ -1,3 +1,5 @@
+use alloc::collections::BTreeMap;
+use spring::{Float3, ResultExt};
 use std::sync::OnceLock;
 
 pub const ENEMY_TEAM_ID: i32 = 0;
@@ -80,11 +82,13 @@ pub struct DefRegistry {
     pub flower_shot_weapon: i32,
     pub upgrade_shot_weapon: i32,
     pub poison_weapon: i32,
+    pub target_teams: alloc::vec::Vec<i32>,
+    geometry: BTreeMap<i32, UnitGeometry>,
 }
 
 impl DefRegistry {
     fn resolve(spring: &spring::Spring<'_, spring::RulesSynced>) -> Self {
-        let defs = Self {
+        let mut defs = Self {
             spire: resolve_unit_def(spring, SPIRE_NAME),
             tree_level1: resolve_unit_def(spring, TREE_LEVEL1_NAME),
             tree_level2: resolve_unit_def(spring, TREE_LEVEL2_NAME),
@@ -109,7 +113,24 @@ impl DefRegistry {
             flower_shot_weapon: resolve_weapon_def(spring, FLOWER_SHOT_WEAPON_NAME),
             upgrade_shot_weapon: resolve_weapon_def(spring, UPGRADE_SHOT_WEAPON_NAME),
             poison_weapon: resolve_weapon_def(spring, POISON_WEAPON_NAME),
+            target_teams: spring.teams().get_team_list(-1).expect("game teams"),
+            geometry: BTreeMap::new(),
         };
+        for id in [
+            defs.spire,
+            defs.tree_level1,
+            defs.tree_level2,
+            defs.tree_level3,
+        ]
+        .into_iter()
+        .chain(defs.flowers)
+        .chain(defs.grass)
+        .chain(defs.tunnel_tubes)
+        {
+            if let Some(geometry) = UnitGeometry::read(spring, id) {
+                defs.geometry.insert(id, geometry);
+            }
+        }
         spring::log_info!(
             spring,
             crate::diagnostics::LOG_SECTION,
@@ -120,6 +141,45 @@ impl DefRegistry {
             defs.poison_weapon
         );
         defs
+    }
+
+    pub fn configure_geometry(
+        &self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        unit: i32,
+        def: i32,
+    ) {
+        if let Some(g) = self.geometry.get(&def) {
+            spring
+                .unit_control()
+                .set_unit_mid_and_aim_pos(unit, g.mid, g.mid, true)
+                .log_err_once(spring, "setting unit model midpoint");
+            spring
+                .unit_control()
+                .set_unit_radius_and_height(unit, g.radius, g.height)
+                .log_err_once(spring, "setting unit model bounds");
+        }
+        if self.is_shrub(def) || self.is_flower(def) {
+            spring
+                .unit_control()
+                .set_unit_blocking(
+                    unit,
+                    spring::unit_control::SetUnitBlockingOptions {
+                        blocking: false,
+                        solid_objects: false,
+                        projectiles: false,
+                        quad_map_rays: false,
+                        crushable: false,
+                        block_enemy_pushing: false,
+                        block_height_changes: false,
+                    },
+                )
+                .log_err_once(spring, "disabling shrub blocking");
+            spring
+                .unit_control()
+                .set_unit_neutral(unit, true)
+                .log_err_once(spring, "setting shrub neutral");
+        }
     }
 
     pub fn is_tree(&self, def_id: i32) -> bool {
@@ -178,4 +238,34 @@ fn resolve_unit_def(spring: &spring::Spring<'_, spring::RulesSynced>, name: &str
 
 fn resolve_weapon_def(spring: &spring::Spring<'_, spring::RulesSynced>, name: &str) -> i32 {
     spring.weapon_defs().get_weapon_def_id(name).unwrap_or(-1)
+}
+
+// Same model-relative offsets and bounds as Lua's unit_centeroffset gadget.
+#[derive(Debug, Clone)]
+struct UnitGeometry {
+    mid: Float3,
+    radius: f32,
+    height: f32,
+}
+impl UnitGeometry {
+    fn read(spring: &spring::Spring<'_, spring::RulesSynced>, id: i32) -> Option<Self> {
+        let d = spring.utils().get_unit_def_dimensions(id).ok()?;
+        let text = spring
+            .unit_defs()
+            .get_unit_def_custom_param(id, "midposoffset")
+            .ok()?;
+        let mut coords = text.split_whitespace().map(|s| s.parse::<f32>().ok());
+        let offset = Float3::new(coords.next()??, coords.next()??, coords.next()??);
+        let radius = spring
+            .unit_defs()
+            .get_unit_def_custom_param(id, "modelradius")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(d.radius);
+        Some(Self {
+            mid: Float3::new(d.midx, d.midy, d.midz) + offset,
+            radius,
+            height: d.height,
+        })
+    }
 }

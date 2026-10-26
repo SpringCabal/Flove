@@ -43,9 +43,8 @@ flove` commands, selecting an independently built engine via
 
 Wisp drawing gathers the existing tree rules parameters once per draw frame
 and reuses stage vertex buffers across the three stage and reflection passes.
-Creation and destruction invalidate that frame's snapshot. Mushroom AI reads
-command counts directly and reuses weighted-target scratch storage; its target
-ordering, random draws and attack behavior are unchanged.
+Creation and destruction invalidate that frame's snapshot. Mushroom AI reads command counts directly, reuses weighted-target scratch
+storage and shares one target snapshot per AI tick.
 
 Release builds use whole-program LTO and one code generation unit. The
 workspace profile applies to both installed modules and verification builds.
@@ -68,3 +67,18 @@ Growth shuffles only live trees in both versions. Decorations use terrain
 height, and weighted growth calculations retain the engine's float32 ordering.
 The visual upgrade scenario waits for three real projectile completions and
 checks promotion at the chosen tree; its deadline remains bounded.
+
+
+The scene is compiled from the original export, retaining positions, angles
+and terrain flattening. Model bounds are cached per definition and applied
+from Rust; the duplicate Lua bounds gadget is removed. Growth reproduces
+Lua's base-position rectangle and midpoint-circle query. AI targets use the
+engine's indexed live roster so a tree born this tick is immediately visible.
+Actor, target, wisp and wave-type iteration is deterministic in both ports.
+Lua also caches tree configuration and fixes its grass-distance coordinate.
+
+Mushrooms restore their aim after one second. Dying trees remain until their
+trunk turn finishes; ordinary mushrooms retain UnitBase's one-frame death
+yield. The existing animation probe covers both death lifetimes and aim
+restoration. `skip_tutorial=1` enters free play at frame four; normal launches
+keep the interactive tutorial.

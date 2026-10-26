@@ -38,6 +38,7 @@ impl Gadget<Global> for UnitScriptsGadget {
         _team: i32,
         _builder: i32,
     ) {
+        crate::definitions::defs(_ctx.spring()).configure_geometry(_ctx.spring(), unit, def);
         crate::with_cus_module(|host, spring| host.unit_created(spring, UnitId(unit), def))
             .log_err_once(_ctx.spring(), "attaching a unit script");
         let spring = _ctx.spring();

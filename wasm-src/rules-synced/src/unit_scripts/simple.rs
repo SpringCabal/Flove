@@ -78,8 +78,19 @@ pub(super) fn tree_killed(ctx: &UnitCtx, trunk: spring::cus::Piece) -> WreckLeve
             spring::cus::Angle::radians(2.0),
             spring::cus::AngularSpeed::radians_per_second(1.0),
         );
+        ctx.spawn(TaskDefinition::with_state(
+            "flove-tree-death",
+            Rc::new(RefCell::new(trunk)),
+            tree_death,
+        ));
     }
     WreckLevel::None
+}
+
+async fn tree_death(trunk: Rc<RefCell<spring::cus::Piece>>, ctx: UnitCtx) {
+    let trunk = *trunk.borrow();
+    ctx.wait_for_turn(trunk, Axis::Z).await;
+    ctx.set_killed_finished(WreckLevel::None);
 }
 
 pub(super) fn trigger_killed(_ctx: &UnitCtx) -> WreckLevel {

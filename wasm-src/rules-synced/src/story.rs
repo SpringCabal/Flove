@@ -174,17 +174,20 @@ fn damage_trees(
     trees: &TreeManager,
     target_fraction: f32,
 ) {
-    for tree_id in trees.get_tree_ids() {
+    let mut ids = trees.get_tree_ids();
+    ids.sort_unstable();
+    for tree_id in ids {
         if let Ok(health) = spring.units_info().get_unit_health(tree_id) {
             let deviation = 0.2f32;
-            let random_factor = (spring
-                .synced_random()
-                .next_float()
-                .expect("synced random float")
+            let deviation_damage = deviation
+                * health.max_health
                 * 2.0
-                - 1.0)
-                * deviation;
-            let new_h = (health.health * target_fraction + health.max_health * random_factor)
+                * (spring
+                    .synced_random()
+                    .next_float()
+                    .expect("synced random float")
+                    - 1.0);
+            let new_h = (health.max_health * target_fraction + deviation_damage)
                 .clamp(0.05 * health.max_health, 0.95 * health.max_health);
             spring
                 .unit_control()

@@ -23,7 +23,6 @@ pub struct MushroomAiUnit {
     pub unit_id: i32,
     pub def_id: i32,
     pub last_order_frame: i32,
-    pub created_frame: i32,
 }
 
 #[derive(Debug, Default)]
@@ -82,20 +81,22 @@ impl MushroomManager {
         self.initialize_waves();
     }
 
-    pub fn register_mushroom(&mut self, unit_id: i32, def_id: i32, created_frame: i32) {
-        if self.ai_units.iter().all(|u| u.unit_id != unit_id) {
-            self.ai_units.push(MushroomAiUnit {
-                unit_id,
-                def_id,
-                last_order_frame: 0,
-                created_frame,
-            });
+    pub fn register_mushroom(&mut self, unit_id: i32, def_id: i32, _created_frame: i32) {
+        if let Err(index) = self.ai_units.binary_search_by_key(&unit_id, |u| u.unit_id) {
+            self.ai_units.insert(
+                index,
+                MushroomAiUnit {
+                    unit_id,
+                    def_id,
+                    last_order_frame: 0,
+                },
+            );
         }
     }
 
     pub fn unregister_mushroom(&mut self, unit_id: i32) {
         if let Some(pos) = self.ai_units.iter().position(|u| u.unit_id == unit_id) {
-            self.ai_units.swap_remove(pos);
+            self.ai_units.remove(pos);
         }
         if let Some(pos) = self.story_mushrooms.iter().position(|&id| id == unit_id) {
             self.story_mushrooms.swap_remove(pos);
@@ -110,30 +111,21 @@ impl MushroomManager {
         trees: &TreeManager,
         free_play: bool,
     ) {
+        // Lua orders existing actors before creating the next wave.
+        self.update_ai(spring, frame, spire_id, trees);
         let wave = if free_play {
             self.due_wave(frame)
         } else {
             None
         };
-        let Some(wave) = wave else {
-            self.update_ai(spring, frame, spire_id, trees);
-            return;
-        };
-        let spawn_points = self.spawn_point_units.clone();
-        let targets = is_ai_frame(frame).then(|| collect_targets(spring, spire_id, trees));
-        crate::with_addon_context(|ctx| {
-            ctx.commands().run(move |spring| {
-                spawn_wave_at(spring, &spawn_points, wave.units, wave.spawn_king);
-                if let Some(targets) = targets {
-                    crate::with_global(|global| {
-                        global
-                            .mushrooms
-                            .access_mut()
-                            .order_idle(spring, frame, spire_id, &targets);
-                    });
-                }
-            })
-        });
+        if let Some(wave) = wave {
+            let spawn_points = self.spawn_point_units.clone();
+            crate::with_addon_context(|ctx| {
+                ctx.commands().run(move |spring| {
+                    spawn_wave_at(spring, &spawn_points, wave.units, wave.spawn_king);
+                })
+            });
+        }
     }
 
     fn due_wave(&mut self, frame: i32) -> Option<&'static WaveSpec> {
@@ -148,7 +140,7 @@ impl MushroomManager {
             let should_spawn = if !wave.spawned {
                 game_frame >= wave.spec.time_seconds * FRAMES_PER_SECOND
             } else if let (Some(repeat), Some(last)) = (wave.spec.repeat_seconds, wave.last_frame) {
-                game_frame - last >= repeat * FRAMES_PER_SECOND
+                game_frame - last > repeat * FRAMES_PER_SECOND
             } else {
                 false
             };
@@ -182,12 +174,12 @@ impl MushroomManager {
         spring: &spring::Spring<'_, spring::RulesSynced>,
         frame: i32,
         spire_id: i32,
-        trees: &TreeManager,
+        _trees: &TreeManager,
     ) {
         if !is_ai_frame(frame) {
             return;
         }
-        let targets = collect_targets(spring, spire_id, trees);
+        let targets = collect_targets(spring);
         self.order_idle(spring, frame, spire_id, &targets);
     }
 
@@ -212,9 +204,6 @@ impl MushroomManager {
             None
         };
         for (index, ai) in self.ai_units.iter_mut().enumerate() {
-            if ai.created_frame == frame {
-                continue;
-            }
             if ai.def_id == defs.small_mushroom {
                 if frame - ai.last_order_frame >= 30 {
                     ai.last_order_frame = frame;
@@ -357,6 +346,11 @@ fn spawn_wave_at(
     spawn_king: bool,
 ) {
     let defs = crate::definitions::defs(spring);
+    let mut units: Vec<_> = units
+        .iter()
+        .map(|&(kind, count)| (kind.def_id(defs), count))
+        .collect();
+    units.sort_unstable_by_key(|&(id, _)| id);
     for (idx, spawn_id) in spawn_points.iter().enumerate() {
         let Ok(spawn_pos) = spring.units_info().get_unit_position(
             *spawn_id,
@@ -372,8 +366,7 @@ fn spawn_wave_at(
             spawn_mushroom_unit(spring, defs.king_shroom, spawn_pos.x, spawn_pos.z);
         }
 
-        for &(shroom, count) in units {
-            let def_id = shroom.def_id(defs);
+        for &(def_id, count) in &units {
             if def_id <= 0 {
                 continue;
             }
@@ -428,34 +421,33 @@ fn order(
     });
 }
 
-fn collect_targets(
-    spring: &spring::Spring<'_, spring::RulesSynced>,
-    spire_id: i32,
-    trees: &TreeManager,
-) -> Vec<(i32, Float3)> {
+fn collect_targets(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<(i32, Float3)> {
+    // Query the engine's indexed live roster. TreeManager admission is deferred
+    // during a creation callback, so it can omit a tree born earlier this tick.
+    let defs = crate::definitions::defs(spring);
+    let wanted = [
+        defs.tree_level1,
+        defs.tree_level2,
+        defs.tree_level3,
+        defs.spire,
+    ];
     let mut targets = Vec::new();
-    if spire_id >= 0
-        && let Ok(pos) = spring.units_info().get_unit_position(
-            spire_id,
-            spring::units_info::GetUnitPositionOptions {
-                mid_pos: true,
-                aim_pos: false,
-            },
-        )
-    {
-        targets.push((spire_id, pos));
-    }
-    for tree_id in trees.trees.iter().map(|tree| tree.unit_id) {
-        if let Ok(pos) = spring.units_info().get_unit_position(
-            tree_id,
-            spring::units_info::GetUnitPositionOptions {
-                mid_pos: true,
-                aim_pos: false,
-            },
-        ) {
-            targets.push((tree_id, pos));
+    for &team in &defs.target_teams {
+        for id in spring
+            .units_query()
+            .get_team_units_by_defs(team, &wanted)
+            .log_err_once(spring, "querying mushroom targets")
+            .unwrap_or_default()
+        {
+            if let Ok(pos) = spring
+                .units_info()
+                .get_unit_position(id, Default::default())
+            {
+                targets.push((id, pos));
+            }
         }
     }
+    targets.sort_unstable_by_key(|(id, _)| *id);
     targets
 }
 
@@ -467,18 +459,37 @@ fn select_random_target(
     weights: &mut Vec<f32>,
     prepared: Option<&Option<jobs::Stats>>,
 ) -> Option<(i32, Float3)> {
+    if spring
+        .synced_random()
+        .next_float()
+        .expect("synced random float")
+        < 0.5
+    {
+        let nearest = spring
+            .units_query()
+            .get_unit_nearest_enemy(
+                mushroom_id,
+                10240.0,
+                spring::units_query::GetUnitNearestEnemyOptions {
+                    use_los: true,
+                    sphere_dist_test: false,
+                    check_sight_dist: false,
+                },
+            )
+            .log_err_once(spring, "finding a mushroom's nearest enemy")
+            .unwrap_or(-1);
+        // Lua returns nil immediately when the nearest-enemy query finds none.
+        // Only a spire result falls through to the weighted choice.
+        if nearest != spire_id {
+            return spring
+                .units_info()
+                .get_unit_position(nearest, Default::default())
+                .ok()
+                .map(|position| (nearest, position));
+        }
+    }
     if let Some(stats) = prepared {
         let stats = stats.as_ref()?;
-        if spring
-            .synced_random()
-            .next_float()
-            .expect("synced random float")
-            < 0.5
-            && let Some(index) = stats.nearest
-            && targets[index].0 != spire_id
-        {
-            return Some(targets[index]);
-        }
         if stats.total <= 0.0 {
             return None;
         }
@@ -490,7 +501,7 @@ fn select_random_target(
         let mut q = 0.0;
         for (target, weight) in targets.iter().zip(stats.weights()) {
             q += weight;
-            if q >= p {
+            if q > p {
                 return Some(*target);
             }
         }
@@ -499,37 +510,12 @@ fn select_random_target(
     let Ok(u_pos) = spring.units_info().get_unit_position(
         mushroom_id,
         spring::units_info::GetUnitPositionOptions {
-            mid_pos: true,
+            mid_pos: false,
             aim_pos: false,
         },
     ) else {
         return None;
     };
-
-    if spring
-        .synced_random()
-        .next_float()
-        .expect("synced random float")
-        < 0.5
-    {
-        let mut closest = None;
-        let mut min_dist_sq = f32::MAX;
-        for target in targets {
-            let dx = target.1.x - u_pos.x;
-            let dy = target.1.y - u_pos.y;
-            let dz = target.1.z - u_pos.z;
-            let dist_sq = dx * dx + dy * dy + dz * dz;
-            if dist_sq < min_dist_sq {
-                min_dist_sq = dist_sq;
-                closest = Some(*target);
-            }
-        }
-        if let Some(closest) = closest
-            && closest.0 != spire_id
-        {
-            return Some(closest);
-        }
-    }
 
     let weight = |pos: &Float3| {
         let dx = pos.x - u_pos.x;
@@ -553,7 +539,7 @@ fn select_random_target(
     let mut q = 0.0f32;
     for (target, weight) in targets.iter().zip(weights) {
         q += *weight;
-        if q >= p {
+        if q > p {
             return Some(*target);
         }
     }

@@ -223,4 +223,13 @@ impl UnitScript for FloveUnitScript {
             Some(ScriptState::Trigger) | None => simple::trigger_killed(ctx),
         }
     }
+    fn killed_pending(&self) -> bool {
+        match &self.state {
+            Some(ScriptState::Tree(trunk)) => *trunk != Piece::INVALID,
+            Some(ScriptState::Mushroom { kind, .. }) => {
+                !matches!(kind, MushroomKind::Bomb | MushroomKind::Cluster)
+            }
+            _ => false,
+        }
+    }
 }

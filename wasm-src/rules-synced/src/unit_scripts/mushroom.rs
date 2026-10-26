@@ -395,6 +395,13 @@ async fn aim_task(state: Rc<RefCell<AimState>>, ctx: UnitCtx) {
             .echo("[FloveAnimTrace] CUS_AIM_Y_DONE", "")
     });
     ctx.set_aim_ready(request.weapon, true);
+    // UnitBase starts a separate restore thread after every completed aim.
+    // Its zero signal mask keeps later aiming requests from cancelling it.
+    ctx.spawn(spring::cus::TaskDefinition::with_state(
+        "flove-mushroom-restore",
+        state,
+        restore_aim,
+    ));
     #[cfg(feature = "animation-trace")]
     let _ = ctx.with_spring(|spring| spring.messages().echo("[FloveAnimTrace] CUS_AIM_READY", ""));
 }
@@ -458,7 +465,13 @@ pub(super) fn killed(ctx: &UnitCtx, pieces: MushroomPieces, kind: MushroomKind) 
             spawn_cluster_children(ctx, unit, position);
             WreckLevel::None
         }
-        _ => WreckLevel::Three,
+        _ => {
+            ctx.spawn(spring::cus::TaskDefinition::new(
+                "flove-unitbase-death",
+                unitbase_death,
+            ));
+            WreckLevel::Three
+        }
     }
 }
 
@@ -497,11 +510,29 @@ fn spawn_cluster_children(ctx: &UnitCtx, unit: UnitId, position: Float3) {
                         Float3::new(x, position.y + 20.0, z),
                         0,
                         team,
-                        crate::definitions::unit_create_options(),
+                        spring::unit_control::CreateUnitOptions {
+                            flatten_ground: true,
+                            ..crate::definitions::unit_create_options()
+                        },
                     ),
                     || alloc::format!("spawning a cluster child of unit {}", unit.0),
                 );
             }
         })
     });
+}
+
+async fn restore_aim(state: Rc<RefCell<AimState>>, ctx: UnitCtx) {
+    let pieces = state.borrow().pieces;
+    sleep_millis(&ctx, 1000.0).await;
+    turn(&ctx, pieces.muzzle, Axis::Y, 0.0, 90.0f32.to_radians());
+    turn(&ctx, pieces.muzzle, Axis::X, 0.0, 100.0f32.to_radians());
+    ctx.wait_for_turn(pieces.muzzle, Axis::X).await;
+    ctx.wait_for_turn(pieces.muzzle, Axis::Y).await;
+}
+
+async fn unitbase_death(ctx: UnitCtx) {
+    // UnitBase.lua yields once before returning its wreck level.
+    sleep_millis(&ctx, 10.0).await;
+    ctx.set_killed_finished(WreckLevel::Three);
 }
