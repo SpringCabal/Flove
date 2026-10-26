@@ -20,11 +20,18 @@ end
 
 local file = "LuaRules/Configs/spawn.lua"
 
+local pendingLoad = false
 function gadget:Initialize()
 	if Game.gameName == "Scened LD34" then
 		gadgetHandler:RemoveGadget()
 		return
 	end
+	pendingLoad = true
+end
+
+function gadget:GameFrame()
+	if not pendingLoad then return end
+	pendingLoad = false
 	self:clear()
 	local data = loadstring(VFS.LoadFile(file))()
 	self:load(data.units)
@@ -164,7 +171,7 @@ function gadget:load(units)
     self.unitIdCounter = 0
     -- load the units without the commands
     local unitCommands = {} 
-    for _, unit in pairs(units) do
+    for _, unit in ipairs(units) do
         local commands = unit.commands
         unit.commands = nil
         local unitId = self:loadUnit(unit)

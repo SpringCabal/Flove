@@ -97,7 +97,7 @@ local MAX_TREE_HEIGHT = 1600
 --------------------------------------------------------------------------------
 
 local function SpawnUnit(unitDefID, x, z, noRotate)
-	local unitID = Spring.CreateUnit(unitDefID, x, 0, z, 0, 1, false, false)
+	local unitID = Spring.CreateUnit(unitDefID, x, Spring.GetGroundHeight(x,z), z, 0, 1, false, false)
 	if not noRotate then
 		Spring.SetUnitRotation(unitID, 0, math.random()*2*math.pi, 0)
 	end
@@ -128,7 +128,7 @@ end
 --------------------------------------------------------------------------------
 
 function gadget:Initialize()
-    nextTreeSpawnTime = NewTreeSpawnTime()       
+    nextTreeSpawnTime = nil
     
     -- fix this, it breaks with luarules reload but no idea why
     local units = Spring.GetAllUnits()
@@ -140,6 +140,7 @@ end
 
 local _loadFrame
 function gadget:GameFrame(frame)
+	if nextTreeSpawnTime == nil then nextTreeSpawnTime = NewTreeSpawnTime() end
 	-- spawn base wave
 	if _loadFrame == nil then
 		_loadFrame = frame + 3
@@ -264,8 +265,15 @@ end
 
 function SpawnTree()
     -- now choose a position in which to spawn a new (L1) tree
-    local units = Spring.GetAllUnits()
-    
+    -- Only trees are candidate parents. Shuffling grass and tunnel markers
+    -- costs random draws and work proportional to decorative unit count.
+    local units = {}
+    for _, id in ipairs(Spring.GetAllUnits()) do
+        if UnitDefs[Spring.GetUnitDefID(id)].customParams.tree and not Spring.GetUnitIsDead(id) then
+            units[#units+1] = id
+        end
+    end
+
     -- knuth shuffle, because Spring.GetAllUnits order is predictable
     local perm = {}
     for i=1,#units do
