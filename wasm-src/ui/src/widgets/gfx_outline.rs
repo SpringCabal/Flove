@@ -30,6 +30,10 @@ impl Widget<Global> for GfxOutlineWidget {
         outline::draw_world_pre_unit(spring, &self.outline, &self.created_frames);
     }
 
+    fn shutdown(&self, ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>) {
+        self.outline.borrow_mut().shutdown(ctx.spring());
+    }
+
     fn unit_destroyed(
         &self,
         _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,

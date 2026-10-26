@@ -1,6 +1,8 @@
+mod batch;
 mod passes;
 mod resources;
 
+use alloc::rc::Rc;
 use core::cell::RefCell;
 
 use spring::ResultExt;
@@ -13,6 +15,7 @@ use resources::{Shaders, Targets};
 #[derive(Default)]
 pub struct Outline {
     initialized: bool,
+    batch: Rc<batch::Batch>,
     vsx: i32,
     vsy: i32,
     res_changed: bool,
@@ -21,6 +24,7 @@ pub struct Outline {
 }
 
 struct Frame {
+    batch: Rc<batch::Batch>,
     targets: Targets,
     shaders: Shaders,
     vsx: i32,
@@ -59,6 +63,18 @@ impl Outline {
         self.initialized = true;
     }
 
+    pub fn shutdown(&mut self, spring: &spring::Spring<'_, spring::Ui>) {
+        self.batch.shutdown(spring);
+        if let Some(targets) = self.targets.take() {
+            targets.delete(spring);
+        }
+        for shader in [self.shaders.depth, self.shaders.blur_h, self.shaders.blur_v] {
+            if shader != 0 {
+                let _ = spring.gfx().delete_shader(shader);
+            }
+        }
+    }
+
     pub fn on_view_resize(&mut self, spring: &spring::Spring<'_, spring::Ui>, vsx: i32, vsy: i32) {
         self.vsx = vsx;
         self.vsy = vsy;
@@ -87,6 +103,7 @@ impl Outline {
             resources::set_view_size_uniforms(spring, &self.shaders, self.vsx, self.vsy);
         }
         Some(Frame {
+            batch: Rc::clone(&self.batch),
             targets,
             shaders: self.shaders,
             vsx: self.vsx,
@@ -104,6 +121,7 @@ pub fn draw_world_pre_unit(
         return;
     };
     let Frame {
+        batch,
         targets,
         shaders,
         vsx,
@@ -129,7 +147,15 @@ pub fn draw_world_pre_unit(
     spring
         .gfx()
         .render_to_texture(&targets.offscreen, |spring| {
-            passes::draw_visible_units(spring, &camera, shaders.tree_deformation, created_frames);
+            passes::draw_visible_units(
+                spring,
+                &camera,
+                shaders.depth,
+                shaders.tree_deformation,
+                created_frames,
+                &batch,
+                (vsx, vsy),
+            );
         })
         .log_err_once(spring, "drawing outline silhouettes");
 

@@ -82,3 +82,8 @@ trunk turn finishes; ordinary mushrooms retain UnitBase's one-frame death
 yield. The existing animation probe covers both death lifetimes and aim
 restoration. `skip_tutorial=1` enters free play at frame four; normal launches
 keep the interactive tutorial.
+
+Outlines submit animated models through the engine's GL4 model buffers in one
+batch, retaining piece poses, tree deformation and upgrade highlighting.
+Drivers without model-buffer support use the existing renderer. The Lua
+startup also honors `skip_tutorial=1` before constructing its story dialog.

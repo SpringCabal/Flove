@@ -145,8 +145,11 @@ pub(super) struct Camera {
 pub(super) fn draw_visible_units(
     spring: &spring::Spring<'_, spring::Ui>,
     camera: &Camera,
+    shader: u32,
     deformation_location: i32,
     created_frames: &RefCell<CreatedFrames>,
+    batch: &super::batch::Batch,
+    size: (i32, i32),
 ) {
     let _ = spring.gfx().push_attrib(gl::ALL_ATTRIB_BITS);
     let _ = spring.gfx().alpha_test(false, gl::ALWAYS, 0.0);
@@ -176,9 +179,18 @@ pub(super) fn draw_visible_units(
     let current_frame = spring.game().current_frame().unwrap_or(0) as u32;
     let hovered = hovered_unit(spring);
 
+    let use_batch = batch.available(spring);
+    if !use_batch {
+        let _ = spring.gfx().use_shader(shader);
+    }
+    let mut batch_ids = Vec::new();
+    let mut effects = Vec::new();
     let mut last_deformation = None;
     let mut last_highlight = false;
     for &unit_id in &unit_ids {
+        if use_batch && !spring.units_query().valid_unit_id(unit_id).unwrap_or(false) {
+            continue;
+        }
         let Some(unit) = created_frames
             .borrow_mut()
             .unit(spring, unit_id, current_frame)
@@ -197,6 +209,22 @@ pub(super) fn draw_visible_units(
             current_frame,
             created_frames,
         );
+        let highlight = hovered == Some(unit_id)
+            && matches!(kind, OutlineKind::Tree(1 | 2))
+            && !spring
+                .units_info()
+                .get_unit_is_dead(unit_id)
+                .unwrap_or(true);
+        if use_batch {
+            batch_ids.push(unit_id as u32);
+            effects.extend_from_slice(&[
+                deformation[0],
+                deformation[1],
+                deformation[2],
+                if highlight { 1.0 } else { 0.0 },
+            ]);
+            continue;
+        }
         if last_deformation != Some(deformation) {
             spring
                 .gfx()
@@ -204,12 +232,6 @@ pub(super) fn draw_visible_units(
                 .log_err_once(spring, "setting outline deformation");
             last_deformation = Some(deformation);
         }
-        let highlight = hovered == Some(unit_id)
-            && matches!(kind, OutlineKind::Tree(1 | 2))
-            && !spring
-                .units_info()
-                .get_unit_is_dead(unit_id)
-                .unwrap_or(true);
         if highlight != last_highlight {
             if highlight {
                 let _ = spring.gfx().color(0.1, 1.0, 0.65, OUTLINE_THICKNESS);
@@ -234,6 +256,19 @@ pub(super) fn draw_visible_units(
             .log_err_once(spring, "drawing an outline unit");
     }
 
+    if use_batch && !batch.draw(spring, &batch_ids, &effects, size) {
+        // Batch marks itself unavailable after an API failure. Retain the
+        // legacy renderer for unsupported drivers and transient resource loss.
+        draw_visible_units(
+            spring,
+            camera,
+            shader,
+            deformation_location,
+            created_frames,
+            batch,
+            size,
+        );
+    }
     let _ = spring.gfx().color(1.0, 1.0, 1.0, 1.0);
     let _ = spring.gfx().pop_attrib();
 }
