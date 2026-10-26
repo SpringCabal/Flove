@@ -61,3 +61,10 @@ their original order. A dedicated worker module has an 8 MiB fixed memory.
 For measurements, use the springcabal-dev performance runner with
 `--rust-jobs off|on|check --worker-threads 1|4`; compare jobs at the same
 engine pool width.
+
+The Lua/Rust startup uses the same frame-zero markers and frame-three groves
+and tunnels, including placement jitter, ownership and tree wisp RNG order.
+Growth shuffles only live trees in both versions. Decorations use terrain
+height, and weighted growth calculations retain the engine's float32 ordering.
+The visual upgrade scenario waits for three real projectile completions and
+checks promotion at the chosen tree; its deadline remains bounded.

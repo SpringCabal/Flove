@@ -66,10 +66,10 @@ pub fn spawn_tree(spring: &spring::Spring<'_, spring::RulesSynced>, spire_id: i3
         let Some(spire) = ground_position(spring, spire_id) else {
             return;
         };
-        let weights: Vec<f64> = spots
+        let weights: Vec<f32> = spots
             .iter()
             .map(|&(x, z)| {
-                let (dx, dz) = (f64::from(spire.x - x), f64::from(spire.z - z));
+                let (dx, dz) = (spire.x - x, spire.z - z);
                 let dist_sq = dx * dx + dz * dz;
                 if dist_sq > 0.0 {
                     1.0 / (dist_sq * dist_sq)
@@ -78,16 +78,15 @@ pub fn spawn_tree(spring: &spring::Spring<'_, spring::RulesSynced>, spire_id: i3
                 }
             })
             .collect();
-        let total: f64 = weights.iter().sum();
+        let total: f32 = weights.iter().sum();
         if total <= 0.0 {
             return;
         }
-        let pick = f64::from(
-            spring
-                .synced_random()
-                .next_float()
-                .expect("synced random float"),
-        ) * total;
+        let pick = spring
+            .synced_random()
+            .next_float()
+            .expect("synced random float")
+            * total;
         let mut sum = 0.0;
         let Some(index) = weights.iter().position(|weight| {
             sum += weight;
@@ -99,7 +98,7 @@ pub fn spawn_tree(spring: &spring::Spring<'_, spring::RulesSynced>, spire_id: i3
     };
     let defs = crate::definitions::defs(spring);
     if create_with_random_yaw(spring, defs.tree_level1, x, z, PLAYER_TEAM_ID).is_some() {
-        spawn_grass(spring, x, z, 3, 5, MIN_TREE_DISTANCE);
+        spawn_grass(spring, x, z, 3, 5, MIN_TREE_DISTANCE, 10.0);
     }
 }
 
@@ -204,6 +203,7 @@ pub fn spawn_grass(
     min_count: i32,
     max_count: i32,
     side: f32,
+    min_radius: f32,
 ) {
     let defs = crate::definitions::defs(spring);
     for _ in 0..spring
@@ -223,7 +223,9 @@ pub fn spawn_grass(
             .expect("synced random float")
             * side
             - side / 2.0;
-        if is_steep(spring, gx, gz) {
+        if is_steep(spring, gx, gz)
+            || (min_radius > 0.0 && ((x - gx).powi(2) + (z - gz).powi(2)).sqrt() <= min_radius)
+        {
             continue;
         }
         let grass = defs.grass[spring

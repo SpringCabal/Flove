@@ -3,7 +3,7 @@ pub const LOG_SECTION: &str = "flove-rules";
 macro_rules! trace {
     ($spring:expr, $($arg:tt)*) => {
         if cfg!(feature = "diagnostics") {
-            spring::log_info!($spring, $crate::diagnostics::LOG_SECTION, $($arg)*);
+            spring::log_notice!($spring, $crate::diagnostics::LOG_SECTION, $($arg)*);
         }
     };
 }

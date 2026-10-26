@@ -37,14 +37,21 @@ impl Gadget<Global> for TreesGadget {
         let Some(level) = crate::definitions::defs(spring).tree_level(def) else {
             return;
         };
+        // Consume this draw during UnitCreated, before the caller sets yaw
+        // or places grass. Queuing the draw changes the whole world's RNG.
+        let config = crate::trees::tree_config(level);
+        let next_wisp = spring.game().current_frame().unwrap_or(0)
+            + spring
+                .synced_random()
+                .next_int(config.min_wisp_interval, config.max_wisp_interval)
+                .expect("synced random int");
         crate::with_addon_context(|ctx| {
             ctx.commands().run(move |spring| {
                 crate::with_global(|global| {
-                    let frame = spring.game().current_frame().unwrap_or(0);
                     global
                         .trees
                         .access_mut()
-                        .add_tree(spring, unit, level, frame);
+                        .add_tree(spring, unit, level, next_wisp);
                 });
             })
         });

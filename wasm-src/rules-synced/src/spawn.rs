@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use core::f32::consts::TAU;
+use core::f32::consts::PI;
 
 use spring::Float3;
 
@@ -13,7 +13,6 @@ pub fn populate_world(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<i
     let defs = crate::definitions::defs(spring);
     reveal_map(spring);
 
-    let mut base_points = Vec::new();
     let mut spawn_point_units = Vec::new();
 
     for point in &INITIAL_UNITS {
@@ -28,11 +27,8 @@ pub fn populate_world(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<i
         if def_id <= 0 {
             continue;
         }
-        let team = if point.marker == Marker::MushroomSpawn {
-            ENEMY_TEAM_ID
-        } else {
-            PLAYER_TEAM_ID
-        };
+        // All scenario markers belong to the player; enemies spawn later.
+        let team = PLAYER_TEAM_ID;
 
         if let Some(unit_id) = crate::diagnostics::check(
             spring,
@@ -71,20 +67,47 @@ pub fn populate_world(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<i
                         block_height_changes: false,
                     },
                 );
-                if point.marker == Marker::Base {
-                    base_points.push(Float3::new(point.x, point.y, point.z));
-                } else if point.marker == Marker::MushroomSpawn {
+                if point.marker == Marker::MushroomSpawn {
                     spawn_point_units.push(unit_id);
-                    spawn_tunnel_tubes(spring, point.x, point.z);
                 }
             }
         }
     }
 
-    for pos in base_points {
-        spawn_base_tree(spring, pos.x, pos.z);
-    }
     spawn_point_units
+}
+
+/// The original grove and mushroom gadgets populate on their fourth tick,
+/// with every base grove before the tunnel tubes. Keep the shared RNG order.
+pub fn populate_decorations(spring: &spring::Spring<'_, spring::RulesSynced>) {
+    let defs = crate::definitions::defs(spring);
+    let mut bases = Vec::new();
+    let mut spawns = Vec::new();
+    for unit in spring.units_query().get_all_units().unwrap_or_default() {
+        let Ok(def) = spring.units_info().get_unit_def_id(unit) else {
+            continue;
+        };
+        if def != defs.base && def != defs.mushroom_spawn {
+            continue;
+        }
+        let Ok(position) = spring
+            .units_info()
+            .get_unit_position(unit, Default::default())
+        else {
+            continue;
+        };
+        if def == defs.base {
+            bases.push(position);
+        } else {
+            spawns.push(position);
+        }
+    }
+    for position in bases {
+        spawn_base_tree(spring, position.x, position.z);
+    }
+    for position in spawns {
+        spawn_tunnel_tubes(spring, position.x, position.z);
+    }
 }
 
 fn reveal_map(spring: &spring::Spring<'_, spring::RulesSynced>) {
@@ -99,7 +122,7 @@ fn spawn_base_tree(spring: &spring::Spring<'_, spring::RulesSynced>, x: f32, z: 
         return;
     }
     if create_with_random_yaw(spring, defs.tree_level1, x, z, PLAYER_TEAM_ID).is_some() {
-        spawn_grass(spring, x, z, 8, 12, 500.0);
+        spawn_grass(spring, x, z, 8, 12, 500.0, 0.0);
     }
 }
 
@@ -131,6 +154,22 @@ fn spawn_tunnel_tubes(
                     .expect("synced random float")
                     * tube_radius
                 - tube_radius * 0.5;
+            let ux = ux
+                + 10.0
+                    * (2.0
+                        * spring
+                            .synced_random()
+                            .next_float()
+                            .expect("synced random float")
+                        - 1.0);
+            let uz = uz
+                + 10.0
+                    * (2.0
+                        * spring
+                            .synced_random()
+                            .next_float()
+                            .expect("synced random float")
+                        - 1.0);
             create_with_random_yaw(spring, tube_def, ux, uz, ENEMY_TEAM_ID);
         }
     }
@@ -143,11 +182,10 @@ pub fn create_with_random_yaw(
     z: f32,
     team: i32,
 ) -> Option<i32> {
-    let yaw = spring
-        .synced_random()
-        .next_float()
-        .expect("synced random float")
-        * TAU;
+    let y = spring
+        .terrain()
+        .get_ground_height(x, z)
+        .expect("ground height for a spawned decoration");
     let unit_id = crate::diagnostics::check(
         spring,
         spring.unit_control().create_unit(
@@ -155,13 +193,20 @@ pub fn create_with_random_yaw(
                 name: String::new(),
                 id: def_id,
             },
-            Float3::new(x, 0.0, z),
+            Float3::new(x, y, z),
             0,
             team,
             crate::definitions::unit_create_options(),
         ),
         || alloc::format!("spawning a unit of def {def_id}"),
     )?;
+    // UnitCreated (including the tree's wisp timer) consumes RNG before yaw.
+    let yaw = spring
+        .synced_random()
+        .next_float()
+        .expect("synced random float")
+        * 2.0
+        * PI;
     let _ = spring
         .unit_control()
         .set_unit_rotation(unit_id, Float3::new(0.0, yaw, 0.0));

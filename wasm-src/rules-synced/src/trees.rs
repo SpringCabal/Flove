@@ -35,17 +35,11 @@ impl TreeManager {
         spring: &spring::Spring<'_, spring::RulesSynced>,
         unit_id: i32,
         level: i32,
-        frame: i32,
+        next_wisp: i32,
     ) {
         if self.trees.iter().any(|t| t.unit_id == unit_id) {
             return;
         }
-        let config = tree_config(level);
-        let next_wisp = frame
-            + spring
-                .synced_random()
-                .next_int(config.min_wisp_interval, config.max_wisp_interval)
-                .expect("synced random int");
         self.trees.push(Tree {
             unit_id,
             level,

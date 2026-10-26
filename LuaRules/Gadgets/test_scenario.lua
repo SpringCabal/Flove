@@ -64,6 +64,8 @@ if not gadgetHandler:IsSyncedCode() then
 			return
 		end
 		local f = frame - startF
+        -- Capture the promoted tree after its projectile callbacks finish.
+        if shot.frame == 145 and Spring.GetGameRulesParam("test_upgrade_complete") ~= 1 then return end
 		if f >= shot.frame then
 			nextShot = nextShot + 1
 			Spring.Echo("[Flove-Test] Taking screenshot " .. shot.name .. " at gameframe=" .. tostring(frame) .. " rel=" .. tostring(f))
@@ -81,6 +83,9 @@ local startFrame = nil
 local testTreeID = nil
 local testMushID = nil
 local bossID = nil
+local upgradeTreeID, upgradeX, upgradeZ
+local upgradeProjectiles, upgradesFired, upgradesLanded = {}, 0, 0
+local upgradeChecked = false
 local passCount = 0
 local failCount = 0
 -- Every Assert below passes exactly once.
@@ -114,6 +119,22 @@ end
 function gadget:Initialize()
 	Spring.Echo("[Flove-Test] Initializing Flove automated test scenario...")
 	Spring.SetGameRulesParam("test_mode", 1)
+    Script.SetWatchWeapon(WeaponDefNames.upgradeshot.id, true)
+end
+
+function gadget:ProjectileCreated(id, owner, weapon)
+    if startFrame and Spring.GetGameFrame() - startFrame >= 90
+        and weapon == WeaponDefNames.upgradeshot.id then
+        upgradeProjectiles[id] = true
+        upgradesFired = upgradesFired + 1
+    end
+end
+
+function gadget:ProjectileDestroyed(id)
+    if upgradeProjectiles[id] then
+        upgradeProjectiles[id] = nil
+        upgradesLanded = upgradesLanded + 1
+    end
 end
 
 function gadget:GameFrame(frame)
@@ -223,21 +244,28 @@ function gadget:GameFrame(frame)
 	if f == 90 or f == 110 or f == 130 then
 		Spring.Echo("[Flove-Test] Step 5 (f=" .. tostring(f) .. "): Dispatching upgrade shot...")
 		Spring.SendLuaRulesMsg("add_mana|100")
-		local targetTree = nil
+		local targetTree = upgradeTreeID
 		local minD = 999999
-		for _, uid in ipairs(Spring.GetAllUnits()) do
-			local ud = UnitDefs[Spring.GetUnitDefID(uid)]
-			if ud and ud.customParams and ud.customParams.tree then
-				local ux, uy, uz = Spring.GetUnitPosition(uid)
-				local d = (ux - 4688)^2 + (uz - 5630)^2
-				if d < minD then
-					minD = d
-					targetTree = uid
+		if not targetTree then
+			for _, uid in ipairs(Spring.GetAllUnits()) do
+				local ud = UnitDefs[Spring.GetUnitDefID(uid)]
+				if ud and ud.customParams and ud.customParams.tree then
+					local ux, uy, uz = Spring.GetUnitPosition(uid)
+					local d = (ux - 4688)^2 + (uz - 5630)^2
+					if d < minD then
+						minD = d
+						targetTree = uid
+					end
 				end
 			end
 		end
 		if targetTree and Spring.ValidUnitID(targetTree) then
+            -- Keep all three shots on one tree even if natural growth creates
+            -- another candidate during the sequence.
+            upgradeTreeID = targetTree
 			local ux, uy, uz = Spring.GetUnitPosition(targetTree)
+            upgradeX, upgradeZ = ux, uz
+            Spring.Echo("[Flove-Test] Upgrade target=" .. targetTree .. " at " .. ux .. "," .. uz)
 			Spring.SendLuaRulesMsg("upgrade|" .. tostring(targetTree) .. "|" .. math.floor(ux) .. "|" .. math.floor(uy) .. "|" .. math.floor(uz))
 		end
 	end
@@ -249,10 +277,15 @@ function gadget:GameFrame(frame)
 		Spring.SendLuaRulesMsg("field_of_flowers|4688|1370|5650")
 	end
 
-	-- Three upgrade shots have landed on the tree.
-	if f == 145 then
-		local level2 = CountUnits(function(ud) return ud.name == "treelevel2" end)
-		Assert(level2 > 0, "Upgrade shots promoted a tree to level 2 (" .. level2 .. " level-2 trees)")
+    -- SendLuaRulesMsg delivery is asynchronous. Wait for the real projectile
+    -- callbacks, retaining a deadline before the next ability is dispatched.
+    if not upgradeChecked and f >= 145 and (upgradesLanded >= 3 or f >= 159) then
+        upgradeChecked = true
+		local level2 = upgradeX and CountUnits(function(ud) return ud.name == "treelevel2" end, upgradeX, upgradeZ, 32) or 0
+        Assert(upgradesFired == 3 and upgradesLanded == 3 and level2 > 0,
+            "Upgrade shots promoted the target tree to level 2 (" .. upgradesFired
+            .. " fired, " .. upgradesLanded .. " finished, " .. level2 .. " level-2 trees)")
+        Spring.SetGameRulesParam("test_upgrade_complete", 1)
 	end
 
 	-- The flower shot has landed and its field bloomed.
