@@ -125,6 +125,7 @@ local glPopMatrix     = gl.PopMatrix
 
 --tables
 local unbuiltUnits = {}
+local unitDefinitions, treeGeometry = {}, {}
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -367,13 +368,19 @@ local function DrawVisibleUnits(overrideEngineDraw, deform)
   local checknow = frame % 15 == 0
   local hovered = HoveredUpgradeableTree()
   local visibleUnits = GetVisibleUnits(ALL_UNITS, nil, false)
+  local lastSway, lastGrown, lastHeight, lastHighlight
+  lastHighlight = false -- caller starts with black
   for i = 1, #visibleUnits do
     local unitID = visibleUnits[i]
-    local defID = Spring.GetUnitDefID(unitID)
-    local def = defID and UnitDefs[defID]
+    local def = unitDefinitions[unitID]
+    if not def then
+      local defID = Spring.GetUnitDefID(unitID)
+      def = defID and UnitDefs[defID]
+      unitDefinitions[unitID] = def
+    end
     -- Units can disappear between the visibility query and this draw.
     if def and not def.customParams.effect then
-      if checknow then
+      if checknow and unbuiltUnits[unitID] then
         local progress = select(5, GetUnitHealth(unitID))
         unbuiltUnits[unitID] = progress and progress < 1 or nil
       end
@@ -384,16 +391,24 @@ local function DrawVisibleUnits(overrideEngineDraw, deform)
           local factor = isTree and 0.002 or 0.0001
           sway = factor * math.sin(unitID % 10 + frame / (unitID % 7 + 6))
           if isTree then
-            local created = Spring.GetUnitRulesParam(unitID, "createdFrame") or 0
-            grown = math.min(1, (frame - created) / (33 * 0.5))
-            height = Spring.GetUnitHeight(unitID)
+            local geometry = treeGeometry[unitID]
+            if not geometry then
+              geometry = {Spring.GetUnitRulesParam(unitID, "createdFrame") or 0, Spring.GetUnitHeight(unitID)}
+              treeGeometry[unitID] = geometry
+            end
+            grown = math.min(1, (frame - geometry[1]) / (33 * 0.5))
+            height = geometry[2]
           end
         end
-        if deform then glUniform(uniformTreeDeformation, sway, grown, height) end
-        if hovered == unitID then
-          glColor(0.1, 1.0, 0.65, thickness)
-        else
-          glColor(0, 0, 0, thickness)
+        if deform and (sway ~= lastSway or grown ~= lastGrown or height ~= lastHeight) then
+          glUniform(uniformTreeDeformation, sway, grown, height)
+          lastSway, lastGrown, lastHeight = sway, grown, height
+        end
+        local highlighted = hovered == unitID
+        if highlighted ~= lastHighlight then
+          if highlighted then glColor(0.1, 1.0, 0.65, thickness)
+          else glColor(0, 0, 0, thickness) end
+          lastHighlight = highlighted
         end
         -- The silhouette owns its shader uniforms; the material callback must
         -- not change them while raw model pieces are being drawn.
@@ -513,6 +528,7 @@ end
 
 function widget:UnitDestroyed(unitID)
   unbuiltUnits[unitID] = nil
+  unitDefinitions[unitID], treeGeometry[unitID] = nil, nil
 end
 
 
