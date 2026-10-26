@@ -124,6 +124,7 @@ local glPopMatrix     = gl.PopMatrix
 --------------------------------------------------------------------------------
 
 --tables
+local outlineBatch = VFS.Include("LuaUI/Widgets/Include/outline_batch.lua")
 local unbuiltUnits = {}
 local unitDefinitions, treeGeometry = {}, {}
 
@@ -343,6 +344,7 @@ function widget:Shutdown()
 
   gl.DeleteList(enter2d or 0)
   gl.DeleteList(leave2d or 0)
+  outlineBatch.delete()
 end
 
 
@@ -363,7 +365,8 @@ local function HoveredUpgradeableTree()
   end
 end
 
-local function DrawVisibleUnits(overrideEngineDraw, deform)
+local function DrawVisibleUnits(overrideEngineDraw, deform, batch)
+  local batchIDs, batchData = {}, {}
   local frame = Spring.GetGameFrame()
   local checknow = frame % 15 == 0
   local hovered = HoveredUpgradeableTree()
@@ -379,7 +382,7 @@ local function DrawVisibleUnits(overrideEngineDraw, deform)
       unitDefinitions[unitID] = def
     end
     -- Units can disappear between the visibility query and this draw.
-    if def and not def.customParams.effect then
+    if def and not def.customParams.effect and (not batch or Spring.ValidUnitID(unitID)) then
       if checknow and unbuiltUnits[unitID] then
         local progress = select(5, GetUnitHealth(unitID))
         unbuiltUnits[unitID] = progress and progress < 1 or nil
@@ -400,6 +403,12 @@ local function DrawVisibleUnits(overrideEngineDraw, deform)
             height = geometry[2]
           end
         end
+        if batch then
+          batchIDs[#batchIDs+1] = unitID
+          local offset = #batchData
+          batchData[offset+1], batchData[offset+2] = sway, grown
+          batchData[offset+3], batchData[offset+4] = height, hovered == unitID and 1 or 0
+        else
         if deform and (sway ~= lastSway or grown ~= lastGrown or height ~= lastHeight) then
           glUniform(uniformTreeDeformation, sway, grown, height)
           lastSway, lastGrown, lastHeight = sway, grown, height
@@ -413,8 +422,13 @@ local function DrawVisibleUnits(overrideEngineDraw, deform)
         -- The silhouette owns its shader uniforms; the material callback must
         -- not change them while raw model pieces are being drawn.
         glUnit(unitID, overrideEngineDraw, nil, true)
+        end
       end
     end
+  end
+  if batch and not outlineBatch.draw(batchIDs, batchData, vsx, vsy, thickness) then
+    glUseShader(depthShader)
+    DrawVisibleUnits(overrideEngineDraw, deform, false)
   end
 end
 
@@ -429,7 +443,9 @@ local MyDrawVisibleUnits = function()
   glPushMatrix()
   glResetMatrices()
   glColor(0,0,0,thickness)
-  DrawVisibleUnits(true, true)
+  local batch = outlineBatch.available()
+  if not batch then glUseShader(depthShader) end
+  DrawVisibleUnits(true, true, batch)
   glColor(1,1,1,1)
   glPopMatrix()
   gl.PopAttrib()

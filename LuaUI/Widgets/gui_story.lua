@@ -306,6 +306,12 @@ function widget:Update()
 		FinishRestart()
 		return
 	end
+	-- The rules can enter free play directly (skip_tutorial=1). Complete
+	-- the UI startup too, without sending a second skip and spawning trees again.
+	if not window and Spring.GetGameRulesParam("skip_tutorial") == 1 then
+		StartGame(1)
+		window:Hide()
+	end
 	if not window then
 		return
 	end
