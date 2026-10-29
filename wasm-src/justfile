@@ -11,9 +11,9 @@ build: fmt clippy
 
 copy: build
     mkdir -p ../LuaRules/wasm ../LuaUI/wasm
-    cp target/wasm32-unknown-unknown/release/flove_jobs_wasm.wasm ../LuaRules/wasm/flove-jobs.wasm
-    cp target/wasm32-unknown-unknown/release/flove_rules_wasm.wasm ../LuaRules/wasm/flove-rules.wasm
-    cp target/wasm32-unknown-unknown/release/flove_ui_wasm.wasm ../LuaUI/wasm/flove-ui.wasm
+    cp "${CARGO_TARGET_DIR:-target}/wasm32-unknown-unknown/release/flove_jobs_wasm.wasm" ../LuaRules/wasm/flove-jobs.wasm
+    cp "${CARGO_TARGET_DIR:-target}/wasm32-unknown-unknown/release/flove_rules_wasm.wasm" ../LuaRules/wasm/flove-rules.wasm
+    cp "${CARGO_TARGET_DIR:-target}/wasm32-unknown-unknown/release/flove_ui_wasm.wasm" ../LuaUI/wasm/flove-ui.wasm
 
 # Host tests of the crate the rules and UI share.
 test:
