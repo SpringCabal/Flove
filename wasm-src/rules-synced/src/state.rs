@@ -10,6 +10,8 @@ use crate::trees::TreeManager;
 use crate::victory::VictoryManager;
 
 pub struct Global {
+    pub published_status:
+        [springcabal::message::SendOnChange<f32>; crate::status::Status::PARAMS.len()],
     pub round: Cell<u32>,
     pub mana: Resource<i32>,
     pub spire: Resource<SpireState>,
@@ -23,6 +25,7 @@ pub struct Global {
 impl Default for Global {
     fn default() -> Self {
         Self {
+            published_status: Default::default(),
             round: Cell::new(0),
             mana: Resource::new(0),
             spire: Resource::new(SpireState::new()),

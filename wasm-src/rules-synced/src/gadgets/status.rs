@@ -1,5 +1,4 @@
 use spring_addons::rules::Gadget;
-use springcabal::message::SendOnChange;
 
 use crate::mushrooms::{SHROOM_EVENT_KING_DEFEATED, SHROOM_EVENT_KING_SPAWNED};
 use crate::state::Global;
@@ -7,13 +6,11 @@ use crate::status::{self, Status};
 use crate::story;
 
 #[derive(Default)]
-pub struct StatusGadget {
-    published: [SendOnChange<f32>; Status::PARAMS.len()],
-}
+pub struct StatusGadget;
 
 impl StatusGadget {
     pub fn new() -> Self {
-        Self::default()
+        Self
     }
 }
 
@@ -41,8 +38,8 @@ impl Gadget<Global> for StatusGadget {
             game_over: victory.game_over,
             won: victory.won,
         };
-        for ((last, name), value) in self
-            .published
+        for ((last, name), value) in global
+            .published_status
             .iter()
             .zip(Status::PARAMS)
             .zip(status.values())

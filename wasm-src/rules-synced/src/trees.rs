@@ -22,12 +22,16 @@ pub struct Tree {
 
 #[derive(Debug, Default)]
 pub struct TreeManager {
+    power: i32,
     pub trees: Vec<Tree>,
 }
 
 impl TreeManager {
     pub fn new() -> Self {
-        Self { trees: Vec::new() }
+        Self {
+            trees: Vec::new(),
+            power: 0,
+        }
     }
 
     pub fn add_tree(
@@ -40,6 +44,7 @@ impl TreeManager {
         let Err(index) = self.trees.binary_search_by_key(&unit_id, |t| t.unit_id) else {
             return;
         };
+        self.power += tree_config(level).power;
         self.trees.insert(
             index,
             Tree {
@@ -60,7 +65,8 @@ impl TreeManager {
 
     pub fn remove_tree(&mut self, unit_id: i32) -> bool {
         if let Some(pos) = self.trees.iter().position(|t| t.unit_id == unit_id) {
-            self.trees.remove(pos);
+            let tree = self.trees.remove(pos);
+            self.power -= tree_config(tree.level).power;
             true
         } else {
             false
@@ -132,7 +138,7 @@ impl TreeManager {
     }
 
     pub fn total_power(&self) -> i32 {
-        self.trees.iter().map(|t| tree_config(t.level).power).sum()
+        self.power
     }
 
     pub fn update_wisps(

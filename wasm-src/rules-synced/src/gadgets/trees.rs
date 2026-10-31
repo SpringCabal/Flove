@@ -53,6 +53,7 @@ impl Gadget<Global> for TreesGadget {
                         .trees
                         .access_mut()
                         .add_tree(spring, unit, level, next_wisp);
+                    crate::status::publish_power(spring, global);
                 });
             })
         });
@@ -68,5 +69,6 @@ impl Gadget<Global> for TreesGadget {
             return;
         }
         ctx.global().trees.access_mut().remove_tree(event.unit_id);
+        crate::status::publish_power(spring, ctx.global());
     }
 }
