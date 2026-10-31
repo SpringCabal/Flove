@@ -392,16 +392,18 @@ function SelectEnemy(uID, snapshot)
     for i, target in ipairs(targets) do
         local distance = (x-target.x)*(x-target.x) + (y-target.y)*(y-target.y) + (z-target.z)*(z-target.z)
         local weight = distance > 100 and 1/distance or 0
-        weights[i] = weight
         totalWeight = totalWeight + weight
+        weights[i] = totalWeight
     end
     if totalWeight <= 0 then return nil end
-    local p, q = math.random()*totalWeight, 0
-    for i = 1, #targets do
-        q = q + weights[i]
-        if q > p then return targets[i].id end
+    local p = math.random()*totalWeight
+    -- Prefixes use the original float addition order and strict q > p test.
+    local first, last = 1, #targets + 1
+    while first < last do
+        local middle = math.floor((first + last)/2)
+        if weights[middle] > p then last = middle else first = middle + 1 end
     end
-    return nil
+    return targets[first] and targets[first].id
 end
 
 local SMALL_MUSHROOM_ORDER_CHANGE = 30
