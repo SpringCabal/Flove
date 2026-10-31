@@ -13,18 +13,20 @@ pub(crate) fn worker(bytes: &[u8]) -> Vec<u8> {
     for _ in 0..count {
         let p = Float3::new(reader.f32(), reader.f32(), reader.f32());
         weights.clear();
+        let mut total = 0.0_f32;
         weights.extend(targets.iter().map(|t| {
             let dx = t.x - p.x;
             let dy = t.y - p.y;
             let dz = t.z - p.z;
             let distance = dx * dx + dy * dy + dz * dz;
-            if distance > 100.0 {
+            total += if distance > 100.0 {
                 1.0 / distance
             } else {
                 0.0
-            }
+            };
+            total
         }));
-        put_f32(&mut output, weights.iter().copied().sum());
+        put_f32(&mut output, total);
         for &weight in &weights {
             put_f32(&mut output, weight);
         }

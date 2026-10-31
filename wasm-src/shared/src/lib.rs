@@ -128,6 +128,25 @@ pub mod suites {
     pub const UI_DONE: &str = "flove_ui_suite_done";
 }
 
+/// Select the first cumulative weight strictly above the sampled point.
+/// Prefixes must use the original left-to-right f32 addition order.
+pub fn choose_cumulative_index(
+    count: usize,
+    mut cumulative: impl FnMut(usize) -> f32,
+    point: f32,
+) -> Option<usize> {
+    let (mut first, mut last) = (0, count);
+    while first < last {
+        let middle = first + (last - first) / 2;
+        if cumulative(middle) > point {
+            last = middle;
+        } else {
+            first = middle + 1;
+        }
+    }
+    (first < count).then_some(first)
+}
+
 #[cfg(test)]
 mod tests {
     extern crate std;
@@ -228,5 +247,52 @@ mod tests {
     fn missing_params_read_as_the_intro() {
         assert_eq!(Status::read(|_| None), Status::default());
         assert_eq!(Status::default().story, STAGE_INTRO);
+    }
+}
+
+#[cfg(test)]
+mod cumulative_selection_tests {
+    extern crate std;
+    use super::choose_cumulative_index;
+    use std::vec::Vec;
+
+    #[test]
+    fn matches_original_roulette_at_prefixes_neighbours_and_zero_weights() {
+        for count in 0..130 {
+            let weights: Vec<f32> = (0..count)
+                .map(|i| {
+                    if i % 7 == 0 {
+                        0.0
+                    } else {
+                        ((i * 37 + count * 11) % 997) as f32 / 997.0
+                    }
+                })
+                .collect();
+            let mut total = 0.0_f32;
+            let cumulative: Vec<f32> = weights
+                .iter()
+                .map(|&w| {
+                    total += w;
+                    total
+                })
+                .collect();
+            let mut points = std::vec![-0.0, 0.0, total, f32::INFINITY, f32::NAN];
+            for &prefix in &cumulative {
+                points.push(prefix);
+                if prefix > 0.0 {
+                    points.push(f32::from_bits(prefix.to_bits() - 1));
+                }
+                points.push(f32::from_bits(prefix.to_bits() + 1));
+            }
+            for point in points {
+                let mut q = 0.0_f32;
+                let original = weights.iter().position(|&w| {
+                    q += w;
+                    q > point
+                });
+                let actual = choose_cumulative_index(count, |i| cumulative[i], point);
+                assert_eq!(actual, original, "count={count} point={point:?}");
+            }
+        }
     }
 }

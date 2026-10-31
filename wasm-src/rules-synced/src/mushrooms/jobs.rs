@@ -11,10 +11,19 @@ pub(super) struct Stats {
     weights_len: usize,
 }
 impl Stats {
-    pub fn weights(&self) -> impl Iterator<Item = f32> + '_ {
-        self.packet[self.weights_start..self.weights_start + self.weights_len * 4]
-            .chunks_exact(4)
-            .map(|word| f32::from_le_bytes(word.try_into().expect("four-byte weight")))
+    pub fn choose_index(&self, point: f32) -> Option<usize> {
+        flove_shared::choose_cumulative_index(
+            self.weights_len,
+            |i| {
+                let start = self.weights_start + i * 4;
+                f32::from_le_bytes(
+                    self.packet[start..start + 4]
+                        .try_into()
+                        .expect("cumulative weight"),
+                )
+            },
+            point,
+        )
     }
 }
 pub(super) struct Prepared {
@@ -28,7 +37,7 @@ pub(super) fn prepare(
     units: &[super::MushroomAiUnit],
     frame: i32,
     small: i32,
-    targets: &[(i32, Float3)],
+    targets: &mut Option<Vec<(i32, Float3)>>,
 ) -> Option<Vec<Prepared>> {
     use spring::ResultExt;
     let mut result = Vec::with_capacity(units.len());
@@ -62,13 +71,14 @@ pub(super) fn prepare(
     if positions.is_empty() {
         return Some(result);
     }
+    let targets = targets.get_or_insert_with(|| super::collect_targets(spring));
     let chunk_size = positions.len().div_ceil(jobs::CHUNKS);
     let mut inputs = Vec::new();
     let mut limits = Vec::new();
     for chunk in positions.chunks(chunk_size) {
         let mut bytes = Vec::new();
         put_u32(&mut bytes, targets.len() as u32);
-        for (_, p) in targets {
+        for (_, p) in targets.iter() {
             for v in [p.x, p.y, p.z] {
                 put_f32(&mut bytes, v);
             }

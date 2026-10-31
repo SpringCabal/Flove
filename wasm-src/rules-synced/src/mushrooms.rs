@@ -179,8 +179,7 @@ impl MushroomManager {
         if !is_ai_frame(frame) {
             return;
         }
-        let targets = collect_targets(spring);
-        self.order_idle(spring, frame, spire_id, &targets);
+        self.order_idle(spring, frame, spire_id);
     }
 
     fn order_idle(
@@ -188,8 +187,8 @@ impl MushroomManager {
         spring: &spring::Spring<'_, spring::RulesSynced>,
         frame: i32,
         spire_id: i32,
-        targets: &[(i32, Float3)],
     ) {
+        let mut targets = None;
         let defs = crate::definitions::defs(spring);
         let prepared = if self.jobs.enabled(spring) {
             jobs::prepare(
@@ -198,7 +197,7 @@ impl MushroomManager {
                 &self.ai_units,
                 frame,
                 defs.small_mushroom,
-                targets,
+                &mut targets,
             )
         } else {
             None
@@ -207,9 +206,19 @@ impl MushroomManager {
             if ai.def_id == defs.small_mushroom {
                 if frame - ai.last_order_frame >= 30 {
                     ai.last_order_frame = frame;
+                    // Preserve Lua's private parameter as well as the local cache.
+                    spring
+                        .rules_params()
+                        .set_unit_rules_param_f32(
+                            ai.unit_id,
+                            "lastOrderFrame",
+                            frame as f32,
+                            spring::rules_params::los::PRIVATE,
+                        )
+                        .log_err_once(spring, "publishing a small mushroom order frame");
                     if let Some((_target_id, target_pos)) = select_random_target(
                         spring,
-                        targets,
+                        &mut targets,
                         ai.unit_id,
                         spire_id,
                         &mut self.target_weights,
@@ -250,7 +259,7 @@ impl MushroomManager {
                 if !has_commands {
                     if let Some((_target_id, target_pos)) = select_random_target(
                         spring,
-                        targets,
+                        &mut targets,
                         ai.unit_id,
                         spire_id,
                         &mut self.target_weights,
@@ -433,6 +442,13 @@ fn collect_targets(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<(i32
     ];
     let mut targets = Vec::new();
     for &team in &defs.target_teams {
+        if spring
+            .teams()
+            .are_teams_allied(ENEMY_TEAM_ID, team)
+            .unwrap_or(false)
+        {
+            continue;
+        }
         for id in spring
             .units_query()
             .get_team_units_by_defs(team, &wanted)
@@ -453,7 +469,7 @@ fn collect_targets(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<(i32
 
 fn select_random_target(
     spring: &spring::Spring<'_, spring::RulesSynced>,
-    targets: &[(i32, Float3)],
+    targets: &mut Option<Vec<(i32, Float3)>>,
     mushroom_id: i32,
     spire_id: i32,
     weights: &mut Vec<f32>,
@@ -480,6 +496,9 @@ fn select_random_target(
             .unwrap_or(-1);
         // Lua returns nil immediately when the nearest-enemy query finds none.
         // Only a spire result falls through to the weighted choice.
+        if nearest < 0 {
+            return None;
+        }
         if nearest != spire_id {
             return spring
                 .units_info()
@@ -488,6 +507,8 @@ fn select_random_target(
                 .map(|position| (nearest, position));
         }
     }
+    // Lua snapshots targets only after the nearest-enemy shortcut needs it.
+    let targets = targets.get_or_insert_with(|| collect_targets(spring));
     if let Some(stats) = prepared {
         let stats = stats.as_ref()?;
         if stats.total <= 0.0 {
@@ -498,14 +519,7 @@ fn select_random_target(
             .next_float()
             .expect("synced random float")
             * stats.total;
-        let mut q = 0.0;
-        for (target, weight) in targets.iter().zip(stats.weights()) {
-            q += weight;
-            if q > p {
-                return Some(*target);
-            }
-        }
-        return None;
+        return targets.get(stats.choose_index(p)?).copied();
     }
     let Ok(u_pos) = spring.units_info().get_unit_position(
         mushroom_id,
@@ -525,8 +539,11 @@ fn select_random_target(
         if dist_sq > 100.0 { 1.0 / dist_sq } else { 0.0 }
     };
     weights.clear();
-    weights.extend(targets.iter().map(|(_, pos)| weight(pos)));
-    let total_weight: f32 = weights.iter().copied().sum();
+    let mut total_weight = 0.0_f32;
+    weights.extend(targets.iter().map(|(_, pos)| {
+        total_weight += weight(pos);
+        total_weight
+    }));
     if total_weight <= 0.0 {
         return None;
     }
@@ -536,12 +553,6 @@ fn select_random_target(
         .next_float()
         .expect("synced random float")
         * total_weight;
-    let mut q = 0.0f32;
-    for (target, weight) in targets.iter().zip(weights) {
-        q += *weight;
-        if q > p {
-            return Some(*target);
-        }
-    }
-    None
+    let index = flove_shared::choose_cumulative_index(weights.len(), |i| weights[i], p)?;
+    targets.get(index).copied()
 }
