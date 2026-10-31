@@ -134,7 +134,8 @@ local function UpdateWisps()
 	local frame = Spring.GetGameFrame()
 	local stageDur = wispConfiguration.stageFrameDuration
 	local totalStages = wispConfiguration.totalStages
-	local mana = Spring.GetGameRulesParam("mana") or 0
+	local initialMana = Spring.GetGameRulesParam("mana")
+	local mana = initialMana or 0
 	for _,unitID in ipairs(OrderedTrees()) do
         local tree = trees[unitID]
 		local wisps = tree.wisps
@@ -162,7 +163,9 @@ local function UpdateWisps()
 			Spring.SetUnitRulesParam(unitID, "wispOffset" .. tostring(#tree.wisps), math.random() * 0.25)
 		end
 	end
-	Spring.SetGameRulesParam("mana", mana)
+	if mana ~= initialMana then
+		Spring.SetGameRulesParam("mana", mana)
+	end
 end
 
 function gadget:UnitCreated(unitID, unitDefID, ...)
