@@ -159,7 +159,10 @@ impl DefRegistry {
                 .set_unit_radius_and_height(unit, g.radius, g.height)
                 .log_err_once(spring, "setting unit model bounds");
         }
-        if self.is_shrub(def) || self.is_flower(def) {
+        // Lua configures effect markers on every UnitCreated, including units
+        // created after the exported map has loaded. Map restoration can
+        // subsequently override the original markers' neutral flag.
+        if self.is_shrub(def) || self.is_flower(def) || self.is_trigger(def) {
             spring
                 .unit_control()
                 .set_unit_blocking(

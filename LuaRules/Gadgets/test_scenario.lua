@@ -89,7 +89,8 @@ local upgradeChecked = false
 local passCount = 0
 local failCount = 0
 -- Every Assert below passes exactly once.
-local EXPECTED_CHECKS = 8
+local EXPECTED_CHECKS = 13
+local runtimeMarkers = {}
 
 local function Assert(cond, desc)
 	if not cond then
@@ -301,6 +302,30 @@ function gadget:GameFrame(frame)
 		bossID = Spring.CreateUnit(kingDefID, 4688, 1370, 5620, 0, 1)
 		Assert(bossID ~= nil and Spring.ValidUnitID(bossID), "Spawned King Shroom Boss (id=" .. tostring(bossID) .. ")")
 	end
+
+    -- Runtime marker creation must match the Lua grove-spawner callback.
+    -- Run after all gameplay assertions and the last screenshot (f=225):
+    -- unit creation consumes synced RNG and must not alter those scenarios.
+    if f == 240 then
+        for _, name in ipairs({"base", "expansion1", "expansion2", "expansion3", "mushroomspawn"}) do
+            local id = Spring.CreateUnit(UnitDefNames[name].id, 4300,
+                Spring.GetGroundHeight(4300, 6000), 6000, 0, 1, false, false)
+            runtimeMarkers[#runtimeMarkers + 1] = {name = name, id = id}
+        end
+    end
+    if f == 242 then
+        for _, marker in ipairs(runtimeMarkers) do
+            local id = marker.id
+            local ok = id and Spring.ValidUnitID(id)
+            if ok then
+                local blocking, solid, projectile, ray, crushable, push, height = Spring.GetUnitBlocking(id)
+                ok = Spring.GetUnitNeutral(id) and not blocking and not solid
+                    and not projectile and not ray and not crushable and not push and not height
+            end
+            Assert(ok, "Runtime " .. marker.name .. " marker is neutral and non-colliding, as in Lua")
+            if id and Spring.ValidUnitID(id) then Spring.DestroyUnit(id, false, true) end
+        end
+    end
 
 	-- Step 8 (f = 250): Verification complete
 	if f == 250 then
