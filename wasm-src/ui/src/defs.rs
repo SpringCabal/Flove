@@ -1,6 +1,7 @@
 use std::sync::OnceLock;
 
 pub struct Defs {
+    #[cfg(feature = "headless-integration")]
     pub spire: i32,
     pub triggers: [i32; 5],
 }
@@ -15,6 +16,7 @@ pub fn defs(spring: &spring::Spring<'_, spring::Ui>) -> &'static Defs {
                 .unwrap_or(-1)
         };
         Defs {
+            #[cfg(feature = "headless-integration")]
             spire: id("spire"),
             triggers: [
                 "base",

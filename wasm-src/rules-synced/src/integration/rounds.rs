@@ -140,7 +140,7 @@ pub(super) fn victory_published(
     let global = ctx.global();
     t.check(
         spring,
-        published(spring, global, "game_over") == 1 && published(spring, global, "won") == 1,
+        published(spring, global, "gameOver") == 1 && published(spring, global, "won") == 1,
         "The UI is told of the win",
     );
     send(ctx, "restart|2");
@@ -221,7 +221,7 @@ pub(super) fn defeat(t: &mut TestTracker, ctx: &AddonContext<'_, Global>, frame:
     }
     t.check(
         spring,
-        published(spring, global, "game_over") == 1 && published(spring, global, "won") == 0,
+        published(spring, global, "gameOver") == 1 && published(spring, global, "won") == 0,
         "The UI hears of the defeat from a surviving unit",
     );
     send(ctx, "restart|2");

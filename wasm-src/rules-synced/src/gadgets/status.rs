@@ -8,7 +8,7 @@ use crate::story;
 
 #[derive(Default)]
 pub struct StatusGadget {
-    published: SendOnChange<(i32, Status)>,
+    published: [SendOnChange<f32>; Status::PARAMS.len()],
 }
 
 impl StatusGadget {
@@ -41,12 +41,13 @@ impl Gadget<Global> for StatusGadget {
             game_over: victory.game_over,
             won: victory.won,
         };
-        let first_tree = global.trees.access().trees.first().map(|tree| tree.unit_id);
-        let unit = status::carrier(spring, global.spire.access().unit_id, first_tree);
-        self.published
-            .send_if_changed((unit, status), |(unit, status)| {
-                status::publish(spring, *unit, status);
-                true
-            });
+        for ((last, name), value) in self
+            .published
+            .iter()
+            .zip(Status::PARAMS)
+            .zip(status.values())
+        {
+            last.send_if_changed(value, |value| status::publish(spring, name, *value));
+        }
     }
 }

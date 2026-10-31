@@ -11,53 +11,17 @@ use crate::state::{
 };
 use crate::story;
 
-const PLAYER_TEAM_ID: i32 = 1;
-
 #[derive(Default)]
 struct Hud {
-    carrier: Cell<Option<i32>>,
     shown: Cell<Status>,
     shown_in: Cell<u32>,
 }
 
 impl Hud {
-    fn carrier(&self, spring: &spring::Spring<'_, spring::Ui>) -> Option<i32> {
-        let alive = |unit: i32| !spring.units_info().get_unit_is_dead(unit).unwrap_or(true);
-        if let Some(unit) = self.carrier.get()
-            && alive(unit)
-        {
-            return Some(unit);
-        }
-        let units = spring.units_query().get_team_units(PLAYER_TEAM_ID).ok()?;
-        let spire_def = crate::defs::defs(spring).spire;
-        let is_spire = |unit: i32| {
-            spring
-                .units_info()
-                .get_unit_def_id(unit)
-                .is_ok_and(|d| d == spire_def)
-        };
-        let found = units
-            .iter()
-            .copied()
-            .find(|&unit| is_spire(unit) && alive(unit))
-            .or_else(|| {
-                units.iter().copied().find(|&unit| {
-                    alive(unit)
-                        && spring
-                            .rules_params()
-                            .get_unit_rules_param_f32(unit, "power")
-                            .is_ok()
-                })
-            });
-        self.carrier.set(found);
-        found
-    }
-
     fn poll(&self, spring: &spring::Spring<'_, spring::Ui>, global: &Global) {
-        let Some(unit) = self.carrier(spring) else {
+        let Some(status) = read_status(spring) else {
             return;
         };
-        let status = read_status(spring, unit);
         {
             let mut game = global.game.access_mut();
             game.rules_round = status.round;
@@ -99,13 +63,18 @@ impl Hud {
     }
 }
 
-fn read_status(spring: &spring::Spring<'_, spring::Ui>, unit: i32) -> Status {
-    Status::read(|name| {
-        spring
-            .rules_params()
-            .get_unit_rules_param_f32(unit, name)
-            .ok()
-    })
+fn read_status(spring: &spring::Spring<'_, spring::Ui>) -> Option<Status> {
+    let params = spring.rules_params();
+    // A missing round means the first synced status has not been published.
+    // Reuse this read rather than querying it twice on every HUD update.
+    let round = params.get_game_rules_param_f32("round").ok()?;
+    Some(Status::read(|name| {
+        if name == "round" {
+            Some(round)
+        } else {
+            params.get_game_rules_param_f32(name).ok()
+        }
+    }))
 }
 
 fn update_story(

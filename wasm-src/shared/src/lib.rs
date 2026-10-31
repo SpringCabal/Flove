@@ -53,8 +53,8 @@ impl Status {
         "power",
         "mana",
         "story",
-        "shroom_event",
-        "game_over",
+        "shroomEvent",
+        "gameOver",
         "won",
     ];
 

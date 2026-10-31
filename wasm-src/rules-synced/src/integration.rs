@@ -330,12 +330,14 @@ fn destroy(spring: &spring::Spring<'_, spring::RulesSynced>, unit: i32) {
     );
 }
 
-fn published(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global, name: &str) -> i32 {
-    let first_tree = global.trees.access().trees.first().map(|tree| tree.unit_id);
-    let carrier = crate::status::carrier(spring, global.spire.access().unit_id, first_tree);
+fn published(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    _global: &Global,
+    name: &str,
+) -> i32 {
     spring
         .rules_params()
-        .get_unit_rules_param_f32(carrier, name)
+        .get_game_rules_param_f32(name)
         .map_or(-1, |value| value as i32)
 }
 
