@@ -220,7 +220,7 @@ function gadget:GameFrame(frame)
 	end
 	
 	if frame%15==0 then
-        CheckForIdleMushrooms()
+        CheckForIdleMushrooms(frame)
     end
 	
     if frame == 4 and tonumber((Spring.GetModOptions() or {}).skip_tutorial) == 1 then
@@ -300,6 +300,8 @@ end
 --------------------------------------------------------------------------------
 
 local aiMushrooms = {}
+local aiOrderFrames = {}
+local aiTeams = {}
 local aiOrder, aiOrderDirty = {}, true
 local function OrderedMushrooms()
     if aiOrderDirty then
@@ -317,14 +319,16 @@ function CheckForSpire(unitID, unitDefID)
 	end
 end
 
-function gadget:UnitCreated(unitID, unitDefID)
+function gadget:UnitCreated(unitID, unitDefID, unitTeam)
 	CheckForSpire(unitID, unitDefID)
 
 	if unitDefID == kingshroomDefID then
 		Spring.SetGameRulesParam("shroomEvent", 1)
 	end
     if UnitDefs[unitDefID].customParams.mushroom and not (Spring.GetUnitRulesParam(unitID, "aiDisabled")==1) then
-		aiMushrooms[unitID] = true
+		aiMushrooms[unitID] = unitDefID
+        aiTeams[unitID] = unitTeam or Spring.GetUnitTeam(unitID)
+        aiOrderFrames[unitID] = Spring.GetUnitRulesParam(unitID, "lastOrderFrame") or 0
         aiOrderDirty = true
     end
 end
@@ -347,20 +351,29 @@ function gadget:UnitDestroyed(unitID, unitDefID)
 	end
 	
 	aiMushrooms[unitID] = nil
+    aiOrderFrames[unitID] = nil
+    aiTeams[unitID] = nil
     aiOrderDirty = true
 end
+
+function gadget:UnitTaken(unitID)
+    if aiMushrooms[unitID] then aiTeams[unitID] = Spring.GetUnitTeam(unitID) end
+end
+gadget.UnitGiven = gadget.UnitTaken
 
 -- Snapshot static target data once per AI tick, only if a mushroom needs the
 -- weighted choice. Preserve GetAllUnits ordering so RNG and floating sums stay
 -- identical to the original per-mushroom scan.
 local targetDefs = {UnitDefNames.treelevel1.id, UnitDefNames.treelevel2.id, UnitDefNames.treelevel3.id, spireDefID}
 local targetTeams = Spring.GetTeamList()
-local function CollectTargets()
+local function CollectTargets(team)
     local targets = {}
-    for _,team in ipairs(targetTeams) do
-        for _,id in ipairs(Spring.GetTeamUnitsByDefs(team,targetDefs)) do
-            local x,y,z = Spring.GetUnitPosition(id)
-            if x then targets[#targets+1] = {id=id,team=team,x=x,y=y,z=z} end
+    for _,targetTeam in ipairs(targetTeams) do
+        if not Spring.AreTeamsAllied(team,targetTeam) then
+            for _,id in ipairs(Spring.GetTeamUnitsByDefs(targetTeam,targetDefs)) do
+                local x,y,z = Spring.GetUnitPosition(id)
+                if x then targets[#targets+1] = {id=id,x=x,y=y,z=z} end
+            end
         end
     end
     table.sort(targets, function(a,b) return a.id < b.id end)
@@ -373,18 +386,10 @@ function SelectEnemy(uID, snapshot)
         if nearest ~= spireID then return nearest end
     end
     local x, y, z = Spring.GetUnitPosition(uID)
-    if not snapshot.targets then snapshot.targets = CollectTargets() end
-    local team = Spring.GetUnitTeam(uID)
+    local team = aiTeams[uID] or Spring.GetUnitTeam(uID)
     local targets = snapshot[team]
     if not targets then
-        targets = {}
-        local allied = {}
-        for _, target in ipairs(snapshot.targets) do
-            if allied[target.team] == nil then
-                allied[target.team] = Spring.AreTeamsAllied(team, target.team)
-            end
-            if not allied[target.team] then targets[#targets + 1] = target end
-        end
+        targets = CollectTargets(team)
         snapshot[team] = targets
     end
     local weights, totalWeight = snapshot.weights or {}, 0
@@ -403,24 +408,27 @@ function SelectEnemy(uID, snapshot)
         local middle = math.floor((first + last)/2)
         if weights[middle] > p then last = middle else first = middle + 1 end
     end
-    return targets[first] and targets[first].id
+    local target = targets[first]
+    if target then return target.id, target.x, target.y, target.z end
+    return nil
 end
 
 local SMALL_MUSHROOM_ORDER_CHANGE = 30
-function CheckForIdleMushrooms()
-	local frame = Spring.GetGameFrame()
+function CheckForIdleMushrooms(frame)
+    frame = frame or Spring.GetGameFrame()
     local snapshot = {}
     for _, uID in ipairs(OrderedMushrooms()) do
-		local unitDefID = Spring.GetUnitDefID(uID)
+		local unitDefID = aiMushrooms[uID]
 		if unitDefID == smallMushroomDefID then
-			local lastOrderFrame = Spring.GetUnitRulesParam(uID, "lastOrderFrame") or 0
+			local lastOrderFrame = aiOrderFrames[uID] or 0
 			if frame - lastOrderFrame >= SMALL_MUSHROOM_ORDER_CHANGE then
 				lastOrderFrame = frame
+                aiOrderFrames[uID] = frame
 				Spring.SetUnitRulesParam(uID, "lastOrderFrame", lastOrderFrame)
 				
-				local eID = SelectEnemy(uID, snapshot)
+				local eID, x, y, z = SelectEnemy(uID, snapshot)
 				if eID then
-					local x,y,z = Spring.GetUnitPosition(eID)
+					if not x then x,y,z = Spring.GetUnitPosition(eID) end
 					local d = 500
 					local dx = x + math.random()*d - d/2
 					local dz = z + math.random()*d - d/2
@@ -429,10 +437,9 @@ function CheckForIdleMushrooms()
 				end
 			end
 		elseif Spring.GetUnitCommandCount(uID) == 0 then
-            local eID = SelectEnemy(uID, snapshot)
+            local eID, x, y, z = SelectEnemy(uID, snapshot)
             if eID then
-                local x,y,z = Spring.GetUnitPosition(eID)
-                local cx,cy,cz = Spring.GetUnitPosition(uID)
+                if not x then x,y,z = Spring.GetUnitPosition(eID) end
                 StandUpAndFightLikeAMan(uID,x,y,z)
             else
                 GoForAShortWalk(uID)
